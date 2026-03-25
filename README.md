@@ -2,6 +2,9 @@
 # Hệ thống Đấu giá Trực tuyến - BTL UET
 ## Thành viên nhóm:
 1. Biện Minh Đức
+2. Nguyễn Đình Đức
+3. Đinh Văn Toàn
+4. Trần Đức Tuấn
 
 ## Công nghệ sử dụng:
 - Backend: Java Spring Boot
