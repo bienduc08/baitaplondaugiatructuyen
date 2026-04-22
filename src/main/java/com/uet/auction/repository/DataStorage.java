@@ -3,6 +3,8 @@ package com.uet.auction.repository;
 import com.uet.auction.model.Product;
 import com.uet.auction.model.User;
 import org.springframework.stereotype.Repository;;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -90,4 +92,14 @@ public class DataStorage {
                 .orElse(null);
     }
 
+    private List<String> logs = new ArrayList<>();
+
+    public void addSystemLog(String message) {
+        // Thêm thời gian hiện tại vào trước tin nhắn cho chuyên nghiệp
+        String timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String fullLog = "[" + timeStamp + "] " + message;
+
+        logs.add(fullLog); // Lưu vào danh sách
+        System.out.println(fullLog); // In ra console để debug cho nhanh
+    }
 }

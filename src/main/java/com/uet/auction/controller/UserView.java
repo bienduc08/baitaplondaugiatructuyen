@@ -46,19 +46,18 @@ public class UserView {
                 // Thực hiện đặt giá
             } else {
                 Alert alert = new Alert(AlertType.ERROR, "Bạn không có quyền");
-                Alert.show();
+                alert.showAndWait();
             }
         });
     }
 
     public void handleBidLogic() {
-        LocalDateTime now = LocalDateTime.now(); // Lấy giờ hiện tại của máy tính
-        if (now.isAfter(product.getEndTime())) {
+        LocalDateTime now = LocalDateTime.now();
+        if (product != null && now.isAfter(product.getEndTime())) {
             System.out.println("Phiên đấu giá đã kết thúc!");
             return;
         }
-        // Nếu chưa hết giờ thì mới gọi auctionService.placeBid(...)
-    }
+    }// Gọi service để đặt giá ở đây
 
     public void show() {
         if (stage != null) {

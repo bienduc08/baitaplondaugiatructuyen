@@ -2,18 +2,24 @@ package com.uet.auction;
 
 import com.uet.auction.controller.AuctionController;
 import com.uet.auction.controller.AuctionGUI;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-public class AuctionApplication {
+public class AuctionApplication extends Application {
     // Danh sách để quản lý 3 cửa sổ nhằm cập nhật giá Real-time
     public static List<AuctionGUI> guis = new ArrayList<>();
 
     public static void main(String[] args) {
+        launch(args);
         System.setProperty("java.awt.headless", "false");
         var context = SpringApplication.run(AuctionApplication.class, args);
 
@@ -40,5 +46,14 @@ public class AuctionApplication {
         for (AuctionGUI gui : guis) {
             gui.updateData(); // Lệnh cho các cửa sổ cập nhật lại giá
         }
+    }
+    @Override
+    public void start(Stage stage) throws IOException {
+        System.out.println(getClass().getResource("/com/uet/auction/view/login.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/login.fxml"));
+        Scene scene = new Scene(fxmlLoader.load());
+        stage.setTitle("Hệ thống Đấu giá Trực tuyến - UET");
+        stage.setScene(scene);
+        stage.show();
     }
 }
