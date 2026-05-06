@@ -1,54 +1,69 @@
 package com.uet.auction.server.service;
 
 import com.uet.auction.common.DTO.ProductDTO;
-import com.uet.auction.server.DAO.ProductDAO;
-import com.uet.auction.server.DAO.BidDAO;
 import com.uet.auction.common.Response.AuctionResponse;
-import com.uet.auction.server.network.SocketServer;
+import com.uet.auction.server.DAO.ProductDAO;
+import com.uet.auction.server.config.DatabaseConnection;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class AuctionService {
-    private final ProductDAO productDAO;
-    private final BidDAO bidDAO;
 
-    public AuctionService() {
-        this.productDAO = new ProductDAO();
-        this.bidDAO = new BidDAO();
+    private ProductDAO productDAO = new ProductDAO();
+
+    public AuctionResponse getProductsByStatus(String status) {
+        List<ProductDTO> list = productDAO.getProductsByStatus(status);
+        return new AuctionResponse(true, "GET_PRODUCTS_RESULT", list);
     }
 
-    // Lấy danh sách sản phẩm mới nhất từ MySQL
-    public AuctionResponse listAllProducts() {
-        List<ProductDTO> products = productDAO.getAllProducts();
-        return new AuctionResponse(true, "Lấy danh sách thành công", products);
-    }
-
-    // Xử lý logic khi người dùng bấm nút Đặt giá
-    public AuctionResponse placeBid(int productId, String username, double amount) {
-        // Kiểm tra xem lượt đặt giá có hợp lệ trong DB không
-        boolean success = bidDAO.placeBid(productId, username, amount);
-
+    public AuctionResponse changeProductStatus(int productId, String newStatus) {
+        boolean success = productDAO.updateProductStatus(productId, newStatus);
         if (success) {
-            return new AuctionResponse(true, "Bạn đã đặt giá thành công!", null);
-        } else {
-            return new AuctionResponse(false, "Giá đặt phải cao hơn giá hiện tại!", null);
+            return new AuctionResponse(true, "CHANGE_STATUS_RESULT", "Cập nhật thành công!");
         }
+        return new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Cập nhật thất bại!");
     }
-    public AuctionResponse register(String username, String password) {
-        boolean success = userDAO.registerUser(username, password);
-        if (success) {
-            return new AuctionResponse(true, "REGISTER_RESULT", "Tạo tài khoản thành công!");
-        } else {
-            return new AuctionResponse(false, "REGISTER_RESULT", "Tên đăng nhập đã tồn tại!");
+
+    public AuctionResponse addProduct(Object[] data) {
+        try {
+            String name = (String) data[0];
+            double price = (Double) data[1];
+            String sellerName = (String) data[2];
+            LocalDateTime startTime = (LocalDateTime) data[3];
+            LocalDateTime endTime = (LocalDateTime) data[4];
+
+            boolean success = productDAO.addProduct(name, price, sellerName, startTime, endTime);
+            if (success) {
+                return new AuctionResponse(true, "ADD_PRODUCT_RESULT", "Gửi yêu cầu đăng bán thành công, chờ Admin duyệt!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Lỗi server khi đăng sản phẩm.");
     }
-    public AuctionResponse addProduct(String name, double price, int days) {
-        boolean success = productDAO.addProduct(name, price, days);
-        if (success) {
-            // Broadcast để tất cả Client đang mở tab User tự động tải lại danh sách sản phẩm mới!
-            SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", "Có sản phẩm mới!"));
-            return new AuctionResponse(true, "ADD_PRODUCT_RESULT", "Thêm sản phẩm thành công!");
+
+    public AuctionResponse placeBid(int productId, String bidderName, double bidAmount) {
+        String sql = "UPDATE products SET current_price = ?, owner_name = ? WHERE id = ? AND status = 'OPEN' AND current_price < ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setDouble(1, bidAmount);
+            pstmt.setString(2, bidderName);
+            pstmt.setInt(3, productId);
+            pstmt.setDouble(4, bidAmount);
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                return new AuctionResponse(true, "BID_RESULT", "Đặt giá thành công!");
+            } else {
+                return new AuctionResponse(false, "BID_RESULT", "Đặt giá thất bại! Giá đã bị vượt qua hoặc phiên đóng.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new AuctionResponse(false, "BID_RESULT", "Lỗi Server.");
         }
-        return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Lỗi CSDL khi thêm sản phẩm.");
     }
 }

@@ -7,7 +7,7 @@ public abstract class Item extends Entity {
     protected String description;
     protected BigDecimal startingPrice;
     protected String sellerId;
-    protected ItemCategory category;
+    protected com.uet.auction.model.ItemCategory category;
 
     public Item() { super(); }
 

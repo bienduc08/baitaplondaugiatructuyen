@@ -5,6 +5,8 @@ import com.uet.auction.client.controller.RegisterController;
 import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.client.controller.LoginController;
 import com.uet.auction.client.controller.UserController;
+import javafx.application.Platform;
+
 import java.io.ObjectInputStream;
 
 public class ResponseListener implements Runnable {
@@ -44,6 +46,15 @@ public class ResponseListener implements Runnable {
                             if (AdminController.instance != null) {
                                 AdminController.instance.handleAdminResponse(type, res.isSuccess(), res.getMessage());
                             }
+                            break;
+                        case "UPDATE_PRICE":
+                            // Khi Server báo có người vừa đặt giá mới hoặc Admin vừa duyệt bài
+                            // Kêu UserController tải lại danh sách sản phẩm ngay lập tức!
+                            Platform.runLater(() -> {
+                                if (UserController.instance != null) {
+                                    UserController.instance.loadProducts();
+                                }
+                            });
                             break;
                     }
                 }

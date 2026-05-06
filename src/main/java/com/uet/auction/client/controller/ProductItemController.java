@@ -1,55 +1,65 @@
 package com.uet.auction.client.controller;
 
-// ... imports
-
 import com.uet.auction.client.network.SocketClient;
 import com.uet.auction.client.util.AlertHelper;
+import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.Request.AuctionRequest;
-import com.uet.auction.common.Response.AuctionResponse;
-
-import java.awt.*;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import java.time.format.DateTimeFormatter;
 
 public class ProductItemController {
     @FXML private Label nameLabel;
     @FXML private Label priceLabel;
-    @FXML private TextField bidAmountField; // Ô để người dùng nhập giá
+    @FXML private Label sellerLabel;
+    @FXML private Label ownerLabel;
+    @FXML private Label timeLabel;
+    @FXML private TextField bidInput;
 
     private ProductDTO currentProduct;
 
+    // Đổ dữ liệu từ UserController vào Thẻ sản phẩm này
     public void setData(ProductDTO product) {
         this.currentProduct = product;
         nameLabel.setText(product.getName());
-        priceLabel.setText(String.valueOf(product.getCurrentPrice()) + " VNĐ");
+        priceLabel.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
+        sellerLabel.setText("Người bán: " + product.getSellerName());
 
-        // Gọi CountdownTask đếm ngược ở đây như đã hướng dẫn trước đó
+        String owner = product.getOwnerName() != null ? product.getOwnerName() : "Chưa có ai";
+        ownerLabel.setText("Đang giữ đỉnh: " + owner);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        if (product.getEndTime() != null) {
+            timeLabel.setText("Hết hạn: " + product.getEndTime().format(formatter));
+        }
     }
 
     @FXML
     public void onBidButtonClick() {
         try {
-            double amount = Double.parseDouble(bidAmountField.getText());
+            double bidAmount = Double.parseDouble(bidInput.getText());
 
-            // Giả sử bạn lấy username của người đang đăng nhập từ SessionManager hoặc một biến static
-            String username = "user_test"; // TODO: Thay bằng username thật
-
-            // Tạo một DTO hoặc gói dữ liệu gửi đi (Bạn có thể tự tạo BidRequest DTO)
-            // Hoặc gửi mảng Object:
-            Object[] bidData = new Object[]{currentProduct.getId(), username, amount};
-            AuctionRequest request = new AuctionRequest("PLACE_BID", bidData);
-
-            AuctionResponse response = SocketClient.sendRequest(request);
-
-            if (response.isSuccess()) {
-                AlertHelper.showInfo("Đặt giá thành công!");
-                // Không cần làm gì thêm, ResponseListener sẽ tự nghe thấy lệnh UPDATE_PRICE
-                // và tự động bảo UserController load lại giá mới cho mọi người!
-            } else {
-                AlertHelper.showError(response.getMessage());
+            if (bidAmount <= currentProduct.getCurrentPrice()) {
+                AlertHelper.showError("Giá đặt phải LỚN HƠN giá hiện tại!");
+                return;
             }
 
+            String currentUser = SessionManager.getCurrentUsername();
+            if (currentUser == null) {
+                AlertHelper.showError("Bạn cần đăng nhập!");
+                return;
+            }
+
+            // Gửi dữ liệu: [ID Sản phẩm, Tên người mua, Giá tiền]
+            Object[] bidData = new Object[]{currentProduct.getId(), currentUser, bidAmount};
+            SocketClient.sendRequest(new AuctionRequest("PLACE_BID", bidData));
+
+            bidInput.clear(); // Xóa ô nhập sau khi gửi
+
         } catch (NumberFormatException e) {
-            AlertHelper.showError("Vui lòng nhập số tiền hợp lệ!");
+            AlertHelper.showError("Vui lòng nhập một số tiền hợp lệ!");
         }
     }
 }

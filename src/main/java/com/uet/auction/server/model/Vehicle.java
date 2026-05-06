@@ -31,7 +31,6 @@ public class Vehicle extends com.uet.auction.model.Item {
     public int getMileage() { return mileage; }
     public void setMileage(int mileage) { this.mileage = mileage; }
 
-    @Override
     public void printInfo() {
         System.out.println("[VEHICLE] " + make + " " + vehicleModel
                 + " (" + year + ") | Đã đi: " + mileage + "km | Giá KĐ: " + startingPrice);
