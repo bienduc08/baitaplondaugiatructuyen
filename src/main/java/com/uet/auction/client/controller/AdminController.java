@@ -113,5 +113,5 @@ public class AdminController {
 // case "GET_PRODUCTS_RESULT":
 //    Nếu là AdminController.instance thì lấy list PENDING và vẽ ra màn hình.
 //    Nếu là UserController.instance thì lấy list OPEN và vẽ ra màn hình.
-    //
+    // commit
 }
