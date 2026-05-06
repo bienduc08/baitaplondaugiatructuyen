@@ -110,5 +110,5 @@ public class AdminController {
 //    Nếu là UserController.instance thì lấy list OPEN và vẽ ra màn hình.
 }
 
-//biện ăn cứt
-// aloooo
+// biện ăn cứt
+// alooo
