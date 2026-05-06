@@ -1,114 +1,106 @@
 package com.uet.auction.controller;
 
-import com.uet.auction.model.Product;
+import com.uet.auction.model.Item;
 import com.uet.auction.model.User;
 import com.uet.auction.repository.DataStorage;
 import com.uet.auction.service.AuctionService;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.TableView;
+import javafx.fxml.Initializable;
+import javafx.scene.control.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.awt.*;
+import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ResourceBundle;
 
-public class AdminView {
-    private User user;
-    private DataStorage dataStorage;
+public class AdminView implements Initializable {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminView.class);
+
+    @FXML private Button          btnApprove;
+    @FXML private TableView<Item> tablePending;
+    @FXML private TextField       txtReason;
+    @FXML private DatePicker      datePickerStart;
+    @FXML private DatePicker      datePickerEnd;
+
+    private User           user;
+    private DataStorage    dataStorage;
     private AuctionService auctionService;
-    @FXML private Button btnApprove;
-    @FXML private TableView<Product> tablePending; // Đảm bảo kiểu dữ liệu là <Product>
-    @FXML private TextField txtReason;
-    @FXML private DatePicker datePickerStart;
-    @FXML private DatePicker datePickerEnd;
 
-    public AdminView(User user, DataStorage dataStorage, AuctionService auctionService) {
-        this.user = user;
-        this.dataStorage = dataStorage;
-        this.auctionService = auctionService;
-
-    }
-    // Constructor để nhận các đối tượng quản lý dữ liệu
-    public AdminView(DataStorage dataStorage, AuctionService auctionService) {
-        this.dataStorage = dataStorage;
-        this.auctionService = auctionService;
-    }
-    // Logic trong AdminView hoặc AdminController
-    public void updateAuctionTime(int productId, LocalDateTime start, LocalDateTime end) {
-        // 1. Tìm sản phẩm trong kho chính thức
-        Product p = dataStorage.getProductById(productId);
-
-        if (p != null) {
-            // 2. Cập nhật giờ mới
-            p.setStartTime(start);
-            p.setEndTime(end);
-
-            // 3. Thông báo cập nhật tới tất cả người dùng
-            auctionService.notifyAllUsers("Cập nhật: Sản phẩm " + p.getName() + " thay đổi thời gian: " + start.toString() + " -> " + end.toString());
+    public void initData(User user, DataStorage dataStorage, AuctionService auctionService) {
+        if (!user.canManageSystem()) {
+            log.warn("User [{}] không có quyền Admin", user.getUsername());
+            new Alert(Alert.AlertType.ERROR, "Bạn không có quyền truy cập trang Admin!").show();
+            return;
         }
-    }
-    // Trong AdminView.java hoặc AdminController.java
-    public void handleProductApproval(Product p, boolean isApproved, String reason) {
-        if (isApproved) {
-            // 1. Thiết lập thời gian mặc định (ví dụ: bắt đầu ngay, kết thúc sau 24h)
-            p.setStartTime(LocalDateTime.now());
-            p.setEndTime(LocalDateTime.now().plusHours(24));
-            p.setActive(true);
-
-            // 2. Cập nhật kho dữ liệu
-            dataStorage.getPendingProducts().remove(p);
-            dataStorage.getAllProducts().add(p);
-
-            // 3. Thông báo cho mọi người
-            auctionService.notifyAllUsers("Sản phẩm mới " + p.getName() + " đã được duyệt lên sàn!");
-        } else {
-            // 1. Xóa khỏi danh sách chờ
-            dataStorage.getPendingProducts().remove(p);
-
-            // 2. Thông báo riêng cho Seller (Người sở hữu sản phẩm)
-            auctionService.notify(p.getOwner(), "Sản phẩm '" + p.getName() + "' bị từ chối. Lý do: " + reason);
-        }
+        this.user           = user;
+        this.dataStorage    = dataStorage;
+        this.auctionService = auctionService;
+        tablePending.getItems().setAll(dataStorage.getPendingItems());
+        log.info("AdminView initData: user={}", user.getUsername());
     }
 
-    @FXML
-    public void initialize() {
-        btnApprove.setOnAction(e -> {
-            Product selectedProduct = tablePending.getSelectionModel().getSelectedItem();
-            if (selectedProduct != null) {
-                // Gọi lệnh 1: Duyệt sản phẩm
-                handleProductApproval(selectedProduct, true, "");
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        log.info("AdminView khởi tạo");
+    }
 
-                tablePending.getItems().remove(selectedProduct);
-                new Alert(Alert.AlertType.INFORMATION, "Phê duyệt thành công!").show();
-            } else {
-                new Alert(Alert.AlertType.WARNING, "Vui lòng chọn một sản phẩm để duyệt!").show();
+    private void processRequest(String action) {
+        try {
+            Item selected = tablePending.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                new Alert(Alert.AlertType.WARNING, "Vui lòng chọn một sản phẩm!").showAndWait();
+                return;
             }
-        });
-    }
-    public void show() {
-    }
-
-
-    public void onRejectButtonClick() {
-        Product selectedProduct = tablePending.getSelectionModel().getSelectedItem();
-        String lyDo = txtReason.getText();
-
-        if (selectedProduct != null) {
-            // Gọi service xử lý (Hàm này phải public trong AuctionService)
-            auctionService.processApproval(selectedProduct, false, lyDo);
+            switch (action) {
+                case "ADMIN_APPROVE"  -> handleApprove(selected);
+                case "ADMIN_REJECT"   -> handleReject(selected);
+                case "ADMIN_SET_TIME" -> handleSetTime(selected);
+                default               -> log.warn("Action Admin không hợp lệ: {}", action);
+            }
+        } catch (Exception e) {
+            log.error("Lỗi xử lý action Admin [{}]: {}", action, e.getMessage(), e);
+            new Alert(Alert.AlertType.ERROR, "Lỗi: " + e.getMessage()).show();
         }
     }
 
-    public void onSaveTimeButtonClick() {
-        Product selectedProduct = tablePending.getSelectionModel().getSelectedItem();
-        if (selectedProduct != null) {
-            // Lưu ý: JavaFX DatePicker dùng getValue(), không phải getDateTimeValue()
-            // Bạn cần convert LocalDate sang LocalDateTime
-            LocalDateTime start = datePickerStart.getValue().atStartOfDay();
-            LocalDateTime end = datePickerEnd.getValue().atTime(23, 59);
-
-            auctionService.updateAuctionTime(selectedProduct.getId(), start, end);
-        }
+    private void handleApprove(Item item) {
+        log.info("Duyệt sản phẩm: name={}", item.getName());
+        auctionService.processApproval(item, true, "");
+        tablePending.getItems().remove(item);
+        new Alert(Alert.AlertType.INFORMATION, "Phê duyệt thành công: " + item.getName()).show();
     }
+
+    private void handleReject(Item item) {
+        String reason = txtReason.getText().trim();
+        if (reason.isEmpty()) {
+            new Alert(Alert.AlertType.WARNING, "Vui lòng nhập lý do từ chối!").showAndWait();
+            return;
+        }
+        log.info("Từ chối sản phẩm: name={}, reason={}", item.getName(), reason);
+        auctionService.processApproval(item, false, reason);
+        tablePending.getItems().remove(item);
+        txtReason.clear();
+    }
+
+    private void handleSetTime(Item item) {
+        if (datePickerStart.getValue() == null || datePickerEnd.getValue() == null) {
+            new Alert(Alert.AlertType.WARNING, "Vui lòng chọn đủ ngày bắt đầu và kết thúc!").showAndWait();
+            return;
+        }
+        LocalDateTime start = datePickerStart.getValue().atStartOfDay();
+        LocalDateTime end   = datePickerEnd.getValue().atTime(23, 59);
+        if (!end.isAfter(start)) {
+            new Alert(Alert.AlertType.WARNING, "Ngày kết thúc phải sau ngày bắt đầu!").showAndWait();
+            return;
+        }
+        log.info("Cập nhật thời gian: itemId={}, start={}, end={}", item.getId(), start, end);
+        auctionService.updateAuctionTime(item.getId(), start, end);
+        new Alert(Alert.AlertType.INFORMATION, "Đã cập nhật thời gian đấu giá!").show();
+    }
+
+    @FXML public void onApproveButtonClick()  { processRequest("ADMIN_APPROVE"); }
+    @FXML public void onRejectButtonClick()   { processRequest("ADMIN_REJECT"); }
+    @FXML public void onSaveTimeButtonClick() { processRequest("ADMIN_SET_TIME"); }
 }

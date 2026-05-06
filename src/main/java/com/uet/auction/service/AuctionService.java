@@ -1,134 +1,185 @@
 package com.uet.auction.service;
 
-import com.uet.auction.controller.UserView;
-import com.uet.auction.model.Bid;
-import com.uet.auction.model.Product;
-import com.uet.auction.model.User;
+import com.uet.auction.model.*;
 import com.uet.auction.repository.DataStorage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-//import static com.sun.management.internal.GcInfoCompositeData.getEndTime;
-
-//Dịch vụ đâ giá
-@Service
 public class AuctionService {
-    private List<Product> products = new ArrayList<>();
 
-    // Hoặc nếu dùng DataStorage:
-    @Autowired
-    private DataStorage dataStorage;
-    /**
-     * Hàm xử lý đặt giá (Mục 3.1.3 trong đề bài)
-     * Trả về true nếu đặt giá thành công, false nếu vi phạm quy tắc.
-     */
-    public boolean placeBid(User user, Integer id, double bidAmount) {
-        // 1. Kiểm tra thời gian: Đã hết giờ đấu giá chưa?
-        if (LocalDateTime.now().isAfter(DataStorage.getProductById(id).getEndTime())) {
-            System.out.println("Lỗi: Phiên đấu giá đã kết thúc!");
-            return false;
-        }
+    private static final Logger log = LoggerFactory.getLogger(AuctionService.class);
 
-        // 2. Kiểm tra giá: Giá mới phải cao hơn giá hiện tại (Mục 3.1.3)
-        if (bidAmount <= DataStorage.getProductById(id).getEndingPrice()) {
-            System.out.println("Lỗi: Giá đặt phải cao hơn giá hiện tại (" +DataStorage.findProductById(id).getEndingPrice() + ")!");
-            return false;
-        }
+    private final DataStorage dataStorage;
+    private final List<AutoBidConfig> autoBidConfigs = new ArrayList<>();
 
-        // 3. Kiểm tra số dư: Người dùng có đủ tiền không?
-        if (user.getBalance() < bidAmount) {
-            System.out.println("Lỗi: Số dư tài khoản không đủ để đặt mức giá này!");
-            return false;
-        }
-
-        // 4. Nếu mọi thứ OK -> Cập nhật thông tin sản phẩm
-        DataStorage.findProductById(id).setEndingPrice( bidAmount);
-        DataStorage.getProductById(id).setHighestBidder(user);
-
-        // 5. Lưu vào lịch sử đặt giá (Mục 3.1.3 - Log)
-        Bid newBid = new Bid(user, DataStorage.findProductById(id), bidAmount);
-        // (Sau này bạn có thể lưu newBid vào một danh sách trong Repository)
-
-        System.out.println("Chúc mừng " + user.getUsername() + " đã dẫn đầu với mức giá: " + bidAmount);
-        return true;
-    }
-    private List<UserView> activeViews = new ArrayList<>();
-
-    // Hàm để mỗi khi một User mở máy lên thì "đăng ký" vào hệ thống
-    public void registerView(UserView view) {
-        activeViews.add(view);
+    public AuctionService(DataStorage dataStorage) {
+        this.dataStorage = dataStorage;
     }
 
-    public void notify(String username, String message) {
-        // 1. Tìm user trong hệ thống (DataStorage)
-        User targetUser = dataStorage.getUserByUsername(username);
+    // ── Đặt giá ───────────────────────────────────────────────────────────────
 
-        if (targetUser != null) {
-            // 2. Thêm thông báo vào danh sách thông báo của User đó
-            // (Bạn nên thêm List<String> notifications trong lớp User)
-            targetUser.addNotification(message);
+    public boolean placeBid(User bidder, int auctionId, BigDecimal amount) {
+        try {
+            Optional<Auction> opt = dataStorage.findAuctionById(auctionId);
+            if (opt.isEmpty()) {
+                log.warn("Không tìm thấy phiên: auctionId={}", auctionId);
+                return false;
+            }
+            Auction auction = opt.get();
 
-            System.out.println("[THÔNG BÁO RIÊNG] Tới " + username + ": " + message);
+            if (auction.getStatus() != AuctionStatus.OPEN
+                    && auction.getStatus() != AuctionStatus.RUNNING) {
+                log.warn("Phiên không còn mở: auctionId={}, status={}", auctionId, auction.getStatus());
+                return false;
+            }
+
+            if (auction.getEndTime() != null && LocalDateTime.now().isAfter(auction.getEndTime())) {
+                log.warn("Phiên đã hết giờ: auctionId={}", auctionId);
+                return false;
+            }
+
+            BigDecimal currentPrice = auction.getCurrentPrice() != null
+                    ? auction.getCurrentPrice() : auction.getStartingPrice();
+
+            if (amount.compareTo(currentPrice) <= 0) {
+                log.warn("Giá đặt [{}] không cao hơn giá hiện tại [{}]", amount, currentPrice);
+                return false;
+            }
+
+            if (bidder.getBalance().compareTo(amount) < 0) {
+                log.warn("Số dư không đủ: user={}, balance={}, amount={}",
+                        bidder.getUsername(), bidder.getBalance(), amount);
+                return false;
+            }
+
+            dataStorage.addBidTransaction(
+                    new BidTransaction(0, LocalDateTime.now(), auctionId, bidder.getId(), amount, false));
+
+            auction.setCurrentPrice(amount);
+            auction.setHighestBidderId(bidder.getId());
+            auction.setStatus(AuctionStatus.RUNNING);
+            dataStorage.updateAuction(auction);
+
+            log.info("Đặt giá thành công: user={}, auctionId={}, amount={}",
+                    bidder.getUsername(), auctionId, amount);
+
+            triggerAutoBid(auction, bidder.getId());
+            return true;
+
+        } catch (Exception e) {
+            log.error("Lỗi placeBid: auctionId={}, error={}", auctionId, e.getMessage(), e);
+            return false;
         }
     }
+
+    // ── Auto-bid ──────────────────────────────────────────────────────────────
+
+    public void registerAutoBid(AutoBidConfig config) {
+        autoBidConfigs.removeIf(c -> c.getBidderId() == config.getBidderId()
+                && c.getAuctionId() == config.getAuctionId());
+        autoBidConfigs.add(config);
+        log.info("Đăng ký auto-bid: bidderId={}, auctionId={}, maxBid={}",
+                config.getBidderId(), config.getAuctionId(), config.getMaxBid());
+    }
+
+    public void cancelAutoBid(AutoBidConfig config) {
+        boolean removed = autoBidConfigs.removeIf(c -> c.getBidderId() == config.getBidderId()
+                && c.getAuctionId() == config.getAuctionId());
+        log.info("Hủy auto-bid: bidderId={}, auctionId={}, kết quả={}",
+                config.getBidderId(), config.getAuctionId(), removed ? "OK" : "Không tìm thấy");
+    }
+
+    private void triggerAutoBid(Auction auction, int lastBidderId) {
+        BigDecimal currentPrice = auction.getCurrentPrice();
+        autoBidConfigs.stream()
+                .filter(c -> c.getAuctionId() == auction.getId() && c.getBidderId() != lastBidderId)
+                .sorted()
+                .forEach(config -> {
+                    BigDecimal nextBid = config.calculateNextBid(currentPrice);
+                    if (nextBid == null) return;
+                    dataStorage.findUserById(config.getBidderId()).ifPresent(user -> {
+                        dataStorage.addBidTransaction(new BidTransaction(
+                                0, LocalDateTime.now(), auction.getId(), user.getId(), nextBid, true));
+                        auction.setCurrentPrice(nextBid);
+                        auction.setHighestBidderId(user.getId());
+                        dataStorage.updateAuction(auction);
+                        log.info("Auto-bid: bidderId={}, amount={}", config.getBidderId(), nextBid);
+                    });
+                });
+    }
+
+    // ── Admin ──────────────────────────────────────────────────────────────────
+
+    public void processApproval(Item item, boolean isApproved, String reason) {
+        try {
+            if (isApproved) {
+                dataStorage.approveItem(item);
+                Auction auction = new Auction(
+                        item.getId(),
+                        Integer.parseInt(item.getSellerId()),
+                        item.getStartingPrice(),
+                        LocalDateTime.now(),
+                        LocalDateTime.now().plusHours(24));
+                dataStorage.addAuction(auction);
+                notifyAllUsers("Sản phẩm mới [" + item.getName() + "] đã lên sàn!");
+                log.info("Duyệt item: name={}", item.getName());
+            } else {
+                dataStorage.rejectItem(item);
+                notify(item.getSellerId(), "Sản phẩm '" + item.getName()
+                        + "' bị từ chối. Lý do: " + reason);
+                log.info("Từ chối item: name={}, reason={}", item.getName(), reason);
+            }
+        } catch (Exception e) {
+            log.error("Lỗi processApproval: name={}, error={}", item.getName(), e.getMessage(), e);
+        }
+    }
+
+    public void updateAuctionTime(int itemId, LocalDateTime start, LocalDateTime end) {
+        dataStorage.getAllAuctions().stream()
+                .filter(a -> a.getItemId() == itemId)
+                .findFirst()
+                .ifPresentOrElse(auction -> {
+                    auction.setStartTime(start);
+                    auction.setEndTime(end);
+                    dataStorage.updateAuction(auction);
+                    dataStorage.findItemById(itemId).ifPresent(item ->
+                            notifyAllUsers("Cập nhật giờ: [" + item.getName() + "] "
+                                    + start + " → " + end));
+                    log.info("Cập nhật thời gian: itemId={}, start={}, end={}", itemId, start, end);
+                }, () -> log.warn("Không tìm thấy phiên cho itemId={}", itemId));
+    }
+
+    // ── Seller ────────────────────────────────────────────────────────────────
+
+    public void submitItemForApproval(String name, String description,
+                                      BigDecimal price, String sellerId,
+                                      ItemCategory category) {
+        Item item = new Item(name, description, price, sellerId, category) {
+            @Override
+            public void printInfo() {
+                System.out.println("[" + category + "] " + name + " | Giá KĐ: " + price);
+            }
+        };
+        dataStorage.addPendingItem(item);
+        log.info("Seller gửi sản phẩm: name={}, category={}, seller={}", name, category, sellerId);
+    }
+
+    // ── Thông báo ─────────────────────────────────────────────────────────────
 
     public void notifyAllUsers(String message) {
-        // Trong bài tập lớn, bạn có thể lưu message này vào một danh sách thông báo chung
-        dataStorage.addSystemLog(message);
-
-        // Nếu bạn có một View đang mở, hãy cập nhật TextArea của nó
-        System.out.println("[HỆ THỐNG]: " + message);
+        log.info("[BROADCAST] {}", message);
+        dataStorage.getAllUsers().forEach(u ->
+                System.out.println("📢 [" + u.getUsername() + "] " + message));
     }
 
-
-    public void sendToAdminForApproval(Product product) {
-
-        if (product == null) {
-            System.out.println("Lỗi: Sản phẩm không hợp lệ.");
-            return;
-        }
-
-        // Logic kiểm tra dữ liệu trước khi gửi
-        if (product.getPrice() <= 0) {
-            System.out.println("Lỗi: Giá khởi điểm phải lớn hơn 0.");
-            return;
-        }
-
-        // Đẩy sản phẩm vào kho dữ liệu chờ duyệt
-        dataStorage.addProduct(product);
-
-        System.out.println("Hệ thống: Sản phẩm '" + product.getName() + "' đã được gửi tới Admin.");
+    public void notify(String sellerId, String message) {
+        log.info("[NOTIFY → sellerId={}] {}", sellerId, message);
+        System.out.println("📩 [Seller " + sellerId + "] " + message);
     }
-
-    public void processApproval(Product p, boolean approved, String note) {
-        if (approved) {
-            // Bê từ danh sách chờ sang danh sách chính thức
-            dataStorage.getPendingProducts().remove(p);
-            dataStorage.getAllProducts().add(p);
-            p.setActive(true);
-
-            notifyAllUsers("Sản phẩm mới '" + p.getName() + "' đã được Admin duyệt lên sàn!");
-        } else {
-            // Xóa khỏi danh sách chờ và báo lỗi cho Seller
-            dataStorage.getPendingProducts().remove(p);
-            // Giả sử bạn có hàm gửi thông báo riêng cho User
-            notify(p.getOwner(), "Sản phẩm bị từ chối. Lý do: " + note);
-        }
-    }
-    public void updateAuctionTime(int productId, LocalDateTime start, LocalDateTime end) {
-        Product p = dataStorage.getProductById(productId);
-        if (p != null) {
-            p.setStartTime(start);
-            p.setEndTime(end);
-
-            // Thông báo cho mọi người biết lịch trình đã thay đổi
-            notifyAllUsers("Cập nhật lịch đấu giá sản phẩm " + p.getName() +
-                    ": Bắt đầu lúc " + start + ", kết thúc lúc " + end);
-        }
-    }
-
-
 }

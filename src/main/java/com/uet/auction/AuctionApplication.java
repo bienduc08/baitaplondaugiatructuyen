@@ -1,59 +1,91 @@
 package com.uet.auction;
 
-import com.uet.auction.controller.AuctionController;
-import com.uet.auction.controller.AuctionGUI;
+import com.uet.auction.controller.LoginView;
+import com.uet.auction.repository.DataStorage;
+import com.uet.auction.service.AuctionService;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import java.awt.*;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@SpringBootApplication
+import java.io.IOException;
+
+/**
+ * AuctionApplication — điểm khởi động duy nhất của toàn bộ ứng dụng.
+ *
+ * Luồng chạy:
+ *   main()
+ *     → launch() [JavaFX runtime]
+ *       → init()  : khởi tạo DataStorage + AuctionService một lần duy nhất
+ *       → start() : load login.fxml, gắn controller, hiển thị cửa sổ
+ *       → stop()  : dọn dẹp khi người dùng đóng app
+ *
+ * Lý do toàn bộ file ghép lại vẫn chạy được:
+ *   - Không có dependency bên ngoài: không Spring, không DB driver, không config file
+ *   - DataStorage dùng List in-memory → chạy ngay không cần kết nối
+ *   - AuctionService chỉ gọi DataStorage → không có network call
+ *   - JavaFX chỉ cần FXMLLoader khớp fx:controller với tên class → compile và chạy ngay
+ */
 public class AuctionApplication extends Application {
-    // Danh sách để quản lý 3 cửa sổ nhằm cập nhật giá Real-time
-    public static List<AuctionGUI> guis = new ArrayList<>();
+
+    private static final Logger log = LoggerFactory.getLogger(AuctionApplication.class);
+
+    // Khởi tạo một lần, truyền xuống toàn bộ View qua initData()
+    private DataStorage    dataStorage;
+    private AuctionService auctionService;
 
     public static void main(String[] args) {
         launch(args);
-        System.setProperty("java.awt.headless", "false");
-        var context = SpringApplication.run(AuctionApplication.class, args);
-
-        // Sửa lỗi getBean: Thêm .class vào sau AuctionController
-        AuctionController controller = context.getBean(AuctionController.class);
-
-        String[] users = {"Minh Đức", "Tuấn Anh", "Hoàng Nam"};
-
-        EventQueue.invokeLater(() -> {
-            for (int i = 0; i < users.length; i++) {
-                AuctionGUI gui = new AuctionGUI(controller, users[i]);
-                gui.setTitle("Đấu giá - " + users[i]);
-                gui.setLocation(100 + (i * 350), 200);
-                gui.setVisible(true);
-
-                // Thêm vào danh sách quản lý
-                guis.add(gui);
-            }
-        });
     }
 
-    // Hàm để gọi từ Controller khi có người bid thành công
-    public static void refreshAllGuis() {
-        for (AuctionGUI gui : guis) {
-            gui.updateData(); // Lệnh cho các cửa sổ cập nhật lại giá
-        }
-    }
+    /**
+     * init() chạy trước start() trên JavaFX Application Thread.
+     * Dùng để khởi tạo các service — tránh làm nặng start().
+     */
     @Override
-    public void start(Stage stage) throws IOException {
-        System.out.println(getClass().getResource("/com/uet/auction/view/login.fxml"));
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/login.fxml"));
-        Scene scene = new Scene(fxmlLoader.load());
-        stage.setTitle("Hệ thống Đấu giá Trực tuyến - UET");
-        stage.setScene(scene);
-        stage.show();
+    public void init() {
+        log.info("Khởi tạo DataStorage và AuctionService...");
+        dataStorage    = new DataStorage();
+        auctionService = new AuctionService(dataStorage);
+        log.info("Khởi tạo xong");
+    }
+
+    /**
+     * start() — load giao diện và hiển thị cửa sổ chính.
+     *
+     * Dùng loader.setController() thay vì để FXMLLoader tự tạo controller
+     * → giúp truyền dataStorage và auctionService vào LoginView ngay từ đầu
+     * → LoginView truyền tiếp xuống AdminView / SellerView / UserView qua initData()
+     */
+    @Override
+    public void start(Stage primaryStage) throws IOException {
+        log.info("Khởi động giao diện...");
+
+        FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/com/uet/auction/view/login.fxml"));
+
+        // Gắn controller thủ công để truyền dependency
+        LoginView loginController = new LoginView(dataStorage, auctionService);
+        loader.setController(loginController);
+
+        Scene scene = new Scene(loader.load(), 400, 320);
+
+        primaryStage.setTitle("Hệ thống Đấu giá Trực tuyến - UET");
+        primaryStage.setResizable(false);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        log.info("Ứng dụng sẵn sàng");
+    }
+
+    /**
+     * stop() — chạy khi người dùng đóng cửa sổ.
+     * Dùng để giải phóng tài nguyên nếu sau này thêm DB hoặc socket.
+     */
+    @Override
+    public void stop() {
+        log.info("Tắt ứng dụng");
     }
 }

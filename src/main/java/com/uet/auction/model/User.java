@@ -1,38 +1,111 @@
 package com.uet.auction.model;
-//Người dùng
-public class User {
-    public Role getRole() {
-        return role;
-    }
 
-    public void addNotification(String message) {
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-    }
-
-    public enum Role {
-        ADMIN, SELLER, USER
-    }
-    private int id ;
+public class User extends Entity {
     private String username;
-    private Role role;
-    private String password;
-    double balance;
-    public User(int id, String username,Role role, String password, double balance) {
-        this.id = id;
-        this.username = username;
-        this.role = role;
-        this.password = password;
-        this.balance = balance;
-    }
-    public User( String username,Role role) {
-        this.username = username;
-        this.role = role;
+    private String passwordHash;
+    private String email;
+    private BigDecimal balance;
+    private UserRole role;
+    private boolean active;
+    private String salt;
+    private String description;
+    private String location;
 
+    public enum UserStatus { IDLE, BIDDING, SELLING }
+    private UserStatus status = UserStatus.IDLE;
+
+    public User() {
+        super();
+        this.active = true;
+        this.balance = BigDecimal.ZERO;
+        this.role = UserRole.USER;
+        this.description = "";
+        this.location = "";
     }
-    public double getBalance() {
-        return balance;
+
+    public User(String username, String passwordHash, String email) {
+        super();
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.email = email;
+        this.balance = BigDecimal.ZERO;
+        this.active = true;
+        this.description = "";
+        this.location = "";
     }
-    public String getUsername() {
-        return username;
+
+    public User(int id, String username, String passwordHash, String email,
+                BigDecimal balance, UserRole role, boolean active, LocalDateTime createdAt,
+                String salt, String description, String location) {
+        super(id, createdAt);
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.email = email;
+        this.balance = balance;
+        this.role = role;
+        this.active = active;
+        this.salt = salt;
+        this.description = description;
+        this.location = location;
+    }
+
+    public boolean canBid()          { return this.role == UserRole.BIDDER; }
+    public boolean canSell()         { return this.role == UserRole.SELLER; }
+    public boolean canManageSystem() { return this.role == UserRole.ADMIN; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
+
+    public UserRole getRole() { return role; }
+    public void setRole(UserRole role) { this.role = role; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+
+    public UserStatus getStatus() { return status; }
+    public void setStatus(UserStatus status) {
+        if (status == UserStatus.SELLING && this.role != UserRole.SELLER)
+            throw new IllegalStateException("Chỉ SELLER mới có thể ở trạng thái SELLING");
+        if (status == UserStatus.BIDDING && this.role != UserRole.BIDDER)
+            throw new IllegalStateException("Chỉ BIDDER mới có thể ở trạng thái BIDDING");
+        this.status = status;
+    }
+
+    public void deposit(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0!");
+        this.balance = this.balance.add(amount);
+    }
+
+    public void withdraw(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Số tiền rút phải lớn hơn 0!");
+        if (this.balance.compareTo(amount) < 0)
+            throw new IllegalStateException("Số dư không đủ! (Hiện có: " + this.balance + ")");
+        this.balance = this.balance.subtract(amount);
+    }
+
+    @Override
+    public void printInfo() {
+        System.out.println("User: " + username + " | Role: " + role
+                + " | Balance: " + balance + " | Status: " + status);
     }
 }

@@ -1,76 +1,110 @@
 package com.uet.auction.controller;
 
-import com.uet.auction.repository.DataStorage;
-import com.uet.auction.model.Product;
+import com.uet.auction.model.Auction;
 import com.uet.auction.model.User;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+import com.uet.auction.repository.DataStorage;
+import javafx.collections.FXCollections;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.management.openmbean.CompositeData;
+import java.math.BigDecimal;
+import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.ResourceBundle;
 
-import static javafx.scene.control.Alert.*;
+public class UserView implements Initializable {
 
-public class UserView {
-    private User user;
-    private Product product;
-    private Stage stage;
-    private Scene scene;
-    private DataStorage dataStorage;
+    private static final Logger log = LoggerFactory.getLogger(UserView.class);
 
-    public UserView(User user, Product product) {
-        this.user = user;
-        this.product = product;
-        this.stage = new Stage();
-        //Giao diện
-        VBox layout = new VBox(10);
-        layout.getChildren().add(new Label("Chào Người mua: " + user.getUsername()));
+    @FXML private Button            btnBid;
+    @FXML private Button            btnRefresh;
+    @FXML private ListView<Auction> listAuctions;
+    @FXML private TextField         txtBidAmount;
+    @FXML private Label             lblWelcome;
+    @FXML private Label             lblStatus;
 
-        Scene scene = new Scene(layout, 400, 300);
-        stage.setScene(scene);
-        stage.setTitle("Giao diện Đấu giá - User");
+    private User              user;
+    private AuctionController auctionController;
+    private DataStorage       dataStorage;
 
-
-        Button btnBid = new Button("Đặt giá");
-        layout.getChildren().add(btnBid);
-        // Trong UserView.java
-        btnBid.setOnAction(e -> {
-            if (this.user.getRole() == User.Role.USER) {
-                handleBidLogic();
-                // Thực hiện đặt giá
-            } else {
-                Alert alert = new Alert(AlertType.ERROR, "Bạn không có quyền");
-                alert.showAndWait();
-            }
-        });
+    public void initData(User user, AuctionController auctionController, DataStorage dataStorage) {
+        this.user              = user;
+        this.auctionController = auctionController;
+        this.dataStorage       = dataStorage;
+        lblWelcome.setText("Chào " + user.getUsername()
+                + " | Số dư: " + user.getBalance() + " đ");
+        processRequest("USER_REFRESH");
+        log.info("UserView initData: user={}", user.getUsername());
     }
 
-    public void handleBidLogic() {
-        LocalDateTime now = LocalDateTime.now();
-        if (product != null && now.isAfter(product.getEndTime())) {
-            System.out.println("Phiên đấu giá đã kết thúc!");
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        log.info("UserView khởi tạo");
+    }
+
+    private void processRequest(String action) {
+        try {
+            switch (action) {
+                case "USER_BID"     -> handleBid();
+                case "USER_REFRESH" -> handleRefresh();
+                default             -> log.warn("Action User không hợp lệ: {}", action);
+            }
+        } catch (Exception e) {
+            log.error("Lỗi xử lý action User [{}]: {}", action, e.getMessage(), e);
+            lblStatus.setText("Lỗi: " + e.getMessage());
+        }
+    }
+
+    private void handleBid() {
+        if (!user.canBid()) {
+            new Alert(Alert.AlertType.ERROR, "Tài khoản chưa được cấp quyền đấu giá!").showAndWait();
             return;
         }
-    }// Gọi service để đặt giá ở đây
+        Auction selected = listAuctions.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            new Alert(Alert.AlertType.WARNING, "Vui lòng chọn phiên đấu giá!").showAndWait();
+            return;
+        }
+        if (selected.getEndTime() != null && LocalDateTime.now().isAfter(selected.getEndTime())) {
+            new Alert(Alert.AlertType.WARNING, "Phiên đấu giá đã kết thúc!").showAndWait();
+            return;
+        }
+        BigDecimal amount;
+        try {
+            amount = new BigDecimal(txtBidAmount.getText().trim());
+        } catch (NumberFormatException e) {
+            new Alert(Alert.AlertType.ERROR, "Số tiền không hợp lệ!").showAndWait();
+            return;
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            new Alert(Alert.AlertType.WARNING, "Số tiền phải lớn hơn 0!").showAndWait();
+            return;
+        }
+        log.info("Đặt giá: user={}, auctionId={}, amount={}",
+                user.getUsername(), selected.getId(), amount);
 
-    public void show() {
-        if (stage != null) {
-            stage.show();
+        BidRequest request = new BidRequest(user, selected.getId(), amount);
+        boolean result = (boolean) auctionController.processRequest("BID_PLACE", request);
+
+        if (result) {
+            lblStatus.setText("Đặt giá thành công: " + amount + " đ");
+            txtBidAmount.clear();
+            log.info("Đặt giá thành công: user={}, amount={}", user.getUsername(), amount);
+        } else {
+            lblStatus.setText("Đặt giá thất bại — giá quá thấp hoặc không đủ số dư.");
+            log.warn("Đặt giá thất bại: user={}, amount={}", user.getUsername(), amount);
         }
     }
 
-    public void refreshData() {
-        List<Product> latestProducts = dataStorage.getAll();
-
-        // 2. Vẽ lại cái bảng (Table) hoặc danh sách trên màn hình
-        // Nếu dùng JavaFX: myTable.setItems(FXCollections.observableArrayList(latestProducts));
-
-        System.out.println("Đã cập nhật dữ liệu mới nhất từ Admin/Seller!");
+    private void handleRefresh() {
+        listAuctions.setItems(FXCollections.observableArrayList(
+                dataStorage.getActiveAuctions()));
+        log.info("Làm mới danh sách: user={}", user != null ? user.getUsername() : "chưa init");
     }
+
+    @FXML public void onBidButtonClick()     { processRequest("USER_BID"); }
+    @FXML public void onRefreshButtonClick() { processRequest("USER_REFRESH"); }
 }
