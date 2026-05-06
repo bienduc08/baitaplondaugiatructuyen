@@ -66,6 +66,12 @@ public class AdminController {
 
     // Hàm nhận phản hồi từ Server (Được gọi bởi ResponseListener)
     public void handleAdminResponse(String type, boolean success, String message) {
+<<<<<<< HEAD
+
+=======
+        Platform.runLater(() -> {
+            if (success) {
+>>>>>>> 12345
 
                 AlertHelper.showInfo("Thành công: " + message);
                 // Xóa trắng các ô nhập liệu sau khi thêm xong
