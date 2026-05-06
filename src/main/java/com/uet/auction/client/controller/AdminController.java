@@ -66,8 +66,7 @@ public class AdminController {
 
     // Hàm nhận phản hồi từ Server (Được gọi bởi ResponseListener)
     public void handleAdminResponse(String type, boolean success, String message) {
-        Platform.runLater(() -> {
-            if (success) {
+
                 AlertHelper.showInfo("Thành công: " + message);
                 // Xóa trắng các ô nhập liệu sau khi thêm xong
                 productNameField.clear();
@@ -109,6 +108,3 @@ public class AdminController {
 //    Nếu là AdminController.instance thì lấy list PENDING và vẽ ra màn hình.
 //    Nếu là UserController.instance thì lấy list OPEN và vẽ ra màn hình.
 }
-
-// biện ăn cứt
-// alooo
