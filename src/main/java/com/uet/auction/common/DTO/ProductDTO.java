@@ -9,5 +9,8 @@ public class ProductDTO implements java.io.Serializable {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String status;     // PENDING, APPROVED, OPEN, CLOSED
+    public ProductDTO() {
+        int
+    }
 
 }
