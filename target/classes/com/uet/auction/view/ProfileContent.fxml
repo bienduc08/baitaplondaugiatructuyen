@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="20.0" prefHeight="400.0" prefWidth="600.0"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.uet.auction.client.controller.ProfileController">
+    <padding>
+        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+    </padding>
+    <children>
+        <Label text="THÔNG TIN TÀI KHOẢN">
+            <font><Font name="System Bold" size="20.0" /></font>
+        </Label>
+        <Separator />
+        <HBox spacing="15.0" alignment="CENTER_LEFT">
+            <children>
+                <Label text="Tên đăng nhập:" style="-fx-font-weight: bold;" />
+                <Label fx:id="usernameLabel" text="—" />
+            </children>
+        </HBox>
+        <HBox spacing="15.0" alignment="CENTER_LEFT">
+            <children>
+                <Label text="Vai trò:" style="-fx-font-weight: bold;" />
+                <Label fx:id="roleLabel" text="—" />
+            </children>
+        </HBox>
+    </children>
+</VBox>
