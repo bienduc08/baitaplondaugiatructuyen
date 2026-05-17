@@ -50,6 +50,40 @@ public class ProductDAO {
         return list;
     }
 
+    public List<ProductDTO> getProductsBySeller(String sellerName) {
+        List<ProductDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM products WHERE seller_name = ? ORDER BY id DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, sellerName);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                ProductDTO p = new ProductDTO();
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setStartingPrice(rs.getDouble("starting_price"));
+
+                double cp = rs.getDouble("current_price");
+                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
+                p.setDescription(safeGetString(rs, "description"));
+                p.setSellerName(safeGetString(rs, "seller_name"));
+                p.setOwnerName(safeGetString(rs, "owner_name"));
+                p.setStatus(rs.getString("status"));
+
+                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
+                try { if (rs.getTimestamp("end_time") != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime()); } catch (Exception ignored) {}
+
+                list.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO.getProductsBySeller] " + e.getMessage());
+        }
+        return list;
+    }
+
     /**
      * INSERT dùng đúng tên cột "name" (không phải product_name)
      * current_price = starting_price ngay từ đầu

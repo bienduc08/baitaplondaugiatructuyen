@@ -23,8 +23,7 @@ public class AuctionService {
     }
 
     public AuctionResponse getProductsBySeller(String sellerName) {
-        List<ProductDTO> list = productDAO.getProductsByStatus("ALL");
-        list.removeIf(p -> !sellerName.equals(p.getSellerName()));
+        List<ProductDTO> list = productDAO.getProductsBySeller(sellerName);
         return new AuctionResponse(true, "GET_MY_PRODUCTS_RESULT", list);
     }
 
