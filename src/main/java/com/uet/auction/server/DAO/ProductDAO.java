@@ -106,6 +106,23 @@ public class ProductDAO {
             System.err.println("[openScheduledAuctions] " + e.getMessage());
         }
     }
+    public void extendAuctionIfLastBid() {
+        // Nếu phiên sắp hết trong 30 giây VÀ có bid trong 30 giây vừa rồi → gia hạn thêm 60 giây
+        String sql = "UPDATE products SET end_time = DATE_ADD(end_time, INTERVAL 60 SECOND) " +
+                "WHERE status = 'OPEN' " +
+                "AND end_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 SECOND) " +
+                "AND id IN (" +
+                "  SELECT product_id FROM bids " +
+                "  WHERE bid_time >= DATE_SUB(NOW(), INTERVAL 30 SECOND)" +
+                ")";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            int n = pstmt.executeUpdate();
+            if (n > 0) System.out.println(">>> Gia hạn tự động " + n + " phiên (anti-sniping).");
+        } catch (SQLException e) {
+            System.err.println("[extendAuctionIfLastBid] " + e.getMessage());
+        }
+    }
 
     public void closeExpiredAuctions() {
         String sql = "UPDATE products SET status = 'CLOSED' WHERE status = 'OPEN' AND end_time <= NOW()";

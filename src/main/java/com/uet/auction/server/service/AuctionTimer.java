@@ -16,12 +16,13 @@ public class AuctionTimer {
     public void startChecking() {
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                boolean changed = false;
 
                 // 1. Mở các phiên APPROVED đã đến giờ start_time → OPEN
                 // openScheduledAuctions() trả về void nên ta dùng flag
                 productDAO.openScheduledAuctions();
 
+                // Anti-sniping: gia hạn nếu có bid trong 30 giây cuối
+                productDAO.extendAuctionIfLastBid();
                 // 2. Đóng các phiên OPEN đã hết giờ end_time → CLOSED
                 productDAO.closeExpiredAuctions();
 

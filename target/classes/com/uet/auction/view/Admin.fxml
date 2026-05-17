@@ -1,112 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.text.Font?>
 
-<VBox prefHeight="680.0" prefWidth="900.0" spacing="0"
-      style="-fx-background-color: #f5f6fa;"
-      xmlns="http://javafx.com/javafx/17"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.uet.auction.client.controller.AdminController">
+<BorderPane fx:id="mainBorderPane" stylesheets="@../style/style.css"
+            prefHeight="750.0" prefWidth="1100.0"
+            xmlns="http://javafx.com/javafx/17.0.12"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.uet.auction.client.controller.AdminController">
 
-    <!-- HEADER -->
-    <HBox alignment="CENTER_LEFT" prefHeight="55.0" spacing="10.0"
-          style="-fx-background-color: #2c3e50; -fx-padding: 0 20 0 20;">
-        <children>
-            <Label text="⚙ HỆ THỐNG QUẢN TRỊ ĐẤU GIÁ" textFill="white">
-                <font><Font name="System Bold" size="18.0"/></font>
-            </Label>
+    <top>
+        <HBox styleClass="top-header" alignment="CENTER_LEFT" spacing="15">
+            <Label text="ĐẤU GIÁ TRỰC TUYẾN UET" styleClass="header-logo"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <!-- THÊM: label hiển thị username admin -->
-            <Label fx:id="lblAdminName" text="" textFill="#dcdde1">
-                <font><Font size="13.0"/></font>
-            </Label>
-            <Button mnemonicParsing="false" onAction="#onRefreshButtonClick"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;"
-                    text="🔄 Làm mới"/>
-            <Button mnemonicParsing="false" onAction="#onLogoutButtonClick"
-                    style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;"
-                    text="Đăng xuất"/>
-        </children>
-    </HBox>
+            <Label fx:id="lblAdminName" text="Hệ thống Admin" styleClass="greeting-text"/>
+            <Button text="🔄 Làm mới" styleClass="btn-refresh" onAction="#onRefreshButtonClick"/>
+            <Button text="Đăng xuất"   styleClass="btn-logout"  onAction="#onLogoutButtonClick"/>
+        </HBox>
+    </top>
 
-    <!-- THỐNG KÊ NHANH -->
-    <HBox spacing="15.0" style="-fx-padding: 15 20 5 20;">
-        <children>
-            <VBox alignment="CENTER" prefHeight="65.0" prefWidth="150.0"
-                  style="-fx-background-color: white; -fx-background-radius: 10;
-                         -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 5, 0, 0, 2);">
-                <children>
-                    <Label text="Chờ duyệt" textFill="#e67e22"/>
-                    <Label fx:id="lblCountPending" text="0" textFill="#e67e22">
-                        <font><Font name="System Bold" size="22.0"/></font>
-                    </Label>
-                </children>
+    <left>
+        <VBox styleClass="sidebar" prefWidth="220.0">
+            <VBox styleClass="role-balance-box" spacing="5">
+                <HBox spacing="5">
+                    <Label text="Vai trò:" styleClass="text-grey"/>
+                    <Label text="Admin" styleClass="role-text" style="-fx-text-fill: #e74c3c;"/>
+                </HBox>
+                <HBox spacing="5">
+                    <Label text="Số dư:" styleClass="text-grey"/>
+                    <Label text="Vô cực" styleClass="balance-text"/>
+                </HBox>
             </VBox>
-            <VBox alignment="CENTER" prefHeight="65.0" prefWidth="150.0"
-                  style="-fx-background-color: white; -fx-background-radius: 10;
-                         -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 5, 0, 0, 2);">
-                <children>
-                    <Label text="Đang đấu giá" textFill="#2980b9"/>
-                    <Label fx:id="lblCountOpen" text="0" textFill="#2980b9">
-                        <font><Font name="System Bold" size="22.0"/></font>
-                    </Label>
-                </children>
+            <VBox spacing="3" style="-fx-padding: 10 15;">
+                <HBox spacing="8">
+                    <Label text="⏳ Chờ duyệt:" styleClass="text-grey"/>
+                    <Label fx:id="lblCountPending" text="0" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
+                </HBox>
+                <HBox spacing="8">
+                    <Label text="🔥 Đang đấu:"   styleClass="text-grey"/>
+                    <Label fx:id="lblCountOpen"    text="0" style="-fx-font-weight: bold; -fx-text-fill: #2980b9;"/>
+                </HBox>
+                <HBox spacing="8">
+                    <Label text="🔒 Đã đóng:"    styleClass="text-grey"/>
+                    <Label fx:id="lblCountClosed"  text="0" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                </HBox>
             </VBox>
-            <VBox alignment="CENTER" prefHeight="65.0" prefWidth="150.0"
-                  style="-fx-background-color: white; -fx-background-radius: 10;
-                         -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 5, 0, 0, 2);">
-                <children>
-                    <Label text="Đã đóng" textFill="#7f8c8d"/>
-                    <Label fx:id="lblCountClosed" text="0" textFill="#7f8c8d">
-                        <font><Font name="System Bold" size="22.0"/></font>
-                    </Label>
-                </children>
-            </VBox>
-        </children>
-    </HBox>
+            <Button text="Trang chủ"         styleClass="menu-button"                   maxWidth="Infinity"
+                    onAction="#onRefreshButtonClick"/>
+            <Button text="Duyệt sản phẩm"   styleClass="menu-button, menu-button-active" maxWidth="Infinity"
+                    onAction="#onRefreshButtonClick"/>
+            <Button text="Quản lý người dùng" styleClass="menu-button"                  maxWidth="Infinity"/>
+            <Button text="Hồ sơ cá nhân"         styleClass="menu-button" maxWidth="Infinity"
+                    onAction="#onProfileButtonClick"/>
+        </VBox>
+    </left>
 
-    <!-- BẢNG SẢN PHẨM -->
-    <VBox VBox.vgrow="ALWAYS" spacing="10.0" style="-fx-padding: 5 20 20 20;">
-        <children>
-            <Label text="Danh sách sản phẩm chờ duyệt:" textFill="#2c3e50">
-                <font><Font name="System Bold" size="14.0"/></font>
-            </Label>
-
-            <TableView fx:id="pendingTable" VBox.vgrow="ALWAYS">
-                <columns>
-                    <TableColumn fx:id="idCol"     prefWidth="55.0"  text="ID"/>
-                    <TableColumn fx:id="nameCol"   prefWidth="240.0" text="Tên sản phẩm"/>
-                    <TableColumn fx:id="priceCol"  prefWidth="130.0" text="Giá khởi điểm"/>
-                    <TableColumn fx:id="sellerCol" prefWidth="150.0" text="Người bán"/>
-                    <TableColumn fx:id="statusCol" prefWidth="110.0" text="Trạng thái"/>
-                    <!-- THÊM: cột thời gian kết thúc -->
-                    <TableColumn fx:id="endTimeCol" prefWidth="150.0" text="Hạn kết thúc"/>
-                </columns>
-                <columnResizePolicy>
-                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                </columnResizePolicy>
-            </TableView>
-
-            <HBox alignment="CENTER_RIGHT" spacing="12.0">
-                <children>
-                    <Button fx:id="approveBtn" mnemonicParsing="false"
-                            onAction="#onApproveButtonClick"
-                            prefHeight="40.0" prefWidth="140.0"
-                            style="-fx-background-color: #2ecc71; -fx-text-fill: white;
-                                   -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"
-                            text="✔ Duyệt"/>
-                    <Button fx:id="rejectBtn" mnemonicParsing="false"
-                            onAction="#onRejectButtonClick"
-                            prefHeight="40.0" prefWidth="140.0"
-                            style="-fx-background-color: #e74c3c; -fx-text-fill: white;
-                                   -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"
-                            text="✘ Từ chối"/>
-                </children>
-            </HBox>
-        </children>
-    </VBox>
-
-</VBox>
+    <center>
+    </center>
+</BorderPane>
