@@ -154,4 +154,22 @@ public class ProductDAO {
     private String safeGetString(ResultSet rs, String col) {
         try { return rs.getString(col); } catch (Exception e) { return null; }
     }
+    public void extendAuctionIfLastBid() {
+        // Ví dụ một câu lệnh SQL để tự động gia hạn thêm 5 phút cho các sản phẩm
+        // đang ở trạng thái OPEN, có người vừa bid và thời gian còn lại dưới 30 giây.
+        String sql = "UPDATE products SET end_time = DATE_ADD(end_time, INTERVAL 5 MINUTE) " +
+                "WHERE status = 'OPEN' AND TIMESTAMPDIFF(SECOND, NOW(), end_time) BETWEEN 0 AND 30";
+
+        try (Connection conn = DatabaseConnection.getConnection(); // Sử dụng class kết nối DB của bạn
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("[Anti-Sniping] Đã kích hoạt gia hạn cho " + affectedRows + " sản phẩm.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi khi thực hiện anti-sniping: " + e.getMessage());
+        }
+    }
 }

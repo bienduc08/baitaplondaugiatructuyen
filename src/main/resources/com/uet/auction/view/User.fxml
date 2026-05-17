@@ -3,19 +3,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0"
-            stylesheets="@../style/style.css"
-            xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.uet.auction.client.controller.UserController">
+<BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.UserController">
 
     <top>
         <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-header">
             <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
             <Region HBox.hgrow="ALWAYS" />
             <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />
-            <Button styleClass="btn-refresh" text="🔄 Làm mới" onAction="#onRefreshButtonClick" />
-            <Button styleClass="btn-logout"  text="Đăng xuất"   onAction="#onLogoutButtonClick" />
+            <Button onAction="#onRefreshButtonClick" styleClass="btn-refresh" text="🔄 Làm mới" />
+            <Button onAction="#onLogoutButtonClick" styleClass="btn-logout" text="Đăng xuất" />
         </HBox>
     </top>
 
@@ -31,12 +27,9 @@
                     <Label fx:id="lblBalance" styleClass="balance-text" text="0 VNĐ" />
                 </HBox>
             </VBox>
-            <Button maxWidth="Infinity" styleClass="menu-button, menu-button-active" text="Trang chủ"
-                    onAction="#onShowHomeClick" />
-            <Button fx:id="btnJoinedAuctions" maxWidth="Infinity" styleClass="menu-button" text="Phiên đấu giá đã tham gia"
-                    onAction="#onShowUserAuctionsClick" />
-            <Button maxWidth="Infinity" styleClass="menu-button" text="Hồ sơ cá nhân"
-                    onAction="#onProfileButtonClick" />
+            <Button maxWidth="Infinity" onAction="#onShowHomeClick" styleClass="menu-button" text="Trang chủ" />
+            <Button maxWidth="Infinity" onAction="#onShowUserAuctionsClick" styleClass="menu-button" text="Phiên đấu giá đã tham gia" />
+            <Button maxWidth="Infinity" onAction="#onProfileButtonClick" styleClass="menu-button" text="Hồ sơ cá nhân" />
         </VBox>
     </left>
 

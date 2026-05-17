@@ -12,6 +12,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -20,7 +21,7 @@ import java.util.List;
 public class AdminController {
 
     public static AdminController instance;
-
+    @FXML private BorderPane mainBorderPane;
     @FXML private Label lblAdminName;
     @FXML private Label lblCountPending;
     @FXML private Label lblCountOpen;
@@ -134,5 +135,8 @@ public class AdminController {
             SessionManager.clearSession();
             SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
         } catch (IOException e) { e.printStackTrace(); }
+    }
+    public BorderPane getMainBorderPane() {
+        return this.mainBorderPane;
     }
 }
