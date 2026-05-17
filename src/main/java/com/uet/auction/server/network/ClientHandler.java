@@ -103,6 +103,12 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
+                    case "GET_MY_BIDS":
+                        String bidUsername = (String) request.getData();
+                        response = auctionService.getMyBids(bidUsername);
+                        sendResponse(response);
+                        break;
+
                     default:
                         sendResponse(new AuctionResponse(false, "ERROR",
                                 "Yêu cầu không hợp lệ: " + request.getType(), null));

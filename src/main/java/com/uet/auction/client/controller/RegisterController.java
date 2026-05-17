@@ -23,9 +23,8 @@ public class RegisterController {
     @FXML
     public void initialize() {
         instance = this;
-        // Điền các role hợp lệ vào ComboBox
         roleComboBox.getItems().addAll("USER", "SELLER");
-        roleComboBox.setValue("USER"); // Mặc định là USER
+        roleComboBox.setValue("USER");
     }
 
     @FXML
@@ -50,7 +49,6 @@ public class RegisterController {
 
         statusLabel.setText("Đang xử lý...");
 
-        // SỬA: Thực sự gửi request lên server
         Object[] regData = new Object[]{username, password, role};
         SocketClient.sendRequest(new AuctionRequest("REGISTER", regData));
     }

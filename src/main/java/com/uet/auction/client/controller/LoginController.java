@@ -23,7 +23,6 @@ import java.io.IOException;
 
 public class LoginController {
 
-    // Instance tĩnh để ResponseListener gọi lại
     public static LoginController instance;
 
     @FXML private TextField usernameField;
@@ -35,9 +34,6 @@ public class LoginController {
         instance = this;
     }
 
-    /**
-     * Xử lý khi nhấn nút Đăng nhập — GỬI request lên server
-     */
     @FXML
     private void handleLoginButton(ActionEvent event) {
         String username = usernameField.getText().trim();
@@ -50,30 +46,24 @@ public class LoginController {
 
         statusLabel.setText("Đang gửi yêu cầu đăng nhập...");
 
-        // SỬA: thực sự gửi request lên server thay vì chỉ System.out.println
         LoginRequest loginReq = new LoginRequest(username, password);
         SocketClient.sendRequest(new AuctionRequest("LOGIN", loginReq));
     }
 
-    /**
-     * Nhận phản hồi từ ResponseListener (gọi từ luồng mạng)
-     */
     public void handleLoginResponse(AuctionResponse res) {
         Platform.runLater(() -> {
             if (res.isSuccess()) {
                 try {
-                    // SỬA: lưu thông tin user vào session
                     UserDTO user = (UserDTO) res.getData();
                     SessionManager.setCurrentUser(user);
 
-                    // SỬA: phân quyền theo role thay vì load cứng MainView.fxml
                     String role = user.getRole();
                     if ("ADMIN".equals(role)) {
                         SceneManager.switchScene("/com/uet/auction/view/Admin.fxml", "Quản trị viên");
                     } else if ("SELLER".equals(role)) {
                         SceneManager.switchScene("/com/uet/auction/view/Seller.fxml", "Người bán");
                     } else {
-                        SceneManager.switchScene("/com/uet/auction/view/User.fxml", "Trang chủ");
+                        SceneManager.switchScene("/com/uet/auction/view/User.fxml", "Người mua");
                     }
 
                 } catch (IOException e) {
@@ -86,14 +76,11 @@ public class LoginController {
         });
     }
 
-    /**
-     * Chuyển sang màn hình Đăng ký
-     */
     @FXML
     private void handleRegisterButton(ActionEvent event) {
         try {
             Parent root = FXMLLoader.load(
-                    getClass().getResource("/com/uet/auction/view/RegisterView.fxml"));
+                    getClass().getResource("/com/uet/auction/view/Register.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.setTitle("Đăng ký tài khoản");

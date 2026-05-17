@@ -1,81 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
 
-<VBox prefHeight="600.0" prefWidth="750.0" spacing="0"
-      style="-fx-background-color: #f5f6fa;"
-      xmlns="http://javafx.com/javafx/17"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.uet.auction.client.controller.UserController">
+<BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0"
+            stylesheets="@../style/style.css"
+            xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.uet.auction.client.controller.UserController">
 
-    <!-- HEADER -->
-    <HBox alignment="CENTER_LEFT" prefHeight="55.0" spacing="10.0"
-          style="-fx-background-color: #2f3640; -fx-padding: 0 20 0 20;">
-        <children>
-            <Label text="🏆 ĐẤU GIÁ UET" textFill="white">
-                <font><Font name="System Bold" size="18.0"/></font>
-            </Label>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="welcomeLabel" text="Xin chào!" textFill="#dcdde1">
-                <font><Font size="13.0"/></font>
-            </Label>
-            <Button mnemonicParsing="false" onAction="#onRefreshButtonClick"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;"
-                    text="🔄 Làm mới"/>
-            <Button mnemonicParsing="false" onAction="#onLogoutButtonClick"
-                    style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-background-radius: 5; -fx-cursor: hand;"
-                    text="Đăng xuất"/>
-        </children>
-    </HBox>
-
-    <!-- THANH TÌM KIẾM -->
-    <VBox spacing="10.0" style="-fx-background-color: white; -fx-padding: 12 15 12 15;">
-        <HBox alignment="CENTER_LEFT" spacing="10.0">
-            <children>
-                <!-- SỬA: Ô tìm kiếm giờ filter real-time qua txtSearch.textProperty listener -->
-                <TextField fx:id="txtSearch" prefHeight="35.0" prefWidth="400.0"
-                           promptText="Tìm kiếm sản phẩm đấu giá..."
-                           style="-fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #dcdde1;"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label text="Số dư: " textFill="#27ae60">
-                    <font><Font name="System Bold" size="13.0"/></font>
-                </Label>
-                <Label fx:id="lblBalance" text="—" textFill="#27ae60">
-                    <font><Font size="13.0"/></font>
-                </Label>
-            </children>
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-header">
+            <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />
+            <Button styleClass="btn-refresh" text="🔄 Làm mới" onAction="#onRefreshButtonClick" />
+            <Button styleClass="btn-logout"  text="Đăng xuất"   onAction="#onLogoutButtonClick" />
         </HBox>
+    </top>
 
-        <!-- DANH MỤC — SỬA: thêm onAction để filter hoạt động -->
-        <HBox spacing="8.0">
-            <children>
-                <Button mnemonicParsing="false" onAction="#onFilterAll"
-                        style="-fx-background-color: #2f3640; -fx-text-fill: white; -fx-background-radius: 15; -fx-cursor: hand;"
-                        text="Tất cả"/>
-                <Button mnemonicParsing="false" onAction="#onFilterElectronics"
-                        style="-fx-background-color: white; -fx-border-color: #bdc3c7; -fx-border-radius: 15; -fx-background-radius: 15; -fx-cursor: hand;"
-                        text="Đồ điện tử"/>
-                <Button mnemonicParsing="false" onAction="#onFilterFashion"
-                        style="-fx-background-color: white; -fx-border-color: #bdc3c7; -fx-border-radius: 15; -fx-background-radius: 15; -fx-cursor: hand;"
-                        text="Thời trang"/>
-                <Button mnemonicParsing="false" onAction="#onFilterAntiques"
-                        style="-fx-background-color: white; -fx-border-color: #bdc3c7; -fx-border-radius: 15; -fx-background-radius: 15; -fx-cursor: hand;"
-                        text="Đồ cổ"/>
-            </children>
-        </HBox>
-    </VBox>
+    <left>
+        <VBox prefWidth="220.0" styleClass="sidebar">
+            <VBox spacing="5" styleClass="role-balance-box">
+                <HBox spacing="5">
+                    <Label styleClass="text-grey" text="Vai trò:" />
+                    <Label styleClass="role-text" text="Người dùng" />
+                </HBox>
+                <HBox spacing="5">
+                    <Label styleClass="text-grey" text="Số dư:" />
+                    <Label fx:id="lblBalance" styleClass="balance-text" text="0 VNĐ" />
+                </HBox>
+            </VBox>
+            <Button maxWidth="Infinity" styleClass="menu-button, menu-button-active" text="Trang chủ" onAction="#onShowHomeClick" />
+            <Button fx:id="btnJoinedAuctions" maxWidth="Infinity" styleClass="menu-button" text="Phiên đấu giá đã tham gia" onAction="#onShowJoinedAuctionsClick" />
+            <Button maxWidth="Infinity" styleClass="menu-button" text="Hồ sơ cá nhân" onAction="#onProfileButtonClick" />
+        </VBox>
+    </left>
 
-    <!-- DANH SÁCH SẢN PHẨM -->
-    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
-        <content>
-            <FlowPane fx:id="productContainer" hgap="20.0" prefWrapLength="700.0" vgap="20.0">
-                <padding>
-                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-                </padding>
-            </FlowPane>
-        </content>
-    </ScrollPane>
-</VBox>
+    <center>
+    </center>
+
+</BorderPane>

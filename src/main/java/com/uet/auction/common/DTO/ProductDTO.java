@@ -21,6 +21,8 @@ public class ProductDTO implements Serializable {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String status;
+    private String category;
+    private String imageUrl;
     // PENDING, OPEN, CLOSED, REJECTED
 
     // Constructor không tham số (Bắt buộc phải có để các thư viện như Jackson/Serialization hoạt động)
@@ -70,6 +72,12 @@ public class ProductDTO implements Serializable {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     @Override
     public String toString() {

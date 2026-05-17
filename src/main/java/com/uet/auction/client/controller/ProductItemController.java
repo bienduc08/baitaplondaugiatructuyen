@@ -10,6 +10,7 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -19,7 +20,6 @@ import javafx.util.Duration;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 public class ProductItemController {
@@ -35,7 +35,7 @@ public class ProductItemController {
     private ProductDTO currentProduct;
     private Timeline countdown;
 
-    public void setData(ProductDTO product) {
+    public void setProductData(ProductDTO product) {
         this.currentProduct = product;
 
         nameLabel.setText(product.getName());
@@ -50,9 +50,8 @@ public class ProductItemController {
 
         String owner = (product.getOwnerName() != null && !product.getOwnerName().isBlank())
                 ? product.getOwnerName() : "Chưa có ai";
-        ownerLabel.setText("Đang giữ đỉnh: " + owner);
+        if (ownerLabel != null) ownerLabel.setText("Đang giữ đỉnh: " + owner);
 
-        // Khởi động đếm ngược nếu có end_time
         if (product.getEndTime() != null) {
             startCountdown(product.getEndTime());
         } else {
@@ -60,12 +59,7 @@ public class ProductItemController {
         }
     }
 
-    /**
-     * Đếm ngược thời gian còn lại — cập nhật mỗi giây.
-     * Thay thế việc chỉ hiển thị ngày tĩnh.
-     */
     private void startCountdown(LocalDateTime endTime) {
-        // Hủy countdown cũ nếu có (tránh leak khi card được dùng lại)
         if (countdown != null) countdown.stop();
 
         countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
@@ -89,7 +83,6 @@ public class ProductItemController {
                 text = String.format("⏱ Còn %02d:%02d:%02d", hours, minutes, secs);
             }
             timeLabel.setText(text);
-            // Tô đỏ khi còn dưới 1 tiếng
             timeLabel.setStyle(totalSeconds < 3600
                     ? "-fx-text-fill: #e74c3c; -fx-font-weight: bold;"
                     : "-fx-text-fill: #27ae60;");
@@ -99,47 +92,48 @@ public class ProductItemController {
     }
 
     @FXML
-    public void onBidButtonClick() {
-        String text = bidInput.getText().trim();
-        if (text.isEmpty()) {
-            AlertHelper.showError("Vui lòng nhập số tiền muốn đặt!");
-            return;
-        }
-
-        // SỬA: xóa dấu phẩy/chấm phân cách ngàn trước khi parse
-        // Người dùng có thể nhập "22,000,000" hoặc "22.000.000"
-        String cleanText = text.replace(",", "");
-
+    public void onProductCardClick() {
+        if (currentProduct == null) return;
         try {
-            double bidAmount = Double.parseDouble(cleanText);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProductDetailContent.fxml"));
+            Node detailNode = loader.load();
 
-            if (bidAmount <= 0) {
-                AlertHelper.showError("Số tiền phải lớn hơn 0!");
-                return;
+            ProductDetailController ctrl = loader.getController();
+            ctrl.setProductData(currentProduct, java.util.Collections.emptyList());
+            ctrl.updateStatus(
+                    currentProduct.getSellerName() != null ? currentProduct.getSellerName() : "—",
+                    currentProduct.getOwnerName()
+            );
+
+            javafx.scene.layout.BorderPane activeMainPane = null;
+
+            if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
+                activeMainPane = UserController.instance.getMainBorderPane();
+            } else if (SellerController.instance != null && SellerController.instance.getMainBorderPane() != null) {
+                activeMainPane = SellerController.instance.getMainBorderPane();
+            } else if (AdminController.instance != null && AdminController.instance.getMainBorderPane() != null) {
+                activeMainPane = AdminController.instance.getMainBorderPane();
             }
 
-            double currentPrice = currentProduct.getCurrentPrice();
-            if (bidAmount <= currentPrice) {
-                AlertHelper.showError(String.format(
-                        "Giá đặt phải LỚN HƠN giá hiện tại!\nGiá hiện tại: %,.0f VNĐ\nBạn nhập: %,.0f VNĐ",
-                        currentPrice, bidAmount));
-                return;
+            if (activeMainPane != null) {
+                Node previousCenterView = activeMainPane.getCenter();
+
+                javafx.scene.layout.BorderPane finalActiveMainPane = activeMainPane;
+                ProductDetailController.onBackAction = () -> {
+                    finalActiveMainPane.setCenter(previousCenterView);
+                };
+
+                activeMainPane.setCenter(detailNode);
+            } else {
+                Stage stage = new Stage();
+                stage.setTitle("Chi tiết — " + currentProduct.getName());
+                stage.setScene(new Scene((Parent) detailNode));
+                stage.show();
             }
 
-            String currentUser = SessionManager.getCurrentUsername();
-            if (currentUser == null) {
-                AlertHelper.showError("Bạn cần đăng nhập để đặt giá!");
-                return;
-            }
-
-            // Disable nút để tránh double-click gửi 2 lần
-            javafx.scene.Node source = bidInput.getParent();
-            Object[] bidData = new Object[]{currentProduct.getId(), currentUser, bidAmount};
-            SocketClient.sendRequest(new AuctionRequest("PLACE_BID", bidData));
-            bidInput.clear();
-
-        } catch (NumberFormatException e) {
-            AlertHelper.showError("Số tiền không hợp lệ!\nVui lòng chỉ nhập số (VD: 25000000)");
+        } catch (Exception e) {
+            e.printStackTrace();
+            AlertHelper.showError("Không thể mở chi tiết sản phẩm!");
         }
     }
 
@@ -160,6 +154,61 @@ public class ProductItemController {
         } catch (IOException e) {
             e.printStackTrace();
             AlertHelper.showError("Không thể mở lịch sử đấu giá!");
+        }
+    }
+
+    @FXML
+    public void onBidButtonClick() {
+        String text = bidInput.getText().trim();
+        if (text.isEmpty()) {
+            AlertHelper.showError("Vui lòng nhập số tiền muốn đặt!");
+            return;
+        }
+
+        String cleanText = text.replace(",", "");
+        try {
+            double bidAmount = Double.parseDouble(cleanText);
+
+            if (bidAmount <= 0) {
+                AlertHelper.showError("Số tiền phải lớn hơn 0!");
+                return;
+            }
+
+            String role = SessionManager.getCurrentUser().getRole();
+            if ("SELLER".equals(role)) {
+                AlertHelper.showError("Người bán không được phép tham gia đấu giá!");
+                return;
+            }
+
+            String currentUser = SessionManager.getCurrentUsername();
+            String currentOwner = currentProduct.getOwnerName();
+            if (currentUser != null && currentUser.equals(currentOwner)) {
+                AlertHelper.showError("Bạn đang giữ mức giá cao nhất!\nKhông thể đặt thêm cho đến khi bị vượt qua.");
+                return;
+            }
+
+            double currentPrice = currentProduct.getCurrentPrice();
+            if (bidAmount <= currentPrice) {
+                AlertHelper.showError(String.format(
+                        "Giá đặt phải LỚN HƠN giá hiện tại!\nGiá hiện tại: %,.0f VNĐ\nBạn nhập: %,.0f VNĐ",
+                        currentPrice, bidAmount));
+                return;
+            }
+
+            double balance = SessionManager.getCurrentUser().getBalance();
+            if (balance <= bidAmount) {
+                AlertHelper.showError(String.format(
+                        "Số dư không đủ!\nSố dư hiện tại: %,.0f VNĐ\nGiá bạn muốn đặt: %,.0f VNĐ",
+                        balance, bidAmount));
+                return;
+            }
+
+            Object[] bidData = new Object[]{currentProduct.getId(), currentUser, bidAmount};
+            SocketClient.sendRequest(new AuctionRequest("PLACE_BID", bidData));
+            bidInput.clear();
+
+        } catch (NumberFormatException e) {
+            AlertHelper.showError("Số tiền không hợp lệ!\nVui lòng chỉ nhập số (VD: 25000000)");
         }
     }
 }
