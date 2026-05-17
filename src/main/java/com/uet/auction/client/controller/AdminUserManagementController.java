@@ -17,7 +17,7 @@ import java.util.List;
  * Controller cho AdminUserManagement.fxml
  * Cho phép Admin xem danh sách thành viên, tìm kiếm và thay đổi trạng thái (Khóa/Mở khóa).
  */
-public class AdminUserController {
+public class AdminUserManagementController {
 
     @FXML private TextField txtSearchUser;
     @FXML private TableView<UserDTO> tbvUsers;
@@ -26,7 +26,7 @@ public class AdminUserController {
     @FXML private TableColumn<UserDTO, String> colRole;
     @FXML private TableColumn<UserDTO, Double> colBalance;
     @FXML private TableColumn<UserDTO, String> colStatus;
-    @FXML public static AdminUserController instance;
+    @FXML public static AdminUserManagementController instance;
     private final ObservableList<UserDTO> userList = FXCollections.observableArrayList();
 
     @FXML
