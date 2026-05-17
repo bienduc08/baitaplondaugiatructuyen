@@ -108,7 +108,6 @@ public class ProductDAO {
             pstmt.setTimestamp(7, Timestamp.valueOf(endTime));
 
             boolean ok = pstmt.executeUpdate() > 0;
-            if (ok) System.out.println("[ProductDAO] Đã thêm sản phẩm: " + name);
             return ok;
 
         } catch (SQLException e) {
@@ -135,7 +134,7 @@ public class ProductDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             int n = pstmt.executeUpdate();
-            if (n > 0) System.out.println(">>> Đã mở tự động " + n + " phiên.");
+
         } catch (SQLException e) {
             System.err.println("[openScheduledAuctions] " + e.getMessage());
         }
@@ -152,7 +151,7 @@ public class ProductDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             int n = pstmt.executeUpdate();
-            if (n > 0) System.out.println(">>> Gia hạn tự động " + n + " phiên (anti-sniping).");
+
         } catch (SQLException e) {
             System.err.println("[extendAuctionIfLastBid] " + e.getMessage());
         }
@@ -163,7 +162,7 @@ public class ProductDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             int n = pstmt.executeUpdate();
-            if (n > 0) System.out.println(">>> Đã đóng tự động " + n + " phiên.");
+
         } catch (SQLException e) {
             System.err.println("[closeExpiredAuctions] " + e.getMessage());
         }
