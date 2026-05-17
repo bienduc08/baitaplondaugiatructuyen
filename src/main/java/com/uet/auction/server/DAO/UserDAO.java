@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO {
 
@@ -24,6 +26,7 @@ public class UserDAO {
     }
 
     public UserDTO checkLogin(String username, String password) {
+        // Tùy chọn lấy thêm cột status nếu bạn cần kiểm tra tài khoản bị khóa lúc đăng nhập
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -42,6 +45,9 @@ public class UserDAO {
                 } catch (SQLException e) {
                     user.setBalance(0.0);
                 }
+                // Nếu UserDTO có thuộc tính status, có thể set ở đây:
+                // try { user.setStatus(rs.getString("status")); } catch (Exception ignored) {}
+
                 return user;
             }
         } catch (SQLException e) {
@@ -50,7 +56,6 @@ public class UserDAO {
         return null;
     }
 
-    // THÊM: lấy số dư của user theo username
     public double getBalance(String username) {
         String sql = "SELECT balance FROM users WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -64,7 +69,6 @@ public class UserDAO {
         return 0.0;
     }
 
-    // THÊM: lấy role của user theo username
     public String getRole(String username) {
         String sql = "SELECT role FROM users WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -80,7 +84,8 @@ public class UserDAO {
 
     public boolean registerUser(String username, String password, String role) {
         String checkSql  = "SELECT id FROM users WHERE username = ?";
-        String insertSql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+        // Mặc định đăng ký xong thì status là ACTIVE
+        String insertSql = "INSERT INTO users (username, password, role, status) VALUES (?, ?, ?, 'ACTIVE')";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement checkStmt  = conn.prepareStatement(checkSql);
              PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
@@ -95,6 +100,102 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("Lỗi đăng ký tài khoản: " + e.getMessage());
+            // Fallback: Nếu CSDL chưa có cột status thì dùng lệnh INSERT cũ
+            return fallbackRegisterUser(username, password, role);
+        }
+    }
+
+    // Hàm dự phòng khi bảng chưa có cột status
+    private boolean fallbackRegisterUser(String username, String password, String role) {
+        String insertSql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+            insertStmt.setString(1, username);
+            insertStmt.setString(2, hashPassword(password));
+            insertStmt.setString(3, role);
+            return insertStmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi đăng ký (fallback): " + e.getMessage());
+            return false;
+        }
+    }
+
+    // =========================================================
+    // 3 HÀM QUẢN LÝ NGƯỜI DÙNG CHO ADMIN
+    // =========================================================
+
+    public List<UserDTO> getAllUsers() {
+        List<UserDTO> users = new ArrayList<>();
+        String sql = "SELECT id, username, role, balance, status FROM users";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                UserDTO user = new UserDTO();
+                user.setId(rs.getInt("id"));
+                user.setUsername(rs.getString("username"));
+                user.setRole(rs.getString("role"));
+                user.setBalance(rs.getDouble("balance"));
+
+                try {
+                    user.setStatus(rs.getString("status"));
+                } catch (SQLException e) {
+                    // Nếu cột status chưa được tạo trong CSDL, mặc định để là ACTIVE
+                    user.setStatus("ACTIVE");
+                }
+
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi lấy danh sách người dùng: " + e.getMessage());
+            return null;
+        }
+        return users;
+    }
+
+    public List<UserDTO> searchUser(String keyword) {
+        List<UserDTO> users = new ArrayList<>();
+        String sql = "SELECT id, username, role, balance, status FROM users WHERE username LIKE ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, "%" + keyword + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    UserDTO user = new UserDTO();
+                    user.setId(rs.getInt("id"));
+                    user.setUsername(rs.getString("username"));
+                    user.setRole(rs.getString("role"));
+                    user.setBalance(rs.getDouble("balance"));
+
+                    try {
+                        user.setStatus(rs.getString("status"));
+                    } catch (SQLException e) {
+                        user.setStatus("ACTIVE");
+                    }
+
+                    users.add(user);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi tìm kiếm người dùng: " + e.getMessage());
+            return null;
+        }
+        return users;
+    }
+
+    public boolean changeUserStatus(int userId, String newStatus) {
+        String sql = "UPDATE users SET status = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, newStatus);
+            pstmt.setInt(2, userId);
+            return pstmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Lỗi cập nhật trạng thái: " + e.getMessage());
             return false;
         }
     }

@@ -40,8 +40,8 @@ public class UserController {
         loadView("/com/uet/auction/view/HomeContent.fxml");
     }
 
-    @FXML public void onShowJoinedAuctionsClick() {
-        loadView("/com/uet/auction/view/JoinedAuctionsContent.fxml");
+    @FXML public void onShowUserAuctionsClick() {
+        loadView("/com/uet/auction/view/UserAuctions.fxml");
     }
 
     @FXML public void onProfileButtonClick() {

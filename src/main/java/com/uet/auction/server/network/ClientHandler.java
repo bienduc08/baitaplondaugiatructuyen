@@ -50,6 +50,11 @@ public class ClientHandler implements Runnable {
                         ProductDTO product = (ProductDTO) request.getData();
                         response = auctionService.addProduct(product);
                         sendResponse(response);
+
+                        // ĐÃ SỬA: Nếu thêm thành công, phát tín hiệu cho tất cả các máy (bao gồm Admin) tự cập nhật bảng
+                        if (response.isSuccess()) {
+                            SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
+                        }
                         break;
 
                     case "GET_PENDING_PRODUCTS":
@@ -62,7 +67,6 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
-                    // THÊM: Admin load tất cả sản phẩm (trừ CLOSED)
                     case "GET_ALL_PRODUCTS":
                         response = auctionService.getProductsByStatus("ALL");
                         sendResponse(response);
@@ -74,12 +78,32 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
+                    // ==========================================
+                    // ĐÃ KHÔI PHỤC: CÁC CASE DUYỆT BÀI CỦA ADMIN
+                    // ==========================================
+                    case "APPROVE_PRODUCT":
+                        ProductDTO pApprove = (ProductDTO) request.getData();
+                        response = auctionService.changeProductStatus(pApprove.getId(), "OPEN");
+                        sendResponse(response);
+                        if (response.isSuccess()) {
+                            SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
+                        }
+                        break;
+
+                    case "REJECT_PRODUCT":
+                        ProductDTO pReject = (ProductDTO) request.getData();
+                        response = auctionService.changeProductStatus(pReject.getId(), "REJECTED");
+                        sendResponse(response);
+                        if (response.isSuccess()) {
+                            SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
+                        }
+                        break;
+
                     case "CHANGE_PRODUCT_STATUS":
                         Object[] statusData = (Object[]) request.getData();
                         response = auctionService.changeProductStatus(
                                 (int) statusData[0], (String) statusData[1]);
                         sendResponse(response);
-                        // Broadcast để tất cả client biết trạng thái thay đổi
                         if (response.isSuccess()) {
                             SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
                         }
@@ -87,9 +111,9 @@ public class ClientHandler implements Runnable {
 
                     case "PLACE_BID":
                         Object[] bidData = (Object[]) request.getData();
-                        int productId2 = ((Number) bidData[0]).intValue();      // dùng Number thay vì (int)
+                        int productId2 = ((Number) bidData[0]).intValue();
                         String bidder  = (String) bidData[1];
-                        double amount  = ((Number) bidData[2]).doubleValue();   // dùng Number thay vì (double)
+                        double amount  = ((Number) bidData[2]).doubleValue();
                         response = auctionService.placeBid(productId2, bidder, amount);
                         sendResponse(response);
                         if (response.isSuccess()) {

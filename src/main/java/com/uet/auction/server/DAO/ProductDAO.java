@@ -50,6 +50,9 @@ public class ProductDAO {
         return list;
     }
 
+    // =========================================================
+    // HÀM MỚI BỔ SUNG: Lấy danh sách sản phẩm theo người bán
+    // =========================================================
     public List<ProductDTO> getProductsBySeller(String sellerName) {
         List<ProductDTO> list = new ArrayList<>();
         String sql = "SELECT * FROM products WHERE seller_name = ? ORDER BY id DESC";
@@ -74,7 +77,7 @@ public class ProductDAO {
                 p.setStatus(rs.getString("status"));
 
                 try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
-                try { if (rs.getTimestamp("end_time") != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime()); } catch (Exception ignored) {}
+                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
 
                 list.add(p);
             }
@@ -84,10 +87,6 @@ public class ProductDAO {
         return list;
     }
 
-    /**
-     * INSERT dùng đúng tên cột "name" (không phải product_name)
-     * current_price = starting_price ngay từ đầu
-     */
     public boolean addProduct(String name, double startingPrice, String sellerName,
                               LocalDateTime startTime, LocalDateTime endTime, String description) {
 
@@ -108,6 +107,7 @@ public class ProductDAO {
             pstmt.setTimestamp(7, Timestamp.valueOf(endTime));
 
             boolean ok = pstmt.executeUpdate() > 0;
+            if (ok) System.out.println("[ProductDAO] Đã thêm sản phẩm: " + name);
             return ok;
 
         } catch (SQLException e) {
@@ -133,27 +133,10 @@ public class ProductDAO {
         String sql = "UPDATE products SET status = 'OPEN' WHERE status = 'APPROVED' AND start_time <= NOW()";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.executeUpdate();
-
+            int n = pstmt.executeUpdate();
+            if (n > 0) System.out.println(">>> Đã mở tự động " + n + " phiên.");
         } catch (SQLException e) {
             System.err.println("[openScheduledAuctions] " + e.getMessage());
-        }
-    }
-    public void extendAuctionIfLastBid() {
-        // Nếu phiên sắp hết trong 30 giây VÀ có bid trong 30 giây vừa rồi → gia hạn thêm 60 giây
-        String sql = "UPDATE products SET end_time = DATE_ADD(end_time, INTERVAL 60 SECOND) " +
-                "WHERE status = 'OPEN' " +
-                "AND end_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 SECOND) " +
-                "AND id IN (" +
-                "  SELECT product_id FROM bids " +
-                "  WHERE bid_time >= DATE_SUB(NOW(), INTERVAL 30 SECOND)" +
-                ")";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.executeUpdate();
-
-        } catch (SQLException e) {
-            System.err.println("[extendAuctionIfLastBid] " + e.getMessage());
         }
     }
 
@@ -161,8 +144,8 @@ public class ProductDAO {
         String sql = "UPDATE products SET status = 'CLOSED' WHERE status = 'OPEN' AND end_time <= NOW()";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.executeUpdate();
-
+            int n = pstmt.executeUpdate();
+            if (n > 0) System.out.println(">>> Đã đóng tự động " + n + " phiên.");
         } catch (SQLException e) {
             System.err.println("[closeExpiredAuctions] " + e.getMessage());
         }

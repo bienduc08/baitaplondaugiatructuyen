@@ -1,56 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane fx:id="mainBorderPane" stylesheets="@../style/style.css"
-            prefHeight="750.0" prefWidth="1100.0"
-            xmlns="http://javafx.com/javafx/17.0.12"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.uet.auction.client.controller.AdminController">
+<BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.AdminController">
 
     <top>
-        <HBox styleClass="top-header" alignment="CENTER_LEFT" spacing="15">
-            <Label text="ĐẤU GIÁ TRỰC TUYẾN UET" styleClass="header-logo"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="lblAdminName" text="Hệ thống Admin" styleClass="greeting-text"/>
-            <Button text="🔄 Làm mới" styleClass="btn-refresh" onAction="#onRefreshButtonClick"/>
-            <Button text="Đăng xuất"   styleClass="btn-logout"  onAction="#onLogoutButtonClick"/>
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-header">
+            <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />
+            <Button onAction="#onRefreshButtonClick" styleClass="btn-refresh" text="🔄 Làm mới" />
+            <Button onAction="#onLogoutButtonClick" styleClass="btn-logout" text="Đăng xuất" />
         </HBox>
     </top>
 
     <left>
-        <VBox styleClass="sidebar" prefWidth="220.0">
-            <VBox styleClass="role-balance-box" spacing="5">
+        <VBox prefWidth="220.0" styleClass="sidebar">
+            <VBox spacing="5" styleClass="role-balance-box">
                 <HBox spacing="5">
-                    <Label text="Vai trò:" styleClass="text-grey"/>
-                    <Label text="Admin" styleClass="role-text" style="-fx-text-fill: #e74c3c;"/>
+                    <Label styleClass="text-grey" text="Vai trò:" />
+                    <Label style="-fx-text-fill: #e74c3c;" styleClass="role-text" text="Admin" />
                 </HBox>
                 <HBox spacing="5">
-                    <Label text="Số dư:" styleClass="text-grey"/>
-                    <Label text="Vô cực" styleClass="balance-text"/>
+                    <Label styleClass="text-grey" text="Số dư:" />
+                    <Label fx:id="lblBalance" styleClass="balance-text" text="0 VNĐ" />
                 </HBox>
             </VBox>
             <VBox spacing="3" style="-fx-padding: 10 15;">
                 <HBox spacing="8">
-                    <Label text="⏳ Chờ duyệt:" styleClass="text-grey"/>
-                    <Label fx:id="lblCountPending" text="0" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
+                    <Label styleClass="text-grey" text="⏳ Chờ duyệt:" />
+                    <Label fx:id="lblCountPending" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" text="0" />
                 </HBox>
                 <HBox spacing="8">
-                    <Label text="🔥 Đang đấu:"   styleClass="text-grey"/>
-                    <Label fx:id="lblCountOpen"    text="0" style="-fx-font-weight: bold; -fx-text-fill: #2980b9;"/>
+                    <Label styleClass="text-grey" text="🔥 Đang đấu:" />
+                    <Label fx:id="lblCountOpen" style="-fx-font-weight: bold; -fx-text-fill: #2980b9;" text="0" />
                 </HBox>
                 <HBox spacing="8">
-                    <Label text="🔒 Đã đóng:"    styleClass="text-grey"/>
-                    <Label fx:id="lblCountClosed"  text="0" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                    <Label styleClass="text-grey" text="🔒 Đã đóng:" />
+                    <Label fx:id="lblCountClosed" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;" text="0" />
                 </HBox>
             </VBox>
-            <Button text="Trang chủ"         styleClass="menu-button"                   maxWidth="Infinity"
-                    onAction="#onRefreshButtonClick"/>
-            <Button text="Duyệt sản phẩm"   styleClass="menu-button, menu-button-active" maxWidth="Infinity"
-                    onAction="#onRefreshButtonClick"/>
-            <Button text="Quản lý người dùng" styleClass="menu-button"                  maxWidth="Infinity"/>
-            <Button text="Hồ sơ cá nhân"         styleClass="menu-button" maxWidth="Infinity"
-                    onAction="#onProfileButtonClick"/>
+            <Button maxWidth="Infinity" onAction="#onShowHomeClick" styleClass="menu-button" text="Trang chủ" />
+            <Button maxWidth="Infinity" onAction="#onPendingButtonClick" styleClass="menu-button" text="Duyệt sản phẩm" />
+            <Button maxWidth="Infinity" onAction="#onUserManageButtonClick" styleClass="menu-button" text="Quản lý người dùng" />
+            <Button maxWidth="Infinity" onAction="#onProfileButtonClick" styleClass="menu-button" text="Hồ sơ cá nhân" />
         </VBox>
     </left>
 

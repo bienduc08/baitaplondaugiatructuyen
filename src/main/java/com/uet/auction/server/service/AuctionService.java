@@ -18,13 +18,32 @@ public class AuctionService {
 
     public AuctionResponse getProductsByStatus(String status) {
         List<ProductDTO> list = productDAO.getProductsByStatus(status);
-        String resultType = "ALL".equals(status) ? "GET_ALL_PRODUCTS_RESULT" : "GET_PRODUCTS_RESULT";
+
+        // =========================================================
+        // LOG KIỂM TRA SERVER: Biết ngay Database có trả ra sản phẩm nào không
+        // =========================================================
+        System.out.println("[Server LOG] Thực hiện lấy sản phẩm trạng thái [" + status + "]. Tìm thấy: "
+                + (list != null ? list.size() : 0) + " sản phẩm trong CSDL.");
+
+        String resultType;
+        if ("ALL".equals(status)) {
+            resultType = "GET_ALL_PRODUCTS_RESULT";
+        } else if ("PENDING".equals(status)) {
+            resultType = "GET_PENDING_PRODUCTS_RESULT";
+        } else {
+            resultType = "GET_PRODUCTS_RESULT";
+        }
+
         return new AuctionResponse(true, resultType, list);
     }
 
     public AuctionResponse getProductsBySeller(String sellerName) {
-        List<ProductDTO> list = productDAO.getProductsBySeller(sellerName);
-        return new AuctionResponse(true, "GET_MY_PRODUCTS_RESULT", list);
+        List<ProductDTO> products = productDAO.getProductsBySeller(sellerName);
+        if (products != null) {
+            return new AuctionResponse(true, "GET_MY_PRODUCTS_RESULT", products);
+        } else {
+            return new AuctionResponse(false, "GET_MY_PRODUCTS_RESULT", "Không thể lấy danh sách sản phẩm!", null);
+        }
     }
 
     public AuctionResponse changeProductStatus(int productId, String newStatus) {
@@ -47,43 +66,33 @@ public class AuctionService {
             if (ok) return new AuctionResponse(true, "ADD_PRODUCT_RESULT",
                     "Gửi yêu cầu đăng bán thành công! Chờ Admin duyệt.", null);
         } catch (Exception e) {
-            System.err.println("Lỗi khi đăng sản phẩm: " + e.getMessage());
+            System.err.println("[AuctionService.addProduct] " + e.getMessage());
         }
         return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Lỗi server khi đăng sản phẩm.", null);
     }
 
     public AuctionResponse placeBid(int productId, String bidderName, double bidAmount) {
-
-        // Kiểm tra role người bán
         try {
             String role = userDAO.getRole(bidderName);
             if ("SELLER".equals(role)) {
-                return new AuctionResponse(false, "BID_RESULT",
-                        "Người bán không được phép tham gia đấu giá!", null);
+                return new AuctionResponse(false, "BID_RESULT", "Người bán không được phép tham gia đấu giá!", null);
             }
         } catch (Exception e) {
-            // Bỏ qua lỗi role, mặc định cho phép bid
+            System.err.println("[AuctionService] " + e.getMessage());
         }
 
-        // Kiểm tra số dư — FIX: chỉ báo lỗi nếu balance > 0 VÀ không đủ
-        // Nếu cột balance chưa có hoặc = 0 → bỏ qua kiểm tra này
         try {
             double balance = userDAO.getBalance(bidderName);
             if (balance > 0 && balance < bidAmount) {
                 return new AuctionResponse(false, "BID_RESULT",
-                        String.format("Số dư không đủ! Số dư: %,.0f VNĐ | Giá đặt: %,.0f VNĐ",
-                                balance, bidAmount), null);
+                        String.format("Số dư không đủ! Số dư: %,.0f VNĐ", balance), null);
             }
-        } catch (Exception e) {
-            // Không block bid nếu không đọc được balance
-        }
+        } catch (Exception e) {}
 
-        // BidDAO kiểm tra đang giữ đỉnh + giá hợp lệ + ghi lịch sử
         boolean ok = bidDAO.placeBid(productId, bidderName, bidAmount);
         return ok
                 ? new AuctionResponse(true,  "BID_RESULT", "Đặt giá thành công!", null)
-                : new AuctionResponse(false, "BID_RESULT",
-                "Đặt giá thất bại! Giá không hợp lệ, bạn đang giữ đỉnh, hoặc phiên đã đóng.", null);
+                : new AuctionResponse(false, "BID_RESULT", "Đặt giá thất bại!", null);
     }
 
     public AuctionResponse getBidHistory(int productId) {
@@ -91,8 +100,7 @@ public class AuctionService {
             List<BidDTO> list = bidDAO.getBidsByProductId(productId);
             return new AuctionResponse(true, "GET_BID_HISTORY_RESULT", list);
         } catch (Exception e) {
-            return new AuctionResponse(false, "GET_BID_HISTORY_RESULT",
-                    "Lỗi khi tải lịch sử: " + e.getMessage(), null);
+            return new AuctionResponse(false, "GET_BID_HISTORY_RESULT", "Lỗi: " + e.getMessage(), null);
         }
     }
 
@@ -101,9 +109,7 @@ public class AuctionService {
             List<BidDTO> list = bidDAO.getBidsByUsername(username);
             return new AuctionResponse(true, "GET_MY_BIDS_RESULT", list);
         } catch (Exception e) {
-            return new AuctionResponse(false, "GET_MY_BIDS_RESULT",
-                    "Lỗi khi tải lịch sử: " + e.getMessage(), null);
+            return new AuctionResponse(false, "GET_MY_BIDS_RESULT", "Lỗi: " + e.getMessage(), null);
         }
     }
-
 }

@@ -9,7 +9,8 @@ public class UserDTO implements Serializable {
     private String username;
     private String role;
     private String message;
-    private double balance; // THÊM
+    private double balance;
+    private String status; // ĐÃ KHÔI PHỤC: Biến trạng thái để Admin khóa/mở khóa tài khoản
 
     public UserDTO() {}
 
@@ -31,12 +32,16 @@ public class UserDTO implements Serializable {
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
 
-    // THÊM getter/setter balance
     public double getBalance() { return balance; }
     public void setBalance(double balance) { this.balance = balance; }
 
+    // ĐÃ KHÔI PHỤC: Getter và Setter cho status
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
     @Override
     public String toString() {
-        return "UserDTO{id=" + id + ", username='" + username + "', role='" + role + "', balance=" + balance + "}";
+        return "UserDTO{id=" + id + ", username='" + username + "', role='" + role +
+                "', balance=" + balance + ", status='" + status + "'}";
     }
 }

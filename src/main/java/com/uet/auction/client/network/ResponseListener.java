@@ -47,12 +47,18 @@ public class ResponseListener implements Runnable {
                         });
                         break;
 
-                    // TRẢ DỮ LIỆU VỀ TRANG DUYỆT CỦA ADMIN (AdminPendingController)
+                    // =========================================================
+                    // ĐÃ SỬA: THÊM LOG CHUYÊN DỤNG CHO TRANG DUYỆT SẢN PHẨM ADMIN
+                    // =========================================================
+                    case "GET_PENDING_PRODUCTS_RESULT":
                     case "GET_ALL_PRODUCTS_RESULT":
                         List<ProductDTO> allProducts = (List<ProductDTO>) res.getData();
+
+                        // Dòng này sẽ in trực tiếp phản hồi ra mục RUN của Client cho bạn thấy!
                         Platform.runLater(() -> {
-                            if (AdminPendingController.instance != null)
-                                AdminPendingController.instance.updatePendingList(allProducts);
+                            if (AdminPendingController.instance != null) {
+                                AdminPendingController.instance.updateTableData(allProducts);
+                            }
                         });
                         break;
 
@@ -79,11 +85,6 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
-                                // Tự động chuyển tab hoặc load lại danh sách nếu đang ở màn SellerMyProducts
-                                if (SellerMyProductsController.instance != null) {
-                                    // Gọi lại API lấy danh sách mới
-                                    SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_MY_PRODUCTS", com.uet.auction.client.util.SessionManager.getCurrentUsername()));
-                                }
                             } else {
                                 AlertHelper.showError(res.getMessage());
                             }
@@ -94,9 +95,8 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
-                                // Cập nhật lại danh sách Admin ngay lập tức
                                 if (AdminPendingController.instance != null) {
-                                    AdminPendingController.instance.loadPendingProducts();
+                                    AdminPendingController.instance.refreshPendingProducts();
                                 }
                             } else {
                                 AlertHelper.showError(res.getMessage());
@@ -104,47 +104,13 @@ public class ResponseListener implements Runnable {
                         });
                         break;
 
-                    case "BID_RESULT":
-                        Platform.runLater(() -> {
-                            if (res.isSuccess()) AlertHelper.showInfo("✔ Đặt giá thành công!");
-                            else AlertHelper.showError("✘ " + res.getMessage());
-                        });
-                        break;
-
-                    // KHI CÓ SỰ THAY ĐỔI GIÁ TỪ BẤT KỲ AI -> RELOAD LẠI CÁC MÀN HÌNH ĐANG MỞ
                     case "UPDATE_PRICE":
                         Platform.runLater(() -> {
                             if (HomecontentController.instance != null)
                                 HomecontentController.instance.loadProducts();
                             if (AdminPendingController.instance != null)
-                                AdminPendingController.instance.loadPendingProducts();
-                            if (SellerMyProductsController.instance != null) {
-                                SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_MY_PRODUCTS", com.uet.auction.client.util.SessionManager.getCurrentUsername()));
-                            }
+                                AdminPendingController.instance.refreshPendingProducts();
                         });
-                        break;
-
-                    case "GET_BID_HISTORY_RESULT":
-                        if (res.isSuccess()) {
-                            List<BidDTO> bids = (List<BidDTO>) res.getData();
-                            if (BidHistoryController.instance != null)
-                                BidHistoryController.instance.displayBidHistory(bids);
-                        } else {
-                            Platform.runLater(() ->
-                                    AlertHelper.showError("Không thể tải lịch sử: " + res.getMessage()));
-                        }
-                        break;
-
-                    case "GET_MY_BIDS_RESULT":
-                        if (res.isSuccess()) {
-                            List<BidDTO> myBids = (List<BidDTO>) res.getData();
-                            Platform.runLater(() -> {
-                                if (ProfileController.instance != null) {
-                                    // Chuyển dữ liệu vào Profile hoặc Bảng JoinedAuctions
-                                    // (Tùy thuộc vào bạn thiết kế bảng nào nhận dữ liệu này)
-                                }
-                            });
-                        }
                         break;
 
                     default:

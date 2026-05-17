@@ -1,43 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane fx:id="mainBorderPane" stylesheets="@../style/style.css"
-            prefHeight="750.0" prefWidth="1100.0"
-            xmlns="http://javafx.com/javafx/17.0.12"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.uet.auction.client.controller.SellerController">
+<BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.SellerController">
 
     <top>
-        <HBox styleClass="top-header" alignment="CENTER_LEFT" spacing="15">
-            <Label text="ĐẤU GIÁ TRỰC TUYẾN UET" styleClass="header-logo"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label text="Xin chào, minhduc08!" styleClass="greeting-text"/>
-            <Button text="🔄 Làm mới" styleClass="btn-refresh" onAction="#loadMyProducts"/>
-            <Button text="Đăng xuất"  styleClass="btn-logout"   onAction="#onLogoutButtonClick"/>
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-header">
+            <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />
+            <Button onAction="#onRefreshButtonClick" styleClass="btn-refresh" text="🔄 Làm mới" />
+            <Button onAction="#onLogoutButtonClick" styleClass="btn-logout" text="Đăng xuất" />
         </HBox>
     </top>
 
     <left>
-        <VBox styleClass="sidebar" prefWidth="220.0">
-            <VBox styleClass="role-balance-box" spacing="5">
+        <VBox prefWidth="220.0" styleClass="sidebar">
+            <VBox spacing="5" styleClass="role-balance-box">
                 <HBox spacing="5">
-                    <Label text="Vai trò:" styleClass="text-grey"/>
-                    <Label text="Người bán" styleClass="role-text"/>
+                    <Label styleClass="text-grey" text="Vai trò:" />
+                    <Label styleClass="role-text" text="Người bán" />
                 </HBox>
                 <HBox spacing="5">
-                    <Label text="Số dư:" styleClass="text-grey"/>
-                    <Label text="1,500,000 VNĐ" styleClass="balance-text"/>
+                    <Label styleClass="text-grey" text="Số dư:" />
+                    <Label fx:id="lblBalance" styleClass="balance-text" text="0 VNĐ" />
                 </HBox>
             </VBox>
-            <Button text="Trang chủ"             styleClass="menu-button" maxWidth="Infinity"
-                    onAction="#onShowHomeClick"/>
-            <Button text="Tạo phiên đấu giá"     styleClass="menu-button" maxWidth="Infinity"
-                    onAction="#onShowAddFormClick"/>
-            <Button text="Phiên đấu giá của tôi" styleClass="menu-button, menu-button-active" maxWidth="Infinity"
-                    onAction="#onShowMyProductsClick"/>
-            <Button text="Hồ sơ cá nhân"         styleClass="menu-button" maxWidth="Infinity"
-                    onAction="#onProfileButtonClick"/>
+            <Button maxWidth="Infinity" onAction="#onShowHomeClick" styleClass="menu-button" text="Trang chủ" />
+            <Button maxWidth="Infinity" onAction="#onShowAddProductClick" styleClass="menu-button" text="Tạo phiên đấu giá" />
+            <Button maxWidth="Infinity" onAction="#onShowMyProductsClick" styleClass="menu-button" text="Phiên đấu giá của tôi" />
+            <Button maxWidth="Infinity" onAction="#onProfileButtonClick" styleClass="menu-button" text="Hồ sơ cá nhân" />
         </VBox>
     </left>
 

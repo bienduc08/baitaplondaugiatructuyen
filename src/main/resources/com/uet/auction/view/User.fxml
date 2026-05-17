@@ -31,9 +31,12 @@
                     <Label fx:id="lblBalance" styleClass="balance-text" text="0 VNĐ" />
                 </HBox>
             </VBox>
-            <Button maxWidth="Infinity" styleClass="menu-button, menu-button-active" text="Trang chủ" onAction="#onShowHomeClick" />
-            <Button fx:id="btnJoinedAuctions" maxWidth="Infinity" styleClass="menu-button" text="Phiên đấu giá đã tham gia" onAction="#onShowJoinedAuctionsClick" />
-            <Button maxWidth="Infinity" styleClass="menu-button" text="Hồ sơ cá nhân" onAction="#onProfileButtonClick" />
+            <Button maxWidth="Infinity" styleClass="menu-button, menu-button-active" text="Trang chủ"
+                    onAction="#onShowHomeClick" />
+            <Button fx:id="btnJoinedAuctions" maxWidth="Infinity" styleClass="menu-button" text="Phiên đấu giá đã tham gia"
+                    onAction="#onShowUserAuctionsClick" />
+            <Button maxWidth="Infinity" styleClass="menu-button" text="Hồ sơ cá nhân"
+                    onAction="#onProfileButtonClick" />
         </VBox>
     </left>
 

@@ -9,8 +9,8 @@ import java.util.List;
 
 public class BidDAO {
 
-    public boolean placeBid(int productId, String username, double bidAmount) {
-        String checkSql = "SELECT current_price, owner_name FROM products WHERE id = ? AND status = 'OPEN' FOR UPDATE";
+    public synchronized boolean placeBid(int productId, String username, double bidAmount) {
+        String checkSql  = "SELECT current_price, owner_name FROM products WHERE id = ? AND status = 'OPEN'";
         String updateSql = "UPDATE products SET current_price = ?, owner_name = ? WHERE id = ?";
         String insertSql = "INSERT INTO bids (product_id, bidder_name, amount, bid_time, status) "
                 + "VALUES (?, ?, ?, NOW(), 'Hợp lệ')";
@@ -25,6 +25,7 @@ public class BidDAO {
                 ResultSet rs = pstmt.executeQuery();
 
                 if (!rs.next()) {
+                    System.err.println("[BidDAO] Sản phẩm id=" + productId + " không tồn tại hoặc không OPEN");
                     conn.rollback();
                     return false;
                 }
@@ -36,15 +37,20 @@ public class BidDAO {
 
                 // KIỂM TRA: đang giữ đỉnh thì không được đặt tiếp
                 if (username.equals(currentOwner)) {
+                    System.err.println("[BidDAO] " + username + " đang giữ đỉnh, không thể đặt thêm");
                     conn.rollback();
                     return false;
                 }
 
                 // KIỂM TRA: giá đặt phải lớn hơn giá hiện tại
                 if (bidAmount <= currentPrice) {
+                    System.err.println("[BidDAO] Giá đặt " + bidAmount + " <= giá hiện tại " + currentPrice);
                     conn.rollback();
                     return false;
                 }
+
+                System.out.println("[BidDAO] currentPrice=" + currentPrice
+                        + " | owner=" + currentOwner + " | bidAmount=" + bidAmount);
             }
 
             // Cập nhật giá mới
@@ -64,6 +70,7 @@ public class BidDAO {
             }
 
             conn.commit();
+            System.out.println("[BidDAO] Đặt giá thành công: " + username + " - " + bidAmount);
             return true;
 
         } catch (SQLException e) {
