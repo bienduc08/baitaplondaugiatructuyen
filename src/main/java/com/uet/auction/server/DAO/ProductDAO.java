@@ -133,7 +133,7 @@ public class ProductDAO {
         String sql = "UPDATE products SET status = 'OPEN' WHERE status = 'APPROVED' AND start_time <= NOW()";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            int n = pstmt.executeUpdate();
+            pstmt.executeUpdate();
 
         } catch (SQLException e) {
             System.err.println("[openScheduledAuctions] " + e.getMessage());
@@ -150,7 +150,7 @@ public class ProductDAO {
                 ")";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            int n = pstmt.executeUpdate();
+            pstmt.executeUpdate();
 
         } catch (SQLException e) {
             System.err.println("[extendAuctionIfLastBid] " + e.getMessage());
@@ -161,7 +161,7 @@ public class ProductDAO {
         String sql = "UPDATE products SET status = 'CLOSED' WHERE status = 'OPEN' AND end_time <= NOW()";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            int n = pstmt.executeUpdate();
+            pstmt.executeUpdate();
 
         } catch (SQLException e) {
             System.err.println("[closeExpiredAuctions] " + e.getMessage());
