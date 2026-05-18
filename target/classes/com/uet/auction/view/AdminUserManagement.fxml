@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<VBox spacing="20.0" style="-fx-padding: 30; -fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.AdminUserController">
+<VBox spacing="20.0" style="-fx-padding: 30; -fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.AdminUserManagementController">
     <VBox spacing="5.0">
         <Label text="Quản lý người dùng" textFill="#1e293b">
             <font><Font name="System Bold" size="28.0" /></font>

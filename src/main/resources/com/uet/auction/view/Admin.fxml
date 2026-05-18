@@ -42,12 +42,31 @@
                 </HBox>
             </VBox>
             <Button maxWidth="Infinity" onAction="#onShowHomeClick" styleClass="menu-button" text="Trang chủ" />
-            <Button maxWidth="Infinity" onAction="#onPendingButtonClick" styleClass="menu-button" text="Duyệt sản phẩm" />
-            <Button maxWidth="Infinity" onAction="#onUserManageButtonClick" styleClass="menu-button" text="Quản lý người dùng" />
+            <Button maxWidth="Infinity" onAction="#onPendingClick" styleClass="menu-button" text="Duyệt sản phẩm" />
+            <Button maxWidth="Infinity" onAction="#onUserManageClick" styleClass="menu-button" text="Quản lý người dùng" />
             <Button maxWidth="Infinity" onAction="#onProfileButtonClick" styleClass="menu-button" text="Hồ sơ cá nhân" />
         </VBox>
     </left>
 
     <center>
+        <VBox fx:id="adminContent" spacing="15" style="-fx-padding: 20;">
+            <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="DANH SÁCH SẢN PHẨM CẦN QUẢN LÝ" />
+
+            <TableView fx:id="pendingTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="idCol" prefWidth="60.0" text="ID" />
+                    <TableColumn fx:id="nameCol" prefWidth="250.0" text="Tên sản phẩm" />
+                    <TableColumn fx:id="priceCol" prefWidth="150.0" text="Giá khởi điểm" />
+                    <TableColumn fx:id="sellerCol" prefWidth="150.0" text="Người bán" />
+                    <TableColumn fx:id="statusCol" prefWidth="150.0" text="Trạng thái" />
+                    <TableColumn fx:id="endTimeCol" prefWidth="180.0" text="Thời gian kết thúc" />
+                </columns>
+            </TableView>
+
+            <HBox alignment="CENTER_RIGHT" spacing="15">
+                <Button onAction="#onRejectButtonClick" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;" text="✘ Từ chối sản phẩm" />
+                <Button onAction="#onApproveButtonClick" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;" text="✓ Duyệt sản phẩm" />
+            </HBox>
+        </VBox>
     </center>
 </BorderPane>

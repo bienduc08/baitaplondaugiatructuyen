@@ -10,11 +10,15 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -22,18 +26,22 @@ public class AdminController {
 
     public static AdminController instance;
     @FXML private BorderPane mainBorderPane;
-    @FXML private Label lblAdminName;
+    @FXML private VBox adminContent; // Màn hình quản lý duyệt sản phẩm
+    @FXML private Label welcomeLabel; // Đã sửa tên biến khớp với FXML
     @FXML private Label lblCountPending;
     @FXML private Label lblCountOpen;
     @FXML private Label lblCountClosed;
+    @FXML private Label lblBalance;
 
-    @FXML private TableView<ProductDTO>            pendingTable;
+    @FXML private TableView<ProductDTO> pendingTable;
     @FXML private TableColumn<ProductDTO, Integer> idCol;
     @FXML private TableColumn<ProductDTO, String>  nameCol;
     @FXML private TableColumn<ProductDTO, Double>  priceCol;
     @FXML private TableColumn<ProductDTO, String>  sellerCol;
     @FXML private TableColumn<ProductDTO, String>  statusCol;
-    @FXML private TableColumn<ProductDTO, String>  endTimeCol;
+
+    // Đã đổi String thành LocalDateTime để chuẩn hóa hiển thị thời gian
+    @FXML private TableColumn<ProductDTO, LocalDateTime> endTimeCol;
 
     private final ObservableList<ProductDTO> pendingListData = FXCollections.observableArrayList();
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -44,10 +52,10 @@ public class AdminController {
         setupTable();
         pendingTable.setItems(pendingListData);
 
-        if (lblAdminName != null && SessionManager.getCurrentUsername() != null)
-            lblAdminName.setText("Admin: " + SessionManager.getCurrentUsername());
-
-        loadPendingProducts();
+        if (welcomeLabel != null && SessionManager.getCurrentUsername() != null)
+            welcomeLabel.setText("Xin chào, Admin: " + SessionManager.getCurrentUsername());
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        onShowHomeClick();
     }
 
     private void setupTable() {
@@ -80,18 +88,21 @@ public class AdminController {
             });
         }
         if (endTimeCol != null) {
+            // FIX LỖI: Map cột với thuộc tính endTime và định dạng an toàn
+            endTimeCol.setCellValueFactory(new PropertyValueFactory<>("endTime"));
             endTimeCol.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(String s, boolean empty) {
-                    super.updateItem(s, empty);
-                    if (empty) { setText(null); return; }
-                    ProductDTO p = getTableView().getItems().get(getIndex());
-                    setText(p != null && p.getEndTime() != null ? p.getEndTime().format(FMT) : "—");
+                @Override protected void updateItem(LocalDateTime item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText("—");
+                    } else {
+                        setText(item.format(FMT));
+                    }
                 }
             });
         }
     }
 
-    /** Load TẤT CẢ sản phẩm trừ CLOSED để admin quản lý được toàn bộ */
     public void loadPendingProducts() {
         SocketClient.sendRequest(new AuctionRequest("GET_ALL_PRODUCTS", null));
     }
@@ -114,9 +125,6 @@ public class AdminController {
         if ("OPEN".equals(selected.getStatus())) { AlertHelper.showError("Sản phẩm này đã đang đấu giá!"); return; }
         if ("CLOSED".equals(selected.getStatus())) { AlertHelper.showError("Sản phẩm này đã đóng!"); return; }
 
-        // FIX CHÍNH: đặt thẳng "OPEN" thay vì "APPROVED"
-        // Không cần chờ AuctionTimer chuyển APPROVED→OPEN nữa
-        // → user có thể bid ngay sau khi admin duyệt
         Object[] data = {selected.getId(), "OPEN"};
         SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
     }
@@ -128,7 +136,9 @@ public class AdminController {
         SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
     }
 
-    @FXML public void onRefreshButtonClick() { loadPendingProducts(); }
+    @FXML public void onRefreshButtonClick() {
+        onShowHomeClick();
+    }
 
     @FXML public void onLogoutButtonClick() {
         try {
@@ -136,7 +146,41 @@ public class AdminController {
             SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
         } catch (IOException e) { e.printStackTrace(); }
     }
+
     public BorderPane getMainBorderPane() {
         return this.mainBorderPane;
+    }
+
+    // ------- XỬ LÝ MENU ĐIỀU HƯỚNG -------
+
+    @FXML public void onShowHomeClick() {
+        loadView("/com/uet/auction/view/HomeContent.fxml");
+    }
+
+    @FXML public void onPendingClick() {
+        // Khi click "Duyệt sản phẩm", trả lại adminContent vào giữa màn hình
+        if (adminContent != null) {
+            mainBorderPane.setCenter(adminContent);
+            loadPendingProducts();
+        }
+    }
+
+    @FXML public void onUserManageClick() {
+        loadView("/com/uet/auction/view/AdminUserManagement.fxml");
+    }
+
+    @FXML public void onProfileButtonClick() {
+        loadView("/com/uet/auction/view/ProfileContent.fxml");
+
+    }
+
+    private void loadView(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Node node = loader.load();
+            mainBorderPane.setCenter(node);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
