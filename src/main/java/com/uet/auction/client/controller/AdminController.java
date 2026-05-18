@@ -51,7 +51,6 @@ public class AdminController {
         instance = this;
         setupTable();
         pendingTable.setItems(pendingListData);
-
         if (welcomeLabel != null && SessionManager.getCurrentUsername() != null)
             welcomeLabel.setText("Xin chào, Admin: " + SessionManager.getCurrentUsername());
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
@@ -179,6 +178,7 @@ public class AdminController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Node node = loader.load();
             mainBorderPane.setCenter(node);
+            loadPendingProducts();
         } catch (Exception e) {
             e.printStackTrace();
         }

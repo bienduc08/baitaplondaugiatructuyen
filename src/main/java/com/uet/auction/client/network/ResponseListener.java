@@ -54,10 +54,9 @@ public class ResponseListener implements Runnable {
                     case "GET_ALL_PRODUCTS_RESULT":
                         List<ProductDTO> allProducts = (List<ProductDTO>) res.getData();
 
-                        // Dòng này sẽ in trực tiếp phản hồi ra mục RUN của Client cho bạn thấy!
                         Platform.runLater(() -> {
-                            if (AdminPendingController.instance != null) {
-                                AdminPendingController.instance.updateTableData(allProducts);
+                            if (AdminController.instance != null) {
+                                AdminController.instance.updatePendingList(allProducts);
                             }
                         });
                         break;
@@ -95,8 +94,9 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
-                                if (AdminPendingController.instance != null) {
-                                    AdminPendingController.instance.refreshPendingProducts();
+                                // Gọi hàm load lại bảng bên AdminController
+                                if (AdminController.instance != null) {
+                                    AdminController.instance.loadPendingProducts();
                                 }
                             } else {
                                 AlertHelper.showError(res.getMessage());
