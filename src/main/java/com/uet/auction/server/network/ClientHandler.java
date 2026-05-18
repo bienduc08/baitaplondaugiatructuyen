@@ -1,6 +1,7 @@
 package com.uet.auction.server.network;
 
 import com.uet.auction.common.DTO.ProductDTO;
+import com.uet.auction.common.DTO.UserDTO; // [THÊM MỚI] import UserDTO để dùng cho LOCK/UNLOCK
 import com.uet.auction.common.Request.AuctionRequest;
 import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.service.AuctionService;
@@ -51,7 +52,6 @@ public class ClientHandler implements Runnable {
                         response = auctionService.addProduct(product);
                         sendResponse(response);
 
-                        // ĐÃ SỬA: Nếu thêm thành công, phát tín hiệu cho tất cả các máy (bao gồm Admin) tự cập nhật bảng
                         if (response.isSuccess()) {
                             SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
                         }
@@ -78,9 +78,6 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
-                    // ==========================================
-                    // ĐÃ KHÔI PHỤC: CÁC CASE DUYỆT BÀI CỦA ADMIN
-                    // ==========================================
                     case "APPROVE_PRODUCT":
                         ProductDTO pApprove = (ProductDTO) request.getData();
                         response = auctionService.changeProductStatus(pApprove.getId(), "OPEN");
@@ -132,6 +129,38 @@ public class ClientHandler implements Runnable {
                         response = auctionService.getMyBids(bidUsername);
                         sendResponse(response);
                         break;
+
+                    // =========================================================
+                    // [THÊM MỚI] QUẢN LÝ NGƯỜI DÙNG DÀNH CHO ADMIN
+                    // 4 case dưới đây hoàn toàn mới, file gốc không có
+                    // =========================================================
+
+                    case "GET_ALL_USERS": // [THÊM MỚI]
+                        response = authService.getAllUsers();
+                        sendResponse(response);
+                        break;
+
+                    case "SEARCH_USER": // [THÊM MỚI]
+                        String searchKeyword = (String) request.getData();
+                        response = authService.searchUser(searchKeyword);
+                        sendResponse(response);
+                        break;
+
+                    case "LOCK_USER": // [THÊM MỚI]
+                        UserDTO userToLock = (UserDTO) request.getData();
+                        response = authService.changeUserStatus(userToLock.getId(), "LOCKED");
+                        sendResponse(response);
+                        break;
+
+                    case "UNLOCK_USER": // [THÊM MỚI]
+                        UserDTO userToUnlock = (UserDTO) request.getData();
+                        response = authService.changeUserStatus(userToUnlock.getId(), "ACTIVE");
+                        sendResponse(response);
+                        break;
+
+                    // =========================================================
+                    // [KẾT THÚC PHẦN THÊM MỚI]
+                    // =========================================================
 
                     default:
                         sendResponse(new AuctionResponse(false, "ERROR",

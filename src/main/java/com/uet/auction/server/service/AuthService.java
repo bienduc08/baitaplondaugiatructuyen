@@ -20,6 +20,13 @@ public class AuthService {
         LoginRequest loginReq = (LoginRequest) request.getData();
         UserDTO user = userDAO.checkLogin(loginReq.getUsername(), loginReq.getPassword());
         if (user != null) {
+            // [THÊM MỚI] Chặn tài khoản bị khóa đăng nhập
+            // File gốc không có đoạn kiểm tra này, user LOCKED vẫn login được bình thường
+            if ("LOCKED".equalsIgnoreCase(user.getStatus())) {
+                return new AuctionResponse(false, "LOGIN_RESULT",
+                        "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin!", null);
+            }
+            // [KẾT THÚC THÊM MỚI]
             return new AuctionResponse(true, "LOGIN_RESULT", user);
         } else {
             return new AuctionResponse(false, "LOGIN_RESULT", "Sai tên đăng nhập hoặc mật khẩu!", null);

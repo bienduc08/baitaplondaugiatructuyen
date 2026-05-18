@@ -26,7 +26,6 @@ public class UserDAO {
     }
 
     public UserDTO checkLogin(String username, String password) {
-        // Tùy chọn lấy thêm cột status nếu bạn cần kiểm tra tài khoản bị khóa lúc đăng nhập
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -45,8 +44,12 @@ public class UserDAO {
                 } catch (SQLException e) {
                     user.setBalance(0.0);
                 }
-                // Nếu UserDTO có thuộc tính status, có thể set ở đây:
-                // try { user.setStatus(rs.getString("status")); } catch (Exception ignored) {}
+                try {
+                    user.setStatus(rs.getString("status"));
+                } catch (SQLException e) {
+                    user.setStatus("ACTIVE"); // mặc định nếu cột chưa có
+                }
+                // [KẾT THÚC SỬA]
 
                 return user;
             }
@@ -100,7 +103,6 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("Lỗi đăng ký tài khoản: " + e.getMessage());
-            // Fallback: Nếu CSDL chưa có cột status thì dùng lệnh INSERT cũ
             return fallbackRegisterUser(username, password, role);
         }
     }
@@ -141,7 +143,6 @@ public class UserDAO {
                 try {
                     user.setStatus(rs.getString("status"));
                 } catch (SQLException e) {
-                    // Nếu cột status chưa được tạo trong CSDL, mặc định để là ACTIVE
                     user.setStatus("ACTIVE");
                 }
 

@@ -2,8 +2,8 @@ package com.uet.auction.client.network;
 
 import com.uet.auction.client.controller.*;
 import com.uet.auction.client.util.AlertHelper;
-import com.uet.auction.common.DTO.BidDTO;
 import com.uet.auction.common.DTO.ProductDTO;
+import com.uet.auction.common.DTO.UserDTO; // [THÊM MỚI] import UserDTO
 import com.uet.auction.common.Response.AuctionResponse;
 import javafx.application.Platform;
 
@@ -38,7 +38,6 @@ public class ResponseListener implements Runnable {
                                     res.isSuccess(), res.getMessage());
                         break;
 
-                    // TRẢ DỮ LIỆU VỀ TRANG CHỦ (HomecontentController)
                     case "GET_PRODUCTS_RESULT":
                         List<ProductDTO> products = (List<ProductDTO>) res.getData();
                         Platform.runLater(() -> {
@@ -47,13 +46,9 @@ public class ResponseListener implements Runnable {
                         });
                         break;
 
-                    // =========================================================
-                    // ĐÃ SỬA: THÊM LOG CHUYÊN DỤNG CHO TRANG DUYỆT SẢN PHẨM ADMIN
-                    // =========================================================
                     case "GET_PENDING_PRODUCTS_RESULT":
                     case "GET_ALL_PRODUCTS_RESULT":
                         List<ProductDTO> allProducts = (List<ProductDTO>) res.getData();
-
                         Platform.runLater(() -> {
                             if (AdminController.instance != null) {
                                 AdminController.instance.updatePendingList(allProducts);
@@ -61,7 +56,6 @@ public class ResponseListener implements Runnable {
                         });
                         break;
 
-                    // TRẢ DỮ LIỆU VỀ TRANG SẢN PHẨM CỦA SELLER (SellerMyProductsController)
                     case "GET_MY_PRODUCTS_RESULT":
                         List<ProductDTO> myProducts = (List<ProductDTO>) res.getData();
                         Platform.runLater(() -> {
@@ -94,7 +88,6 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
-                                // Gọi hàm load lại bảng bên AdminController
                                 if (AdminController.instance != null) {
                                     AdminController.instance.loadPendingProducts();
                                 }
@@ -112,6 +105,42 @@ public class ResponseListener implements Runnable {
                                 AdminPendingController.instance.refreshPendingProducts();
                         });
                         break;
+
+                    // =========================================================
+                    // [THÊM MỚI] XỬ LÝ RESPONSE QUẢN LÝ NGƯỜI DÙNG
+                    // 3 case dưới đây hoàn toàn mới, file gốc không có
+                    // =========================================================
+
+                    case "GET_ALL_USERS_RESULT": // [THÊM MỚI]
+                    case "SEARCH_USER_RESULT":   // [THÊM MỚI]
+                        if (res.isSuccess()) {
+                            List<UserDTO> users = (List<UserDTO>) res.getData();
+                            Platform.runLater(() -> {
+                                if (AdminUserManagementController.instance != null)
+                                    AdminUserManagementController.instance.updateTableData(users);
+                            });
+                        } else {
+                            Platform.runLater(() -> AlertHelper.showError(res.getMessage()));
+                        }
+                        break;
+
+                    case "LOCK_USER_RESULT":   // [THÊM MỚI]
+                    case "UNLOCK_USER_RESULT": // [THÊM MỚI]
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage());
+                                // Tự động reload lại bảng sau khi thay đổi trạng thái thành công
+                                if (AdminUserManagementController.instance != null)
+                                    AdminUserManagementController.instance.reloadUsers();
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                            }
+                        });
+                        break;
+
+                    // =========================================================
+                    // [KẾT THÚC PHẦN THÊM MỚI]
+                    // =========================================================
 
                     default:
                         System.out.println("Phản hồi không xác định: " + type);
