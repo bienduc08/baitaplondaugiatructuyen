@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.UserController">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-header">
+            <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />
+            <Button onAction="#onRefreshButtonClick" styleClass="btn-refresh" text="🔄 Làm mới" />
+            <Button onAction="#onLogoutButtonClick" styleClass="btn-logout" text="Đăng xuất" />
+        </HBox>
+    </top>
+
+    <left>
+        <VBox prefWidth="220.0" styleClass="sidebar">
+            <VBox spacing="5" styleClass="role-balance-box">
+                <HBox spacing="5">
+                    <Label styleClass="text-grey" text="Vai trò:" />
+                    <Label styleClass="role-text" text="Người dùng" />
+                </HBox>
+                <HBox spacing="5">
+                    <Label styleClass="text-grey" text="Số dư:" />
+                    <Label fx:id="lblBalance" styleClass="balance-text" text="0 VNĐ" />
+                </HBox>
+            </VBox>
+            <Button maxWidth="Infinity" onAction="#onShowHomeClick" styleClass="menu-button" text="Trang chủ" />
+            <Button maxWidth="Infinity" onAction="#onShowUserAuctionsClick" styleClass="menu-button" text="Phiên đấu giá đã tham gia" />
+            <Button maxWidth="Infinity" onAction="#onProfileButtonClick" styleClass="menu-button" text="Hồ sơ cá nhân" />
+        </VBox>
+    </left>
+
+    <center>
+    </center>
+
+</BorderPane>

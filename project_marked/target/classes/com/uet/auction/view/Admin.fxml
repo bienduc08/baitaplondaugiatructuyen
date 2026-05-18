@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.AdminController">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-header">
+            <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />
+            <Button onAction="#onRefreshButtonClick" styleClass="btn-refresh" text="🔄 Làm mới" />
+            <Button onAction="#onLogoutButtonClick" styleClass="btn-logout" text="Đăng xuất" />
+        </HBox>
+    </top>
+
+    <left>
+        <VBox prefWidth="220.0" styleClass="sidebar">
+            <VBox spacing="5" styleClass="role-balance-box">
+                <HBox spacing="5">
+                    <Label styleClass="text-grey" text="Vai trò:" />
+                    <Label style="-fx-text-fill: #e74c3c;" styleClass="role-text" text="Admin" />
+                </HBox>
+                <HBox spacing="5">
+                    <Label styleClass="text-grey" text="Số dư:" />
+                    <Label fx:id="lblBalance" styleClass="balance-text" text="0 VNĐ" />
+                </HBox>
+            </VBox>
+            <VBox spacing="3" style="-fx-padding: 10 15;">
+                <HBox spacing="8">
+                    <Label styleClass="text-grey" text="⏳ Chờ duyệt:" />
+                    <Label fx:id="lblCountPending" style="-fx-font-weight: bold; -fx-text-fill: #e67e22;" text="0" />
+                </HBox>
+                <HBox spacing="8">
+                    <Label styleClass="text-grey" text="🔥 Đang đấu:" />
+                    <Label fx:id="lblCountOpen" style="-fx-font-weight: bold; -fx-text-fill: #2980b9;" text="0" />
+                </HBox>
+                <HBox spacing="8">
+                    <Label styleClass="text-grey" text="🔒 Đã đóng:" />
+                    <Label fx:id="lblCountClosed" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;" text="0" />
+                </HBox>
+            </VBox>
+            <Button maxWidth="Infinity" onAction="#onShowHomeClick" styleClass="menu-button" text="Trang chủ" />
+            <Button maxWidth="Infinity" onAction="#onPendingClick" styleClass="menu-button" text="Duyệt sản phẩm" />
+            <Button maxWidth="Infinity" onAction="#onUserManageClick" styleClass="menu-button" text="Quản lý người dùng" />
+            <Button maxWidth="Infinity" onAction="#onProfileButtonClick" styleClass="menu-button" text="Hồ sơ cá nhân" />
+        </VBox>
+    </left>
+
+    <center>
+        <VBox fx:id="adminContent" spacing="15" style="-fx-padding: 20;">
+            <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="DANH SÁCH SẢN PHẨM CẦN QUẢN LÝ" />
+
+            <TableView fx:id="pendingTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="idCol" prefWidth="60.0" text="ID" />
+                    <TableColumn fx:id="nameCol" prefWidth="250.0" text="Tên sản phẩm" />
+                    <TableColumn fx:id="priceCol" prefWidth="150.0" text="Giá khởi điểm" />
+                    <TableColumn fx:id="sellerCol" prefWidth="150.0" text="Người bán" />
+                    <TableColumn fx:id="statusCol" prefWidth="150.0" text="Trạng thái" />
+                    <TableColumn fx:id="endTimeCol" prefWidth="180.0" text="Thời gian kết thúc" />
+                </columns>
+            </TableView>
+
+            <HBox alignment="CENTER_RIGHT" spacing="15">
+                <Button onAction="#onRejectButtonClick" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;" text="✘ Từ chối sản phẩm" />
+                <Button onAction="#onApproveButtonClick" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;" text="✓ Duyệt sản phẩm" />
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

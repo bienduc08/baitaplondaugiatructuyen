@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.Rectangle?>
+
+<VBox spacing="25.0" style="-fx-padding: 30; -fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.ProductDetailController">
+    <children>
+        <Button onAction="#onBackButtonClick" style="-fx-background-color: transparent; -fx-text-fill: #3498db; -fx-cursor: hand; -fx-font-weight: bold;" text="← Quay lại sàn đấu giá" />
+
+        <HBox spacing="30.0" VBox.vgrow="ALWAYS">
+            <children>
+                <VBox prefWidth="420.0" spacing="20.0">
+                    <children>
+                        <StackPane style="-fx-background-color: white; -fx-background-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5); -fx-padding: 15;">
+                            <children>
+                                <Rectangle arcHeight="20.0" arcWidth="20.0" fill="#f1f2f6" height="280.0" width="360.0" />
+                                <Label text="[HÌNH ẢNH SẢN PHẨM]" textFill="#bdc3c7" />
+                            </children>
+                        </StackPane>
+
+                        <VBox spacing="18.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5);">
+                            <children>
+                                <VBox spacing="5.0">
+                                    <children>
+                                        <Label text="Mức giá hiện tại" textFill="#64748b" style="-fx-font-size: 12; -fx-font-weight: bold;" />
+                                        <Label fx:id="lblCurrentPrice" text="50,000,000 VNĐ" textFill="#e67e22">
+                                            <font><Font name="System Bold" size="32.0" /></font>
+                                        </Label>
+                                        <HBox spacing="5.0" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label text="Bước giá tối thiểu:" textFill="#94a3b8" style="-fx-font-size: 12;" />
+                                                <Label fx:id="lblMinStep" text="50,000 VNĐ" textFill="#2ecc71" style="-fx-font-weight: bold; -fx-font-size: 12;" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                                <Separator opacity="0.3" />
+
+                                <VBox spacing="10.0">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                            <children>
+                                                <Label text="Người bán:" textFill="#94a3b8" style="-fx-font-size: 13; -fx-font-weight: bold;" />
+                                                <Label fx:id="lblSellerName" text="minhduc_uethn" style="-fx-text-fill: #334155; -fx-font-weight: bold; -fx-font-size: 13;" />
+                                            </children>
+                                        </HBox>
+                                        <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                            <children>
+                                                <Label text="Đang giữ đỉnh:" textFill="#94a3b8" style="-fx-font-size: 13; -fx-font-weight: bold;" />
+                                                <Label fx:id="lblTopBidder" text="duc_biet_biet" style="-fx-text-fill: #1e293b; -fx-font-weight: bold; -fx-font-size: 13;" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                                <Separator opacity="0.3" />
+
+                                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #fff5f5; -fx-padding: 12 15; -fx-background-radius: 12;">
+                                    <children>
+                                        <Label fx:id="lblTimeRemaining" text="Còn lại: 16 Ngày 06:00:03" textFill="#e74c3c" style="-fx-font-weight: bold; -fx-font-size: 14;" />
+                                    </children>
+                                </HBox>
+
+                                <VBox spacing="12.0">
+                                    <children>
+                                        <TextField fx:id="txtBidAmount" prefHeight="48.0" promptText="Nhập mức giá của bạn..." style="-fx-background-radius: 12; -fx-background-color: #f8fafc; -fx-border-color: #e2e8f0; -fx-border-radius: 12;" />
+                                        <Button maxWidth="Infinity" prefHeight="50.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;" text="ĐẶT GIÁ NGAY" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+
+                <VBox spacing="25.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <VBox spacing="12.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5);">
+                            <children>
+                                <Label fx:id="lblProductName" text="Tên sản phẩm đấu giá">
+                                    <font><Font name="System Bold" size="26.0" /></font>
+                                </Label>
+                                <Label text="MÔ TẢ CHI TIẾT" textFill="#94a3b8" style="-fx-font-weight: bold; -fx-font-size: 11;" />
+                                <Label fx:id="lblDescription" text="Nội dung mô tả sản phẩm sẽ hiển thị tại đây..." wrapText="true" textFill="#4b5563" lineSpacing="1.5">
+                                    <font><Font size="15.0" /></font>
+                                </Label>
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="15.0" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5);">
+                            <children>
+                                <Label text="DIỄN BIẾN ĐẤU GIÁ" textFill="#3498db" style="-fx-font-weight: bold; -fx-font-size: 11;" />
+                                <TableView fx:id="tblRecentBids" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;">
+                                    <columns>
+                                        <TableColumn fx:id="colUser" prefWidth="150.0" text="Người đặt" />
+                                        <TableColumn fx:id="colBidPrice" prefWidth="150.0" text="Mức giá" />
+                                        <TableColumn fx:id="colBidTime" prefWidth="200.0" text="Thời gian" />
+                                    </columns>
+                                    <columnResizePolicy>
+                                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                    </columnResizePolicy>
+                                </TableView>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+    </children>
+</VBox>

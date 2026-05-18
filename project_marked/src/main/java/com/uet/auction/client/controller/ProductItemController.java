@@ -1,0 +1,214 @@
+package com.uet.auction.client.controller;
+
+import com.uet.auction.client.network.SocketClient;
+import com.uet.auction.client.util.AlertHelper;
+import com.uet.auction.client.util.SessionManager;
+import com.uet.auction.common.DTO.ProductDTO;
+import com.uet.auction.common.Request.AuctionRequest;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
+public class ProductItemController {
+
+    @FXML private Label nameLabel;
+    @FXML private Label priceLabel;
+    @FXML private Label sellerLabel;
+    @FXML private Label ownerLabel;
+    @FXML private Label timeLabel;
+    @FXML private TextField bidInput;
+    @FXML private Label descriptionLabel;
+
+    private ProductDTO currentProduct;
+    private Timeline countdown;
+
+    public void setProductData(ProductDTO product) {
+        this.currentProduct = product;
+
+        nameLabel.setText(product.getName());
+        priceLabel.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
+        sellerLabel.setText("Người bán: " + (product.getSellerName() != null ? product.getSellerName() : "—"));
+        if (descriptionLabel != null) {
+            String desc = product.getDescription();
+            descriptionLabel.setText((desc != null && !desc.isBlank()) ? desc : "");
+            descriptionLabel.setVisible(desc != null && !desc.isBlank());
+            descriptionLabel.setManaged(desc != null && !desc.isBlank());
+        }
+
+        String owner = (product.getOwnerName() != null && !product.getOwnerName().isBlank())
+                ? product.getOwnerName() : "Chưa có ai";
+        if (ownerLabel != null) ownerLabel.setText("Đang giữ đỉnh: " + owner);
+
+        if (product.getEndTime() != null) {
+            startCountdown(product.getEndTime());
+        } else {
+            timeLabel.setText("Hết hạn: —");
+        }
+    }
+
+    private void startCountdown(LocalDateTime endTime) {
+        if (countdown != null) countdown.stop();
+
+        countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isAfter(endTime)) {
+                timeLabel.setText("⏰ Đã kết thúc");
+                timeLabel.setStyle("-fx-text-fill: #e74c3c;");
+                countdown.stop();
+                return;
+            }
+            long totalSeconds = ChronoUnit.SECONDS.between(now, endTime);
+            long days    = totalSeconds / 86400;
+            long hours   = (totalSeconds % 86400) / 3600;
+            long minutes = (totalSeconds % 3600) / 60;
+            long secs    = totalSeconds % 60;
+
+            String text;
+            if (days > 0) {
+                text = String.format("⏱ Còn %d ngày %02d:%02d:%02d", days, hours, minutes, secs);
+            } else {
+                text = String.format("⏱ Còn %02d:%02d:%02d", hours, minutes, secs);
+            }
+            timeLabel.setText(text);
+            timeLabel.setStyle(totalSeconds < 3600
+                    ? "-fx-text-fill: #e74c3c; -fx-font-weight: bold;"
+                    : "-fx-text-fill: #27ae60;");
+        }));
+        countdown.setCycleCount(Timeline.INDEFINITE);
+        countdown.play();
+    }
+
+    @FXML
+    public void onProductCardClick() {
+        if (currentProduct == null) return;
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProductDetailContent.fxml"));
+            Node detailNode = loader.load();
+
+            ProductDetailController ctrl = loader.getController();
+            ctrl.setProductData(currentProduct, java.util.Collections.emptyList());
+            ctrl.updateStatus(
+                    currentProduct.getSellerName() != null ? currentProduct.getSellerName() : "—",
+                    currentProduct.getOwnerName()
+            );
+
+            javafx.scene.layout.BorderPane activeMainPane = null;
+
+            if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
+                activeMainPane = UserController.instance.getMainBorderPane();
+            } else if (SellerController.instance != null && SellerController.instance.getMainBorderPane() != null) {
+                activeMainPane = SellerController.instance.getMainBorderPane();
+            } else if (AdminController.instance != null && AdminController.instance.getMainBorderPane() != null) {
+                activeMainPane = AdminController.instance.getMainBorderPane();
+            }
+
+            if (activeMainPane != null) {
+                Node previousCenterView = activeMainPane.getCenter();
+
+                javafx.scene.layout.BorderPane finalActiveMainPane = activeMainPane;
+                ProductDetailController.onBackAction = () -> {
+                    finalActiveMainPane.setCenter(previousCenterView);
+                };
+
+                activeMainPane.setCenter(detailNode);
+            } else {
+                Stage stage = new Stage();
+                stage.setTitle("Chi tiết — " + currentProduct.getName());
+                stage.setScene(new Scene((Parent) detailNode));
+                stage.show();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            AlertHelper.showError("Không thể mở chi tiết sản phẩm!");
+        }
+    }
+
+    @FXML
+    public void onViewHistoryClick() {
+        if (currentProduct == null) return;
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/uet/auction/view/BidHistoryView.fxml"));
+            Parent root = loader.load();
+            BidHistoryController ctrl = loader.getController();
+            ctrl.setProductContext(currentProduct.getId(), currentProduct.getName());
+
+            Stage stage = new Stage();
+            stage.setTitle("Lịch sử đấu giá — " + currentProduct.getName());
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            AlertHelper.showError("Không thể mở lịch sử đấu giá!");
+        }
+    }
+
+    @FXML
+    public void onBidButtonClick() {
+        String text = bidInput.getText().trim();
+        if (text.isEmpty()) {
+            AlertHelper.showError("Vui lòng nhập số tiền muốn đặt!");
+            return;
+        }
+
+        String cleanText = text.replace(",", "");
+        try {
+            double bidAmount = Double.parseDouble(cleanText);
+
+            if (bidAmount <= 0) {
+                AlertHelper.showError("Số tiền phải lớn hơn 0!");
+                return;
+            }
+
+            String role = SessionManager.getCurrentUser().getRole();
+            if ("SELLER".equals(role)) {
+                AlertHelper.showError("Người bán không được phép tham gia đấu giá!");
+                return;
+            }
+
+            String currentUser = SessionManager.getCurrentUsername();
+            String currentOwner = currentProduct.getOwnerName();
+            if (currentUser != null && currentUser.equals(currentOwner)) {
+                AlertHelper.showError("Bạn đang giữ mức giá cao nhất!\nKhông thể đặt thêm cho đến khi bị vượt qua.");
+                return;
+            }
+
+            double currentPrice = currentProduct.getCurrentPrice();
+            if (bidAmount <= currentPrice) {
+                AlertHelper.showError(String.format(
+                        "Giá đặt phải LỚN HƠN giá hiện tại!\nGiá hiện tại: %,.0f VNĐ\nBạn nhập: %,.0f VNĐ",
+                        currentPrice, bidAmount));
+                return;
+            }
+
+            double balance = SessionManager.getCurrentUser().getBalance();
+            if (balance <= bidAmount) {
+                AlertHelper.showError(String.format(
+                        "Số dư không đủ!\nSố dư hiện tại: %,.0f VNĐ\nGiá bạn muốn đặt: %,.0f VNĐ",
+                        balance, bidAmount));
+                return;
+            }
+
+            Object[] bidData = new Object[]{currentProduct.getId(), currentUser, bidAmount};
+            SocketClient.sendRequest(new AuctionRequest("PLACE_BID", bidData));
+            bidInput.clear();
+
+        } catch (NumberFormatException e) {
+            AlertHelper.showError("Số tiền không hợp lệ!\nVui lòng chỉ nhập số (VD: 25000000)");
+        }
+    }
+}
