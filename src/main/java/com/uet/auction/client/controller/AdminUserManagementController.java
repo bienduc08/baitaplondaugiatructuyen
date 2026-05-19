@@ -46,15 +46,15 @@ public class AdminUserManagementController {
                 if (empty || role == null) { setText(null); setStyle(""); return; }
                 switch (role.toUpperCase()) {
                     case "ADMIN":
-                        setText("👑 Admin");
+                        setText("Admin");
                         setStyle("-fx-text-fill: #8e44ad; -fx-font-weight: bold;");
                         break;
                     case "SELLER":
-                        setText("🏪 Seller");
+                        setText("Seller");
                         setStyle("-fx-text-fill: #2980b9; -fx-font-weight: bold;");
                         break;
                     case "BIDDER":
-                        setText("🙋 Bidder");
+                        setText("Bidder");
                         setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
                         break;
                     default:
@@ -80,11 +80,11 @@ public class AdminUserManagementController {
                 if (empty || status == null) { setText(null); setStyle(""); return; }
                 switch (status.toUpperCase()) {
                     case "ACTIVE":
-                        setText("✅ Hoạt động");
+                        setText("Hoạt động");
                         setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
                         break;
                     case "LOCKED":
-                        setText("🔒 Đã khóa");
+                        setText("Đã khóa");
                         setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
                         break;
                     default:
