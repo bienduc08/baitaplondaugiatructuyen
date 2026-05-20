@@ -126,6 +126,19 @@ public class ProductDAO {
         return list;
     }
 
+    public String getSellerName(int productId) {
+        String sql = "SELECT seller_name FROM products WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, productId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return safeGetString(rs, "seller_name");
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO.getSellerName] " + e.getMessage());
+        }
+        return null;
+    }
+
     public boolean addProduct(String name, double startingPrice, String sellerName,
                               LocalDateTime startTime, LocalDateTime endTime, String description) {
 

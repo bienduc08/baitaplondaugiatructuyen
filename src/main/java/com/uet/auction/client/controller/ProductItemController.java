@@ -56,6 +56,17 @@ public class ProductItemController {
         } else {
             timeLabel.setText("Hết hạn: —");
         }
+
+        updateBidInputState();
+    }
+
+    private void updateBidInputState() {
+        if (bidInput == null || currentProduct == null) return;
+        String currentUser = SessionManager.getCurrentUsername();
+        boolean isOwnProduct = currentUser != null && currentUser.equals(currentProduct.getSellerName());
+        boolean isLeading = currentUser != null && currentUser.equals(currentProduct.getOwnerName());
+        boolean canBid = "OPEN".equals(currentProduct.getStatus()) && !isOwnProduct && !isLeading;
+        bidInput.setDisable(!canBid);
     }
 
     private void startCountdown(LocalDateTime endTime) {
@@ -169,13 +180,12 @@ public class ProductItemController {
                 return;
             }
 
-            String role = SessionManager.getCurrentUser().getRole();
-            if ("SELLER".equals(role)) {
-                AlertHelper.showError("Người bán không được phép tham gia đấu giá!");
+            String currentUser = SessionManager.getCurrentUsername();
+            if (currentUser != null && currentUser.equals(currentProduct.getSellerName())) {
+                AlertHelper.showError("Bạn không thể đấu giá sản phẩm do chính mình đăng bán!");
                 return;
             }
 
-            String currentUser = SessionManager.getCurrentUsername();
             String currentOwner = currentProduct.getOwnerName();
             if (currentUser != null && currentUser.equals(currentOwner)) {
                 AlertHelper.showError("Bạn đang giữ mức giá cao nhất!\nKhông thể đặt thêm cho đến khi bị vượt qua.");
