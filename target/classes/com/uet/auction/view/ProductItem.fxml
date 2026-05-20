@@ -8,10 +8,9 @@
 <?import javafx.scene.shape.Rectangle?>
 
 <VBox prefWidth="260.0" spacing="12.0"
-      style="-fx-background-color: white; -fx-background-radius: 18; -fx-padding: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 15, 0, 0, 5); -fx-cursor: hand;"
+      style="-fx-background-color: white; -fx-background-radius: 18; -fx-padding: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 15, 0, 0, 5);"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.uet.auction.client.controller.ProductItemController"
-      onMouseClicked="#onProductCardClick">
+      fx:controller="com.uet.auction.client.controller.ProductItemController">
 
     <children>
         <StackPane style="-fx-background-color: #f8fafc; -fx-background-radius: 12; -fx-overflow: hidden;">
@@ -30,6 +29,7 @@
                     <font><Font name="System Bold" size="16.0" /></font>
                 </Label>
                 <Label fx:id="sellerLabel" text="Người bán: minhduc09" textFill="#94a3b8" style="-fx-font-size: 11;" />
+                <Label fx:id="ownerLabel" text="Đang giữ đỉnh: —" textFill="#64748b" style="-fx-font-size: 11;" />
             </children>
         </VBox>
 

@@ -33,6 +33,15 @@
 
         <Separator opacity="0.5" />
 
+        <VBox fx:id="sellerUpgradeBox" spacing="12.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 20, 0, 0, 10);">
+            <children>
+                <Label text="Đăng ký bán hàng" textFill="#94a3b8" style="-fx-font-size: 13; -fx-font-weight: bold;" />
+                <Label fx:id="lblSellerUpgradeHint" text="Bạn đang là Người dùng. Có thể đăng ký thêm vai trò Người bán để tạo phiên đấu giá." textFill="#64748b" wrapText="true" style="-fx-font-size: 12;" />
+                <Button fx:id="btnBecomeSeller" onAction="#onBecomeSellerClick" text="Đăng ký làm Người bán"
+                        style="-fx-background-color: #16a34a; -fx-text-fill: white; -fx-background-radius: 10; -fx-cursor: hand; -fx-font-weight: bold;" />
+            </children>
+        </VBox>
+
         <HBox spacing="25.0">
             <children>
                 <VBox prefWidth="350.0" spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 20, 0, 0, 10);">
@@ -41,7 +50,7 @@
                         <Label fx:id="lblBalance" text="10,000,000 VNĐ" textFill="#0f172a">
                             <font><Font name="System Bold" size="24.0" /></font>
                         </Label>
-                        <Button text="Nạp thêm tiền" style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-background-radius: 10; -fx-cursor: hand;" />
+                        <Button fx:id="btnDeposit" onAction="#onDepositClick" text="Nạp thêm tiền" style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-background-radius: 10; -fx-cursor: hand;" />
                     </children>
                 </VBox>
 
@@ -51,12 +60,12 @@
                         <HBox spacing="30.0">
                             <children>
                                 <VBox>
-                                    <Label text="12" style="-fx-font-size: 22; -fx-font-weight: bold;" />
+                                    <Label fx:id="lblTotalBids" text="0" style="-fx-font-size: 22; -fx-font-weight: bold;" />
                                     <Label text="Lượt đấu" textFill="#64748b" style="-fx-font-size: 12;" />
                                 </VBox>
                                 <VBox>
-                                    <Label text="05" style="-fx-font-size: 22; -fx-font-weight: bold;" />
-                                    <Label text="Chiến thắng" textFill="#64748b" style="-fx-font-size: 12;" />
+                                    <Label fx:id="lblTotalWins" text="0" style="-fx-font-size: 22; -fx-font-weight: bold;" />
+                                    <Label text="Phiên tham gia" textFill="#64748b" style="-fx-font-size: 12;" />
                                 </VBox>
                             </children>
                         </HBox>

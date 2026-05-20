@@ -57,6 +57,12 @@ public class AdminController {
         onShowHomeClick();
     }
 
+    public void updateBalance() {
+        if (SessionManager.getCurrentUser() != null && lblBalance != null) {
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
+    }
+
     private void setupTable() {
         if (idCol   != null) idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
         if (nameCol != null) nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));

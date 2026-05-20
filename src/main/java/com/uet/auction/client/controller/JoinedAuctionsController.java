@@ -40,8 +40,10 @@ public class JoinedAuctionsController {
         instance = this;
         setupTable();
         tblJoinedAuctions.setItems(joinedList);
+        reloadJoinedAuctions();
+    }
 
-        // Gửi yêu cầu lấy danh sách các phiên đấu giá mà user này đã tham gia
+    public void reloadJoinedAuctions() {
         String username = SessionManager.getCurrentUsername();
         if (username != null) {
             SocketClient.sendRequest(new AuctionRequest("GET_JOINED_PRODUCTS", username));
@@ -125,33 +127,24 @@ public class JoinedAuctionsController {
         }
     }
 
-    // Hàm này được ResponseListener gọi khi Server trả dữ liệu về
     public void displayJoinedAuctions(List<ProductDTO> products) {
-        Platform.runLater(() -> joinedList.setAll(products));
+        Platform.runLater(() -> joinedList.setAll(products != null ? products : List.of()));
     }
 
-    // Chuyển sang màn hình chi tiết sản phẩm (Giữ nguyên logic Callback BackAction)
     private void openProductDetail(ProductDTO product) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/client/view/ProductDetailContent.fxml")); // Chú ý đường dẫn
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProductDetailContent.fxml"));
             Node detailNode = loader.load();
 
             ProductDetailController ctrl = loader.getController();
-            ctrl.setProductData(product, java.util.Collections.emptyList());
-            ctrl.updateStatus(
-                    product.getSellerName() != null ? product.getSellerName() : "—",
-                    product.getOwnerName()
-            );
+            ctrl.setProductData(product, null);
 
-            // Tìm BorderPane chính của User
             if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
                 BorderPane mainPane = UserController.instance.getMainBorderPane();
                 Node previousCenterView = mainPane.getCenter();
 
-                // Cài đặt hành động quay lại
                 ProductDetailController.onBackAction = () -> mainPane.setCenter(previousCenterView);
 
-                // Nạp màn chi tiết
                 mainPane.setCenter(detailNode);
             }
         } catch (IOException e) {

@@ -71,7 +71,7 @@
                                         <VBox spacing="12.0">
                                             <children>
                                                 <TextField fx:id="txtBidAmount" prefHeight="48.0" promptText="Nhập mức giá của bạn..." style="-fx-background-radius: 12; -fx-background-color: #f8fafc; -fx-border-color: #e2e8f0; -fx-border-radius: 12;" />
-                                                <Button maxWidth="Infinity" prefHeight="50.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;" text="ĐẶT GIÁ NGAY" />
+                                                <Button fx:id="btnPlaceBid" maxWidth="Infinity" onAction="#onBidButtonClick" prefHeight="50.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;" text="ĐẶT GIÁ NGAY" />
                                             </children>
                                         </VBox>
                                     </children>

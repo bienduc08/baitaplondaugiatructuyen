@@ -112,4 +112,13 @@ public class AuctionService {
             return new AuctionResponse(false, "GET_MY_BIDS_RESULT", "Lỗi: " + e.getMessage(), null);
         }
     }
+
+    public AuctionResponse getJoinedProducts(String username) {
+        try {
+            List<ProductDTO> list = productDAO.getJoinedProductsByUsername(username);
+            return new AuctionResponse(true, "GET_JOINED_PRODUCTS_RESULT", list);
+        } catch (Exception e) {
+            return new AuctionResponse(false, "GET_JOINED_PRODUCTS_RESULT", "Lỗi: " + e.getMessage(), null);
+        }
+    }
 }

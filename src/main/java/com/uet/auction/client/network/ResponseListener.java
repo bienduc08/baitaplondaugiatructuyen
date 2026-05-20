@@ -2,6 +2,8 @@ package com.uet.auction.client.network;
 
 import com.uet.auction.client.controller.*;
 import com.uet.auction.client.util.AlertHelper;
+import com.uet.auction.client.util.SessionManager;
+import com.uet.auction.common.DTO.BidDTO;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.DTO.UserDTO; // [THÊM MỚI] import UserDTO
 import com.uet.auction.common.Response.AuctionResponse;
@@ -43,6 +45,8 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (HomecontentController.instance != null)
                                 HomecontentController.instance.displayProducts(products);
+                            if (ProductDetailController.instance != null)
+                                ProductDetailController.instance.updateProductFromList(products);
                         });
                         break;
 
@@ -103,6 +107,86 @@ public class ResponseListener implements Runnable {
                                 HomecontentController.instance.loadProducts();
                             if (AdminPendingController.instance != null)
                                 AdminPendingController.instance.refreshPendingProducts();
+                            if (ProductDetailController.instance != null)
+                                ProductDetailController.instance.onPriceUpdateBroadcast();
+                            if (JoinedAuctionsController.instance != null)
+                                JoinedAuctionsController.instance.reloadJoinedAuctions();
+                        });
+                        break;
+
+                    case "BID_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage());
+                                if (HomecontentController.instance != null)
+                                    HomecontentController.instance.loadProducts();
+                                if (ProductDetailController.instance != null)
+                                    ProductDetailController.instance.refreshAfterBid();
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                            }
+                        });
+                        break;
+
+                    case "GET_BID_HISTORY_RESULT":
+                        if (res.isSuccess()) {
+                            List<BidDTO> bidHistory = (List<BidDTO>) res.getData();
+                            Platform.runLater(() -> {
+                                if (BidHistoryController.instance != null)
+                                    BidHistoryController.instance.displayBidHistory(bidHistory);
+                                if (ProductDetailController.instance != null)
+                                    ProductDetailController.instance.displayBidHistory(bidHistory);
+                            });
+                        } else {
+                            Platform.runLater(() -> AlertHelper.showError(res.getMessage()));
+                        }
+                        break;
+
+                    case "GET_MY_BIDS_RESULT":
+                        if (res.isSuccess()) {
+                            List<BidDTO> myBids = (List<BidDTO>) res.getData();
+                            Platform.runLater(() -> {
+                                if (ProfileController.instance != null)
+                                    ProfileController.instance.displayMyBids(myBids);
+                            });
+                        } else {
+                            Platform.runLater(() -> AlertHelper.showError(res.getMessage()));
+                        }
+                        break;
+
+                    case "UPGRADE_TO_SELLER_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage());
+                                if (ProfileController.instance != null)
+                                    ProfileController.instance.handleUpgradeToSellerSuccess();
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                            }
+                        });
+                        break;
+
+                    case "DEPOSIT_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess() && res.getData() instanceof Number) {
+                                double newBalance = ((Number) res.getData()).doubleValue();
+                                if (SessionManager.getCurrentUser() != null) {
+                                    SessionManager.getCurrentUser().setBalance(newBalance);
+                                }
+                                AlertHelper.showInfo(res.getMessage());
+                                if (ProfileController.instance != null)
+                                    ProfileController.instance.handleDepositSuccess(newBalance);
+                                if (UserController.instance != null)
+                                    UserController.instance.updateBalance();
+                                if (SellerController.instance != null)
+                                    SellerController.instance.updateBalance();
+                                if (AdminController.instance != null)
+                                    AdminController.instance.updateBalance();
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                                if (ProfileController.instance != null)
+                                    ProfileController.instance.handleDepositFailure();
+                            }
                         });
                         break;
 

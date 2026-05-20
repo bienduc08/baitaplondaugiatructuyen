@@ -47,6 +47,12 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
+                    case "UPGRADE_TO_SELLER":
+                        String upgradeUsername = (String) request.getData();
+                        response = authService.upgradeToSeller(upgradeUsername);
+                        sendResponse(response);
+                        break;
+
                     case "ADD_PRODUCT":
                         ProductDTO product = (ProductDTO) request.getData();
                         response = auctionService.addProduct(product);
@@ -130,6 +136,12 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
+                    case "GET_JOINED_PRODUCTS":
+                        String joinedUsername = (String) request.getData();
+                        response = auctionService.getJoinedProducts(joinedUsername);
+                        sendResponse(response);
+                        break;
+
                     // =========================================================
                     // [THÊM MỚI] QUẢN LÝ NGƯỜI DÙNG DÀNH CHO ADMIN
                     // 4 case dưới đây hoàn toàn mới, file gốc không có
@@ -155,6 +167,14 @@ public class ClientHandler implements Runnable {
                     case "UNLOCK_USER": // [THÊM MỚI]
                         UserDTO userToUnlock = (UserDTO) request.getData();
                         response = authService.changeUserStatus(userToUnlock.getId(), "ACTIVE");
+                        sendResponse(response);
+                        break;
+
+                    case "DEPOSIT":
+                        Object[] depositData = (Object[]) request.getData();
+                        String depositUser = (String) depositData[0];
+                        double depositAmount = ((Number) depositData[1]).doubleValue();
+                        response = authService.deposit(depositUser, depositAmount);
                         sendResponse(response);
                         break;
 

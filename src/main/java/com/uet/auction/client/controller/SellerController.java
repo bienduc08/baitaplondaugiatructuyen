@@ -21,11 +21,18 @@ public class SellerController {
 
     @FXML
     public void initialize() {
+        instance = this;
         if (SessionManager.getCurrentUser() != null) {
             welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
         }
         onShowHomeClick();
+    }
+
+    public void updateBalance() {
+        if (SessionManager.getCurrentUser() != null && lblBalance != null) {
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
     }
 
     private void loadView(String fxmlPath) {

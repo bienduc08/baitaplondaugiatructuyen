@@ -44,7 +44,7 @@
                                 <PasswordField fx:id="passwordField" prefHeight="45.0" promptText="Mật khẩu" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;" />
                                 <PasswordField fx:id="confirmPasswordField" prefHeight="45.0" promptText="Nhập lại mật khẩu" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;" />
 
-                                <ComboBox fx:id="roleComboBox" maxWidth="Infinity" prefHeight="45.0" promptText="Chọn vai trò" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10;"/>
+                                <Label text="Tài khoản mới mặc định là Người dùng (đấu giá). Đăng ký Người bán tại Hồ sơ sau khi đăng nhập." textFill="#64748b" wrapText="true" style="-fx-font-size: 12;" />
 
                                 <Label fx:id="statusLabel" style="-fx-font-size: 12;" textFill="RED" wrapText="true" />
                             </children>

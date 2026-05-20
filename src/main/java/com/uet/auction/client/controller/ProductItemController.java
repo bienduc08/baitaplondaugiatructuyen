@@ -98,11 +98,7 @@ public class ProductItemController {
             Node detailNode = loader.load();
 
             ProductDetailController ctrl = loader.getController();
-            ctrl.setProductData(currentProduct, java.util.Collections.emptyList());
-            ctrl.updateStatus(
-                    currentProduct.getSellerName() != null ? currentProduct.getSellerName() : "—",
-                    currentProduct.getOwnerName()
-            );
+            ctrl.setProductData(currentProduct, null);
 
             javafx.scene.layout.BorderPane activeMainPane = null;
 
