@@ -46,6 +46,20 @@ public class ResponseListener implements Runnable {
                         });
                         break;
                     case "GET_ALL_PRODUCTS_RESULT":
+                    case "GET_PENDING_PRODUCTS_RESULT": // Gộp chung xử lý vì list giống nhau
+                        List<ProductDTO> allProducts = (List<ProductDTO>) res.getData();
+                        Platform.runLater(() -> {
+                            // 1. Báo cho AdminController đếm số lượng (Open, Pending, Closed)
+                            if (AdminController.instance != null) {
+                                AdminController.instance.updateStatisticsCounts(allProducts);
+                            }
+
+                            // 2. Báo cho AdminPendingController để hiển thị chi tiết vào Bảng
+                            if (AdminPendingController.instance != null) {
+                                AdminPendingController.instance.updateTableData(allProducts);
+                            }
+                        });
+                        break;
                     case "GET_MY_PRODUCTS_RESULT":
                         List<ProductDTO> myProducts = (List<ProductDTO>) res.getData();
                         Platform.runLater(() -> {
