@@ -54,6 +54,14 @@ public class ProductDetailController {
         lblDescription.setText(product.getDescription());
         lblCurrentPrice.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
         lblStepPrice.setText(String.format("%,.0f VNĐ", product.getStepPrice()));
+
+        if (lblSellerName != null) {
+            lblSellerName.setText(product.getSellerName() != null ? product.getSellerName() : "—");
+        }
+        if (lblTopBidder != null) {
+            lblTopBidder.setText(product.getOwnerName() != null && !product.getOwnerName().isBlank() ? product.getOwnerName() : "Chưa có");
+        }
+
         if (imgProduct != null) {
             String imageUrl = product.getImageUrl();
             if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -72,13 +80,17 @@ public class ProductDetailController {
         // Nạp dữ liệu lịch sử đấu giá (nếu có)
         if (allBids != null && !allBids.isEmpty()) {
             List<BidDTO> sortedBids = allBids.stream()
-                    .sorted((b1, b2) -> b2.getTime().compareTo(b1.getTime()))
+                    .sorted((b1, b2) -> {
+                        if (b1.getTime() == null && b2.getTime() == null) return 0;
+                        if (b1.getTime() == null) return 1;
+                        if (b2.getTime() == null) return -1;
+                        return b2.getTime().compareTo(b1.getTime());
+                    })
                     .collect(Collectors.toList());
             recentBidsList.setAll(sortedBids);
         } else {
             recentBidsList.clear();
         }
-
 
         if (product.getEndTime() != null) {
             startCountdown(product.getEndTime());
@@ -144,7 +156,7 @@ public class ProductDetailController {
     }
 
     private void setupTable() {
-        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("username"));
+        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("bidderName"));
         if (colBidTime != null) colBidTime.setCellValueFactory(new PropertyValueFactory<>("time"));
         if (colBidPrice != null) {
             colBidPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
@@ -172,10 +184,54 @@ public class ProductDetailController {
             countdown.stop();
         }
 
+        instance = null;
+
         if (onBackAction != null) {
             onBackAction.run();
         } else {
             System.err.println("Lỗi: Không có hành động quay lại (onBackAction) nào được định nghĩa!");
+        }
+    }
+
+    public void reloadProductDetails() {
+        if (currentProduct != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_BID_HISTORY", currentProduct.getId()));
+        }
+    }
+
+    public void displayBidHistory(List<BidDTO> bids) {
+        if (bids != null) {
+            List<BidDTO> sortedBids = bids.stream()
+                    .sorted((b1, b2) -> {
+                        if (b1.getTime() == null && b2.getTime() == null) return 0;
+                        if (b1.getTime() == null) return 1;
+                        if (b2.getTime() == null) return -1;
+                        return b2.getTime().compareTo(b1.getTime());
+                    })
+                    .collect(Collectors.toList());
+            recentBidsList.setAll(sortedBids);
+
+            if (!sortedBids.isEmpty()) {
+                BidDTO highestBid = sortedBids.get(0);
+                if (currentProduct != null) {
+                    currentProduct.setCurrentPrice(highestBid.getPrice());
+                    currentProduct.setOwnerName(highestBid.getBidderName());
+                }
+
+                if (lblCurrentPrice != null) {
+                    lblCurrentPrice.setText(String.format("%,.0f VNĐ", highestBid.getPrice()));
+                }
+                if (lblTopBidder != null) {
+                    lblTopBidder.setText(highestBid.getBidderName() != null ? highestBid.getBidderName() : "Chưa có");
+                }
+            } else {
+                if (lblTopBidder != null) {
+                    lblTopBidder.setText("Chưa có");
+                }
+                if (currentProduct != null && lblCurrentPrice != null) {
+                    lblCurrentPrice.setText(String.format("%,.0f VNĐ", currentProduct.getStartingPrice()));
+                }
+            }
         }
     }
 
@@ -250,7 +306,7 @@ public class ProductDetailController {
     // Hàm hỗ trợ load ảnh mặc định an toàn
     private void loadDefaultImage() {
         // Sửa lại đường dẫn này cho đúng với cấu trúc thư mục resources của bạn
-        String defaultImagePath = "/com/uet/auction/images/default-product.png";
+        String defaultImagePath = "/com/uet/auction/images/LogoUET.png";
 
         java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
         if (is != null) {

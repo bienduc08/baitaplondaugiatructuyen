@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
 <BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.UserController">
 
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-background-color: linear-gradient(to right, #15284b, #2d74c4);" styleClass="top-header">
-         <ImageView fitHeight="75.0" fitWidth="75.0" pickOnBounds="true" preserveRatio="true">
-            <image>
-               <Image url="@../images/vnu-uet.png" />
-            </image>
-         </ImageView>
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-header">
             <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
             <Region HBox.hgrow="ALWAYS" />
             <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />

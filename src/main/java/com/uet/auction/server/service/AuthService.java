@@ -34,11 +34,39 @@ public class AuthService {
     }
 
     public AuctionResponse register(String username, String password, String role) {
-        boolean success = userDAO.registerUser(username, password, role);
+        // Chỉ cho phép đăng ký tài khoản USER; ADMIN/SELLER không được tạo qua app
+        boolean success = userDAO.registerUser(username, password, "USER");
         if (success) {
             return new AuctionResponse(true, "REGISTER_RESULT", "Đăng ký thành công!", null);
         } else {
             return new AuctionResponse(false, "REGISTER_RESULT", "Tên đăng nhập đã tồn tại hoặc lỗi CSDL!", null);
+        }
+    }
+
+    public AuctionResponse upgradeToSeller(String username) {
+        try {
+            String currentRole = userDAO.getRole(username);
+            if (currentRole == null) {
+                return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Không tìm thấy tài khoản!", null);
+            }
+            if ("SELLER".equals(currentRole)) {
+                return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Bạn đã là Người bán!", null);
+            }
+            if ("ADMIN".equals(currentRole)) {
+                return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Tài khoản quản trị không thể đổi vai trò tại đây!", null);
+            }
+            if (!"USER".equals(currentRole) && !"BIDDER".equals(currentRole)) {
+                return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Không thể nâng cấp vai trò này!", null);
+            }
+
+            boolean ok = userDAO.updateRole(username, "SELLER");
+            if (ok) {
+                return new AuctionResponse(true, "UPGRADE_TO_SELLER_RESULT",
+                        "Đã đăng ký Người bán! Đăng nhập lại hoặc vào giao diện Người bán.", null);
+            }
+            return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Cập nhật vai trò thất bại!", null);
+        } catch (Exception e) {
+            return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Lỗi: " + e.getMessage(), null);
         }
     }
 
@@ -76,5 +104,33 @@ public class AuthService {
         } else {
             return new AuctionResponse(false, type, "Cập nhật trạng thái thất bại!", null);
         }
+    }
+
+    public AuctionResponse deposit(String username, double amount) {
+        if (username == null || username.isBlank()) {
+            return new AuctionResponse(false, "DEPOSIT_RESULT", "Phiên đăng nhập không hợp lệ!", null);
+        }
+        if (amount <= 0) {
+            return new AuctionResponse(false, "DEPOSIT_RESULT", "Số tiền nạp phải lớn hơn 0!", null);
+        }
+        if (amount > 500_000_000) {
+            return new AuctionResponse(false, "DEPOSIT_RESULT", "Mỗi lần nạp tối đa 500.000.000 VNĐ!", null);
+        }
+
+        String status = userDAO.getStatus(username);
+        if (status == null) {
+            return new AuctionResponse(false, "DEPOSIT_RESULT", "Không tìm thấy tài khoản!", null);
+        }
+        if ("LOCKED".equalsIgnoreCase(status)) {
+            return new AuctionResponse(false, "DEPOSIT_RESULT", "Tài khoản bị khóa, không thể nạp tiền!", null);
+        }
+
+        Double newBalance = userDAO.deposit(username, amount);
+        if (newBalance == null) {
+            return new AuctionResponse(false, "DEPOSIT_RESULT", "Nạp tiền thất bại!", null);
+        }
+        return new AuctionResponse(true, "DEPOSIT_RESULT",
+                String.format("Nạp thành công %,.0f VNĐ!\nSố dư mới: %,.0f VNĐ", amount, newBalance),
+                newBalance);
     }
 }

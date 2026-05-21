@@ -9,13 +9,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.stage.FileChooser;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -39,8 +33,6 @@ public class SellerAddProductController {
     @FXML private TextField  txtEndH;
     @FXML private TextField  txtEndM;
     @FXML private TextField  txtEndS;
-    @FXML private ImageView imgPreview;
-    private byte[] selectedImageBytes;
 
     @FXML
     public void initialize() {
@@ -76,14 +68,6 @@ public class SellerAddProductController {
                 return;
             }
 
-            // BẠN CẦN THÊM ĐOẠN ĐỌC BƯỚC GIÁ NÀY VÀO
-            String stepStr = (txtBidStep != null && !txtBidStep.getText().trim().isEmpty()) ? txtBidStep.getText().trim() : "10000";
-            double stepPrice = Double.parseDouble(stepStr.replace(",", ""));
-            if (stepPrice <= 0) {
-                AlertHelper.showError("Bước giá phải lớn hơn 0!");
-                return;
-            }
-
             // Đọc giờ/phút/giây kết thúc
             int endH = parseTimeField(txtEndH, 23);
             int endM = parseTimeField(txtEndM, 59);
@@ -98,7 +82,7 @@ public class SellerAddProductController {
             // Đọc giờ/phút/giây bắt đầu
             LocalDateTime startTime;
             if (dpStartDate != null && dpStartDate.getValue() != null) {
-                int startH = parseTimeField(txtStartH, 0);
+                int startH = parseTimeField(txtStartH, 8);
                 int startM = parseTimeField(txtStartM, 0);
                 int startS = parseTimeField(txtStartS, 0);
                 startTime = LocalDateTime.of(dpStartDate.getValue(), LocalTime.of(startH, startM, startS));
@@ -106,9 +90,14 @@ public class SellerAddProductController {
                 startTime = LocalDateTime.now();
             }
 
-            if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
-                AlertHelper.showError("Thời gian bắt đầu phải trước thời gian kết thúc!");
-                return;
+            double stepPrice = 10000.0;
+            if (txtBidStep != null) {
+                String stepStr = txtBidStep.getText().trim().replace(",", "");
+                if (!stepStr.isEmpty()) {
+                    try {
+                        stepPrice = Double.parseDouble(stepStr);
+                    } catch (NumberFormatException ignored) {}
+                }
             }
 
             ProductDTO product = new ProductDTO();
@@ -116,10 +105,6 @@ public class SellerAddProductController {
             product.setStartingPrice(startingPrice);
             product.setCurrentPrice(startingPrice);
             product.setStepPrice(stepPrice);
-            if (selectedImageBytes != null) {
-                product.setImageBytes(selectedImageBytes);
-            }
-
             product.setDescription(txtDescription != null ? txtDescription.getText().trim() : "");
             product.setSellerName(SessionManager.getCurrentUsername());
             product.setStartTime(startTime);
@@ -131,7 +116,7 @@ public class SellerAddProductController {
             clearForm();
 
         } catch (NumberFormatException e) {
-            AlertHelper.showError("Giá khởi điểm/Bước giá phải là số hợp lệ (VD: 5000000)!");
+            AlertHelper.showError("Giá khởi điểm phải là số hợp lệ (VD: 5000000)!");
         }
     }
 
@@ -151,39 +136,11 @@ public class SellerAddProductController {
         if (txtBidStep       != null) txtBidStep.setText("10,000");
         if (dpStartDate      != null) dpStartDate.setValue(null);
         if (dpEndDate        != null) dpEndDate.setValue(null);
-        if (txtStartH != null) txtStartH.setText("00");
+        if (txtStartH != null) txtStartH.setText("08");
         if (txtStartM != null) txtStartM.setText("00");
         if (txtStartS != null) txtStartS.setText("00");
         if (txtEndH   != null) txtEndH.setText("23");
         if (txtEndM   != null) txtEndM.setText("59");
         if (txtEndS   != null) txtEndS.setText("00");
-        if (imgPreview != null) imgPreview.setImage(null);
-        selectedImageBytes = null;
-    }
-    @FXML
-    public void onChooseImageClick() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn ảnh sản phẩm");
-        // Chỉ cho phép chọn các file định dạng ảnh
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
-        );
-
-        File file = fileChooser.showOpenDialog(null);
-        if (file != null) {
-            try {
-                // Đọc file thành mảng byte để lưu tạm vào biến
-                selectedImageBytes = Files.readAllBytes(file.toPath());
-
-                // Hiển thị ảnh lên giao diện cho Seller xem trước
-                Image image = new Image(file.toURI().toString());
-                if (imgPreview != null) {
-                    imgPreview.setImage(image);
-                }
-            } catch (IOException e) {
-                AlertHelper.showError("Lỗi khi đọc file ảnh! Vui lòng thử lại.");
-                e.printStackTrace();
-            }
-        }
     }
 }

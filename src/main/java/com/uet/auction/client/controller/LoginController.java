@@ -63,7 +63,7 @@ public class LoginController {
                     } else if ("SELLER".equals(role)) {
                         SceneManager.switchScene("/com/uet/auction/view/Seller.fxml", "Người bán");
                     } else {
-                        SceneManager.switchScene("/com/uet/auction/view/User.fxml", "Người mua");
+                        SceneManager.switchScene("/com/uet/auction/view/User.fxml", "Người dùng");
                     }
 
                 } catch (IOException e) {

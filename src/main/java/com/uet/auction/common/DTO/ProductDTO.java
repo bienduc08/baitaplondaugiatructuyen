@@ -21,9 +21,9 @@ public class ProductDTO implements Serializable {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String status;
-    private double stepPrice;
     private String category;
     private String imageUrl;
+    private double stepPrice;
     private byte[] imageBytes;
     // PENDING, OPEN, CLOSED, REJECTED
 
@@ -32,16 +32,14 @@ public class ProductDTO implements Serializable {
     }
 
     // Constructor đầy đủ để tạo nhanh đối tượng tại Server từ kết quả Database
-    public ProductDTO(int id, String name, double startingPrice, String sellerName, String ownerName, LocalDateTime endTime, String status, double stepPrice, String category, double sellingPrice) {
+    public ProductDTO(int id, String name, double currentPrice, String sellerName, String ownerName, LocalDateTime endTime, String status) {
         this.id = id;
         this.name = name;
-        this.startingPrice = startingPrice;
-        this.currentPrice = startingPrice;
+        this.currentPrice = currentPrice;
         this.sellerName = sellerName;
         this.ownerName = ownerName;
         this.endTime = endTime;
         this.status = status;
-        this.stepPrice = stepPrice;
     }
 
     // --- GETTERS & SETTERS ---
@@ -77,14 +75,14 @@ public class ProductDTO implements Serializable {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public double getStepPrice() { return stepPrice; }
-    public void setStepPrice(double stepPrice) { this.stepPrice = stepPrice; }
-
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public double getStepPrice() { return stepPrice; }
+    public void setStepPrice(double stepPrice) { this.stepPrice = stepPrice; }
 
     public byte[] getImageBytes() { return imageBytes; }
     public void setImageBytes(byte[] imageBytes) { this.imageBytes = imageBytes; }

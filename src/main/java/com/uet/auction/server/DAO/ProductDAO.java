@@ -213,4 +213,37 @@ public class ProductDAO {
             return false;
         }
     }
+
+    public List<ProductDTO> getJoinedProducts(String username) {
+        List<ProductDTO> list = new ArrayList<>();
+        String sql = "SELECT p.* FROM products p "
+                + "WHERE p.id IN (SELECT DISTINCT b.product_id FROM bids b WHERE b.bidder_name = ?) "
+                + "ORDER BY p.id DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                ProductDTO p = new ProductDTO();
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setStartingPrice(rs.getDouble("starting_price"));
+                p.setStepPrice(rs.getDouble("step_price"));
+                double cp = rs.getDouble("current_price");
+                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
+                p.setDescription(safeGetString(rs, "description"));
+                p.setSellerName(safeGetString(rs, "seller_name"));
+                p.setOwnerName(safeGetString(rs, "owner_name"));
+                p.setStatus(rs.getString("status"));
+                p.setImageUrl(safeGetString(rs, "image_url"));
+                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
+                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
+                list.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO.getJoinedProducts] " + e.getMessage());
+        }
+        return list;
+    }
+
 }

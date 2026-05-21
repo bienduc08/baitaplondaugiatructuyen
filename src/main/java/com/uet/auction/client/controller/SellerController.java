@@ -29,6 +29,12 @@ public class SellerController {
         onShowHomeClick();
     }
 
+    public void updateBalance() {
+        if (SessionManager.getCurrentUser() != null && lblBalance != null) {
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
+    }
+
     private void loadView(String fxmlPath) {
         try {
             // ĐÃ SỬA: Thay vì load chết file Seller.fxml gây tràn bộ nhớ,

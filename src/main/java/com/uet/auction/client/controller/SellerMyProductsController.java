@@ -5,6 +5,9 @@ import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.Request.AuctionRequest;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,7 +20,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.List;
 
-public class SellerMyProductsController extends TableController<ProductDTO> {
+public class SellerMyProductsController {
 
     public static SellerMyProductsController instance;
 
@@ -32,23 +35,22 @@ public class SellerMyProductsController extends TableController<ProductDTO> {
     @FXML private TableColumn<ProductDTO, String>  colStatus;
     @FXML private TableColumn<ProductDTO, Void>    colActions;
 
-    private FilteredList<ProductDTO> filteredList;
+    private final ObservableList<ProductDTO> masterList   = FXCollections.observableArrayList();
+    private       FilteredList<ProductDTO>   filteredList;
 
     @FXML
     public void initialize() {
         instance = this;
 
-        // Sử dụng tableData từ class cha (TableController) thay vì tạo masterList riêng
-        filteredList = new FilteredList<>(tableData, p -> true);
+        filteredList = new FilteredList<>(masterList, p -> true);
         if (tblMyAuctions != null) tblMyAuctions.setItems(filteredList);
 
         setupTable();
         setupFilters();
-        loadData();
+        loadMyAuctions();
     }
 
-    @Override
-    protected void setupTable() {
+    private void setupTable() {
         if (colId   != null) colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         if (colName != null) colName.setCellValueFactory(new PropertyValueFactory<>("name"));
 
@@ -131,22 +133,17 @@ public class SellerMyProductsController extends TableController<ProductDTO> {
         });
     }
 
-    @Override
-    protected void loadData() {
+    private void loadMyAuctions() {
         String username = SessionManager.getCurrentUsername();
         if (username != null)
             SocketClient.sendRequest(new AuctionRequest("GET_MY_PRODUCTS", username));
     }
 
-    @Override
-    public void updateTable(List<ProductDTO> items) {
-        super.updateTable(items); // Gọi logic setAll của class cha
-        javafx.application.Platform.runLater(this::applyFilter); // Đảm bảo bộ lọc áp dụng ngay sau khi dữ liệu mới nạp vào
-    }
-
-    // Giữ lại hàm này để đảm bảo ResponseListener không bị lỗi nếu nó đang gọi thẳng tới displayMyProducts
     public void displayMyProducts(List<ProductDTO> products) {
-        updateTable(products);
+        Platform.runLater(() -> {
+            masterList.setAll(products);
+            applyFilter();
+        });
     }
 
     private void openBidHistory(ProductDTO product) {

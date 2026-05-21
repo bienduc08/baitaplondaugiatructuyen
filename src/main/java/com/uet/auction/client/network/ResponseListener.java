@@ -51,7 +51,7 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             // 1. Báo cho AdminController đếm số lượng (Open, Pending, Closed)
                             if (AdminController.instance != null) {
-                                AdminController.instance.updateStatisticsCounts(allProducts);
+                                AdminController.instance.updatePendingList(allProducts);
                             }
 
                             // 2. Báo cho AdminPendingController để hiển thị chi tiết vào Bảng
@@ -72,8 +72,8 @@ public class ResponseListener implements Runnable {
                         if (res.isSuccess()) {
                             List<ProductDTO> joinedProducts = (List<ProductDTO>) res.getData();
                             Platform.runLater(() -> {
-                                if (UserAuctionsController.instance != null)
-                                    UserAuctionsController.instance.displayJoinedAuctions(joinedProducts);
+                                if (JoinedAuctionsController.instance != null)
+                                    JoinedAuctionsController.instance.displayJoinedAuctions(joinedProducts);
                             });
                         }
                         break;
@@ -107,6 +107,8 @@ public class ResponseListener implements Runnable {
                                 HomecontentController.instance.loadProducts();
                             if (AdminPendingController.instance != null)
                                 AdminPendingController.instance.refreshPendingProducts();
+                            if (ProductDetailController.instance != null)
+                                ProductDetailController.instance.reloadProductDetails();
                         });
                         break;
 
@@ -140,6 +142,71 @@ public class ResponseListener implements Runnable {
                         });
                         break;
 
+
+
+                    case "BID_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage() != null ? res.getMessage() : "Đặt giá thành công!");
+                            } else {
+                                AlertHelper.showError(res.getMessage() != null ? res.getMessage() : "Đặt giá thất bại!");
+                            }
+                        });
+                        break;
+
+                    case "GET_BID_HISTORY_RESULT":
+                        if (res.isSuccess()) {
+                            java.util.List<com.uet.auction.common.DTO.BidDTO> bidHistory =
+                                    (java.util.List<com.uet.auction.common.DTO.BidDTO>) res.getData();
+                            Platform.runLater(() -> {
+                                if (BidHistoryController.instance != null)
+                                    BidHistoryController.instance.displayBidHistory(bidHistory);
+                                if (ProductDetailController.instance != null)
+                                    ProductDetailController.instance.displayBidHistory(bidHistory);
+                            });
+                        }
+                        break;
+
+                    case "GET_MY_BIDS_RESULT":
+                        if (res.isSuccess()) {
+                            List<com.uet.auction.common.DTO.BidDTO> myBids =
+                                    (List<com.uet.auction.common.DTO.BidDTO>) res.getData();
+                            Platform.runLater(() -> {
+                                if (ProfileController.instance != null)
+                                    ProfileController.instance.displayMyBids(myBids);
+                            });
+                        }
+                        break;
+
+                    case "UPGRADE_TO_SELLER_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage());
+                                if (ProfileController.instance != null)
+                                    ProfileController.instance.handleUpgradeToSellerSuccess();
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                            }
+                        });
+                        break;
+
+                    case "DEPOSIT_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage());
+                                double newBalance = ((Number) res.getData()).doubleValue();
+                                if (ProfileController.instance != null)
+                                    ProfileController.instance.handleDepositSuccess(newBalance);
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                                if (ProfileController.instance != null)
+                                    ProfileController.instance.handleDepositFailure();
+                            }
+                        });
+                        break;
+
+                    case "GET_STATS_SUCCESS":
+                        break;
 
                     default:
                         System.out.println("Phản hồi không xác định: " + type);

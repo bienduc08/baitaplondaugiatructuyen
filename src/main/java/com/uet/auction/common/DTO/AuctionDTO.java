@@ -1,8 +1,5 @@
 package com.uet.auction.common.DTO;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-
 import java.io.Serializable;
 
 public class AuctionDTO implements Serializable {
@@ -34,5 +31,4 @@ public class AuctionDTO implements Serializable {
     public String getStatus() { return status; }
     public String getTimeLeft() { return timeLeft; }
     public String getImagePath() { return imagePath; }
-
 }

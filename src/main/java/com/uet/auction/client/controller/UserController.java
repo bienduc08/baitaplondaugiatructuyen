@@ -1,7 +1,9 @@
 package com.uet.auction.client.controller;
 
+import com.uet.auction.client.network.SocketClient;
 import com.uet.auction.client.util.SceneManager;
 import com.uet.auction.client.util.SessionManager;
+import com.uet.auction.common.Request.AuctionRequest;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -12,9 +14,13 @@ import java.io.IOException;
 public class UserController {
     public static UserController instance;
 
+    private enum ActiveView { HOME, JOINED, PROFILE }
+
     @FXML private BorderPane mainBorderPane;
     @FXML private Label welcomeLabel;
     @FXML private Label lblBalance;
+
+    private ActiveView activeView = ActiveView.HOME;
 
     @FXML
     public void initialize() {
@@ -26,31 +32,60 @@ public class UserController {
         onShowHomeClick();
     }
 
-    private void loadView(String fxmlPath) {
+    private void loadView(String fxmlPath, ActiveView view) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Node node = loader.load();
             mainBorderPane.setCenter(node);
+            activeView = view;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @FXML public void onShowHomeClick() {
-        loadView("/com/uet/auction/view/HomeContent.fxml");
+        loadView("/com/uet/auction/view/HomeContent.fxml", ActiveView.HOME);
     }
 
     @FXML public void onShowUserAuctionsClick() {
-        loadView("/com/uet/auction/view/UserAuctions.fxml");
+        loadView("/com/uet/auction/view/UserAuctions.fxml", ActiveView.JOINED);
     }
 
     @FXML public void onProfileButtonClick() {
         Node previousView = mainBorderPane.getCenter();
         ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
-        loadView("/com/uet/auction/view/ProfileContent.fxml");
+        loadView("/com/uet/auction/view/ProfileContent.fxml", ActiveView.PROFILE);
     }
 
-    @FXML public void onRefreshButtonClick() { onShowHomeClick(); }
+    @FXML
+    public void onRefreshButtonClick() {
+        switch (activeView) {
+            case JOINED:
+                if (JoinedAuctionsController.instance != null)
+                    JoinedAuctionsController.instance.reloadJoinedAuctions();
+                else
+                    onShowUserAuctionsClick();
+                break;
+            case PROFILE:
+                if (ProfileController.instance != null) {
+                    String username = SessionManager.getCurrentUsername();
+                    if (username != null)
+                        SocketClient.sendRequest(new AuctionRequest("GET_MY_BIDS", username));
+                } else {
+                    onProfileButtonClick();
+                }
+                break;
+            default:
+                onShowHomeClick();
+                break;
+        }
+    }
+
+    public void updateBalance() {
+        if (SessionManager.getCurrentUser() != null && lblBalance != null) {
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
+    }
 
     @FXML public void onLogoutButtonClick() {
         try {
@@ -61,5 +96,11 @@ public class UserController {
 
     public BorderPane getMainBorderPane() {
         return mainBorderPane;
+    }
+
+    public void refreshBalance() {
+        if (SessionManager.getCurrentUser() != null && lblBalance != null) {
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
     }
 }

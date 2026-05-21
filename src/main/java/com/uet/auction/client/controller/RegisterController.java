@@ -13,18 +13,17 @@ public class RegisterController {
 
     public static RegisterController instance;
 
+    private static final String DEFAULT_ROLE = "USER";
+
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmPasswordField;
     @FXML private TextField fullNameField;
-    @FXML private ComboBox<String> roleComboBox;
     @FXML private Label statusLabel;
 
     @FXML
     public void initialize() {
         instance = this;
-        roleComboBox.getItems().addAll("USER", "SELLER");
-        roleComboBox.setValue("USER");
     }
 
     @FXML
@@ -32,7 +31,6 @@ public class RegisterController {
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
         String confirm  = confirmPasswordField.getText().trim();
-        String role     = roleComboBox.getValue();
 
         if (username.isEmpty() || password.isEmpty()) {
             statusLabel.setText("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
@@ -42,14 +40,10 @@ public class RegisterController {
             statusLabel.setText("Mật khẩu xác nhận không khớp!");
             return;
         }
-        if (role == null) {
-            statusLabel.setText("Vui lòng chọn vai trò!");
-            return;
-        }
 
         statusLabel.setText("Đang xử lý...");
 
-        Object[] regData = new Object[]{username, password, role};
+        Object[] regData = new Object[]{username, password, DEFAULT_ROLE};
         SocketClient.sendRequest(new AuctionRequest("REGISTER", regData));
     }
 
