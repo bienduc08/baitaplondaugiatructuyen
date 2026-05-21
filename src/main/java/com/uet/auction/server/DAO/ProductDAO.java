@@ -1,117 +1,130 @@
 package com.uet.auction.server.DAO;
 
-import com.uet.auction.server.config.DatabaseConnection;
 import com.uet.auction.common.DTO.ProductDTO;
+import com.uet.auction.server.config.DatabaseConnection;
+
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProductDAO {
-    // Lấy danh sách sản phẩm đang đấu giá
-    public List<ProductDTO> getAllProducts() {
-        List<ProductDTO> list = new ArrayList<>();
-        String sql = "SELECT * FROM products";
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
 
-            while (rs.next()) {
-                ProductDTO p = new ProductDTO();
-                p.setId(rs.getInt("id"));
-                p.setName(rs.getString("name"));
-                p.setCurrentPrice(rs.getDouble("starting_price"));
-                // Map thêm các trường khác như start_time, end_time nếu cần
-                list.add(p);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
+    public List<ProductDTO> getAllProducts() {
+        return getProductsByStatus("ALL");
     }
-    // Thêm hàm này vào com.uet.auction.server.DAO.ProductDAO
+
     public List<ProductDTO> getProductsByStatus(String status) {
         List<ProductDTO> list = new ArrayList<>();
-        String sql = "SELECT * FROM products WHERE status = ?";
+        String sql = "ALL".equals(status)
+                ? "SELECT * FROM products ORDER BY id DESC"
+                : "SELECT * FROM products WHERE status = ? ORDER BY id DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, status);
+            if (!"ALL".equals(status)) pstmt.setString(1, status);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                ProductDTO p = new ProductDTO();
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));  // cột đúng là "name"
+                p.setStartingPrice(rs.getDouble("starting_price"));
+                p.setStepPrice(rs.getDouble("step_price"));
+
+                // current_price = giá đang đấu; nếu NULL thì fallback về starting_price
+                double cp = rs.getDouble("current_price");
+                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
+                p.setDescription(safeGetString(rs, "description"));
+                p.setSellerName(safeGetString(rs, "seller_name"));
+                p.setOwnerName(safeGetString(rs, "owner_name"));
+                p.setStatus(rs.getString("status"));
+                p.setImageUrl(safeGetString(rs, "image_url"));
+
+                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
+                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
+                list.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO.getProductsByStatus] " + e.getMessage());
+        }
+        return list;
+    }
+
+    // =========================================================
+    // HÀM MỚI BỔ SUNG: Lấy danh sách sản phẩm theo người bán
+    // =========================================================
+    public List<ProductDTO> getProductsBySeller(String sellerName) {
+        List<ProductDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM products WHERE seller_name = ? ORDER BY id DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, sellerName);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 ProductDTO p = new ProductDTO();
                 p.setId(rs.getInt("id"));
                 p.setName(rs.getString("name"));
-                p.setCurrentPrice(rs.getDouble("starting_price"));
-                p.setSellerName(rs.getString("seller_name"));
-                p.setOwnerName(rs.getString("owner_name"));
+                p.setStartingPrice(rs.getDouble("starting_price"));
+                p.setStepPrice(rs.getDouble("step_price"));
 
-                if (rs.getTimestamp("start_time") != null) {
-                    p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime());
-                }
-                if (rs.getTimestamp("end_time") != null) {
-                    p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());
-                }
+                double cp = rs.getDouble("current_price");
+                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
+                p.setDescription(safeGetString(rs, "description"));
+                p.setSellerName(safeGetString(rs, "seller_name"));
+                p.setOwnerName(safeGetString(rs, "owner_name"));
                 p.setStatus(rs.getString("status"));
+                p.setImageUrl(safeGetString(rs, "image_url"));
+
+                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
+                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
 
                 list.add(p);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("[ProductDAO.getProductsBySeller] " + e.getMessage());
         }
         return list;
     }
 
-    // Cập nhật giá mới khi có người đặt thầu
-    public boolean updatePrice(int productId, double newPrice) {
-        String sql = "UPDATE products SET starting_price = ? WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setDouble(1, newPrice);
-            pstmt.setInt(2, productId);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    // Thêm vào trong class ProductDAO
-    public void closeExpiredAuctions() {
-        String sql = "UPDATE products SET status = 'CLOSED' WHERE end_time <= NOW() AND status = 'OPEN'";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println(">>> Đã đóng " + affectedRows + " phiên đấu giá hết hạn.");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    // Trong com.uet.auction.server.DAO.ProductDAO
+    public boolean addProduct(String name, String description, double startingPrice,
+                              double stepPrice, String sellerName,
+                              LocalDateTime startTime, LocalDateTime endTime,
+                              String imageUrl) { // [THÊM MỚI] Thêm tham số imageUrl
 
-    // 1. Dành cho Seller: Thêm sản phẩm với trạng thái PENDING
-    public boolean addProduct(String name, double startingPrice, String sellerName, LocalDateTime startTime, LocalDateTime endTime) {
-        String sql = "INSERT INTO products (name, starting_price, seller_name, start_time, end_time, status) VALUES (?, ?, ?, ?, ?, 'PENDING')";
+        // Cập nhật câu SQL: thêm cột image_url
+        String sql = "INSERT INTO products (name, description, starting_price, current_price, " +
+                "step_price, start_time, end_time, seller_name, status, image_url) " + // [SỬA] Thêm image_url
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)"; // [SỬA] Thêm một dấu ? ở cuối
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, name);
-            pstmt.setDouble(2, startingPrice);
-            pstmt.setString(3, sellerName);
-            pstmt.setTimestamp(4, Timestamp.valueOf(startTime));
-            pstmt.setTimestamp(5, Timestamp.valueOf(endTime));
+            pstmt.setString(2, description);
+            pstmt.setDouble(3, startingPrice);
+            pstmt.setDouble(4, startingPrice);
+            pstmt.setDouble(5, stepPrice);
+            pstmt.setTimestamp(6, Timestamp.valueOf(startTime));
+            pstmt.setTimestamp(7, Timestamp.valueOf(endTime));
+            pstmt.setString(8, sellerName);
+            pstmt.setString(9, imageUrl); // [THÊM MỚI] Truyền giá trị imageUrl
 
-            return pstmt.executeUpdate() > 0;
+            boolean ok = pstmt.executeUpdate() > 0;
+            if (ok) System.out.println("[ProductDAO] Đã thêm sản phẩm: " + name);
+            return ok;
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("[ProductDAO.addProduct] " + e.getMessage());
             return false;
         }
     }
 
-    // 2. Dành cho Admin: Cập nhật trạng thái sản phẩm (Duyệt hoặc Từ chối)
+
     public boolean updateProductStatus(int productId, String newStatus) {
         String sql = "UPDATE products SET status = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -120,23 +133,84 @@ public class ProductDAO {
             pstmt.setInt(2, productId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
+            System.err.println("[ProductDAO.updateProductStatus] " + e.getMessage());
             return false;
         }
     }
-    public void openScheduledAuctions() {
-        // Chuyển trạng thái từ APPROVED sang OPEN khi đến giờ
-        String sql = "UPDATE products SET status = 'OPEN' WHERE status = 'APPROVED' AND start_time <= NOW()";
 
+    public void openScheduledAuctions() {
+        String sql = "UPDATE products SET status = 'OPEN' WHERE status = 'APPROVED' AND start_time <= NOW()";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println(">>> Đã mở tự động " + affectedRows + " phiên đấu giá đến giờ!");
-            }
-
+            int n = pstmt.executeUpdate();
+            if (n > 0) System.out.println(">>> Đã mở tự động " + n + " phiên.");
         } catch (SQLException e) {
-            System.err.println("Lỗi khi mở phiên đấu giá tự động: " + e.getMessage());
+            System.err.println("[openScheduledAuctions] " + e.getMessage());
+        }
+    }
+
+    public void closeExpiredAuctions() {
+        String sql = "UPDATE products SET status = 'CLOSED' WHERE status = 'OPEN' AND end_time <= NOW()";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            int n = pstmt.executeUpdate();
+            if (n > 0) System.out.println(">>> Đã đóng tự động " + n + " phiên.");
+        } catch (SQLException e) {
+            System.err.println("[closeExpiredAuctions] " + e.getMessage());
+        }
+    }
+
+    private String safeGetString(ResultSet rs, String col) {
+        try { return rs.getString(col); } catch (Exception e) { return null; }
+    }
+    public void extendAuctionIfLastBid() {
+        // Ví dụ một câu lệnh SQL để tự động gia hạn thêm 5 phút cho các sản phẩm
+        // đang ở trạng thái OPEN, có người vừa bid và thời gian còn lại dưới 30 giây.
+        String sql = "UPDATE products SET end_time = DATE_ADD(end_time, INTERVAL 5 MINUTE) " +
+                "WHERE status = 'OPEN' AND TIMESTAMPDIFF(SECOND, NOW(), end_time) BETWEEN 0 AND 30";
+
+        try (Connection conn = DatabaseConnection.getConnection(); // Sử dụng class kết nối DB của bạn
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("[Anti-Sniping] Đã kích hoạt gia hạn cho " + affectedRows + " sản phẩm.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi khi thực hiện anti-sniping: " + e.getMessage());
+        }
+    }
+    private ProductDTO mapRowToDTO(ResultSet rs) throws SQLException {
+        ProductDTO p = new ProductDTO();
+        p.setId(rs.getInt("id"));
+        p.setName(rs.getString("name"));
+        p.setDescription(rs.getString("description"));
+        p.setStartingPrice(rs.getDouble("starting_price"));
+        p.setCurrentPrice(rs.getDouble("current_price"));
+        p.setStepPrice(rs.getDouble("step_price"));
+        p.setSellerName(rs.getString("seller_name"));
+        p.setStatus(rs.getString("status"));
+        p.setImageUrl(rs.getString("image_url"));
+
+        Timestamp start = rs.getTimestamp("start_time");
+        if (start != null) p.setStartTime(start.toLocalDateTime());
+
+        Timestamp end = rs.getTimestamp("end_time");
+        if (end != null) p.setEndTime(end.toLocalDateTime());
+
+        return p;
+    }
+    public boolean updateStatus(int productId, String status) {
+        String sql = "UPDATE products SET status = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, status);
+            pstmt.setInt(2, productId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.uet.auction.model;
+package com.uet.auction.server.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,7 +15,6 @@ public class Auction extends Entity {
     private BigDecimal currentPrice;
     private BigDecimal reservePrice;
     private BigDecimal minBidIncrement;
-    private double currentHighestBid;
     private AuctionStatus status;
     private int extensionCount;
     private int totalBids;
@@ -25,20 +24,22 @@ public class Auction extends Entity {
         super();
         this.status = AuctionStatus.OPEN;
         this.extensionCount = 0;
+        this.bidHistory = new ArrayList<>();
     }
 
     public Auction(int id, LocalDateTime createdAt, int itemId, int sellerId, int highestBidderId,
-                   LocalDateTime startTime, LocalDateTime endTime, double currentHighestBid,
-                   String status, int extensionCount) {
+                   LocalDateTime startTime, LocalDateTime endTime, BigDecimal currentPrice,
+                   AuctionStatus status, int extensionCount) {
         super(id, createdAt);
         this.itemId = itemId;
         this.sellerId = sellerId;
         this.highestBidderId = highestBidderId;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.currentHighestBid = currentHighestBid;
-        this.status = AuctionStatus.OPEN;
+        this.currentPrice = currentPrice;
+        this.status = status;
         this.extensionCount = extensionCount;
+        this.bidHistory = new ArrayList<>();
     }
 
     public Auction(int itemId, int sellerId, BigDecimal startingPrice,
@@ -72,15 +73,6 @@ public class Auction extends Entity {
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
-    public double getCurrentHighestBid() { return currentHighestBid; }
-    public void setCurrentHighestBid(double currentHighestBid) { this.currentHighestBid = currentHighestBid; }
-
-    public AuctionStatus getStatus() { return status; }
-    public void setStatus(AuctionStatus status) { this.status = status; }
-
-    public int getExtensionCount() { return extensionCount; }
-    public void setExtensionCount(int extensionCount) { this.extensionCount = extensionCount; }
-
     public BigDecimal getStartingPrice() { return startingPrice; }
     public void setStartingPrice(BigDecimal startingPrice) { this.startingPrice = startingPrice; }
 
@@ -89,6 +81,21 @@ public class Auction extends Entity {
 
     public BigDecimal getReservePrice() { return reservePrice; }
     public void setReservePrice(BigDecimal reservePrice) { this.reservePrice = reservePrice; }
+
+    public BigDecimal getMinBidIncrement() { return minBidIncrement; }
+    public void setMinBidIncrement(BigDecimal minBidIncrement) { this.minBidIncrement = minBidIncrement; }
+
+    public AuctionStatus getStatus() { return status; }
+    public void setStatus(AuctionStatus status) { this.status = status; }
+
+    public int getExtensionCount() { return extensionCount; }
+    public void setExtensionCount(int extensionCount) { this.extensionCount = extensionCount; }
+
+    public int getTotalBids() { return totalBids; }
+    public void setTotalBids(int totalBids) { this.totalBids = totalBids; }
+
+    public List<BidTransaction> getBidHistory() { return bidHistory; }
+    public void setBidHistory(List<BidTransaction> bidHistory) { this.bidHistory = bidHistory; }
 
     @Override
     public void printInfo() {

@@ -24,16 +24,26 @@ public class SocketClient {
             System.err.println("Không thể kết nối Server!");
         }
     }
+    public static void setOut(ObjectOutputStream out) {
+        SocketClient.out = out;
+    }
 
     // Hàm gửi tin đi (Không cần nhận về ngay vì ResponseListener sẽ lo việc nhận)
+
     public static void sendRequest(AuctionRequest request) {
+        if (out == null) {
+            System.err.println("Chưa kết nối server!");
+            javafx.application.Platform.runLater(() ->
+                    com.uet.auction.client.util.AlertHelper.showError(
+                            "Không thể kết nối tới server. Vui lòng thử lại!"));
+            return;
+        }
         try {
-            if (out != null) {
-                out.writeObject(request);
-                out.flush();
-            }
-        } catch (IOException e) {
-            System.err.println("Lỗi khi gửi dữ liệu!");
+            out.reset();              // ← THÊM DÒNG NÀY — xóa cache object cũ
+            out.writeObject(request);
+            out.flush();
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi request: " + e.getMessage());
         }
     }
 }

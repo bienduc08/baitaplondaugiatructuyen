@@ -4,21 +4,20 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.application.Platform;
+import java.io.IOException;
 
 public class SceneManager {
-    public static void switchScene(Stage currentStage, String fxmlPath) {
-        Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource(fxmlPath));
-                Parent root = loader.load();
-                Scene scene = new Scene(root);
-                currentStage.setScene(scene);
-                currentStage.show();
-            } catch (Exception e) {
-                e.printStackTrace();
-                AlertHelper.showError("Không thể tải màn hình: " + fxmlPath);
-            }
-        });
+    private static Stage primaryStage;
+
+    public static void setPrimaryStage(Stage stage) {
+        primaryStage = stage;
+    }
+
+    public static void switchScene(String fxmlPath, String title) throws IOException {
+        FXMLLoader loader = new FXMLLoader(SceneManager.class.getResource(fxmlPath));
+        Parent root = loader.load();
+        primaryStage.setTitle(title);
+        primaryStage.setScene(new Scene(root));
+        primaryStage.show();
     }
 }

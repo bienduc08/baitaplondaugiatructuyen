@@ -1,48 +1,65 @@
 package com.uet.auction.client.controller;
 
-import com.uet.auction.client.network.SocketClient;
-import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.client.util.SceneManager;
-import com.uet.auction.common.DTO.ProductDTO;
-import com.uet.auction.common.Request.AuctionRequest;
-import com.uet.auction.common.Response.AuctionResponse;
-import javafx.application.Platform;
+import com.uet.auction.client.util.SessionManager;
 import javafx.fxml.FXML;
-import javafx.scene.layout.VBox;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.stage.Stage;
-import java.util.List;
+import javafx.scene.layout.BorderPane;
+import java.io.IOException;
 
 public class UserController {
-    @FXML private VBox productListContainer;
     public static UserController instance;
+
+    @FXML private BorderPane mainBorderPane;
+    @FXML private Label welcomeLabel;
+    @FXML private Label lblBalance;
 
     @FXML
     public void initialize() {
         instance = this;
-        loadProducts(); // Load ngay khi mở màn hình
+        if (SessionManager.getCurrentUser() != null) {
+            welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
+        onShowHomeClick();
     }
 
-    // Hàm này được gọi từ ResponseListener
-    public void displayProducts(List<ProductDTO> products) {
-        Platform.runLater(() -> {
-            productListContainer.getChildren().clear();
-            for (ProductDTO p : products) {
-                Label label = new Label(p.getName() + " - Giá: " + p.getCurrentPrice());
-                productListContainer.getChildren().add(label);
-                // Lưu ý: Bạn có thể thay Label bằng việc load file product_item.fxml như bài trước mình hướng dẫn
-            }
-        });
+    private void loadView(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Node node = loader.load();
+            mainBorderPane.setCenter(node);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    @FXML
-    public void onLogoutClick() {
-        Stage stage = (Stage) productListContainer.getScene().getWindow();
-        SceneManager.switchScene(stage, "/com/uet/auction/view/Login.fxml");
+    @FXML public void onShowHomeClick() {
+        loadView("/com/uet/auction/view/HomeContent.fxml");
     }
-    public void loadProducts() {
-        // User chỉ được lấy các sản phẩm đang OPEN
-        AuctionRequest req = new AuctionRequest("GET_OPEN_PRODUCTS", null);
-        SocketClient.sendRequest(req);
+
+    @FXML public void onShowUserAuctionsClick() {
+        loadView("/com/uet/auction/view/UserAuctions.fxml");
+    }
+
+    @FXML public void onProfileButtonClick() {
+        Node previousView = mainBorderPane.getCenter();
+        ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
+        loadView("/com/uet/auction/view/ProfileContent.fxml");
+    }
+
+    @FXML public void onRefreshButtonClick() { onShowHomeClick(); }
+
+    @FXML public void onLogoutButtonClick() {
+        try {
+            SessionManager.clearSession();
+            SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    public BorderPane getMainBorderPane() {
+        return mainBorderPane;
     }
 }

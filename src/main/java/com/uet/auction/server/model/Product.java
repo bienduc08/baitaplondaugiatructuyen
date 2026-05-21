@@ -1,88 +1,66 @@
 package com.uet.auction.server.model;
 
-import java.sql.Timestamp;
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.chrono.ChronoLocalDateTime;
 
-//Sản phẩm
-public class Product {
-    int id;
-    String name;
-    double startingPrice;
+public class Product implements Serializable {
+    private int id;
+    private String name;
+    private double startingPrice;
+    private double currentPrice;
+    private String description;
+    private String sellerName;
     private String ownerName;
-    private java.time.LocalDateTime endTime;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private String status;
+    private double stepPrice;
 
-    public Product(int id, String name, double startingPrice,String owner) {
+    public Product() {}
+
+    public Product(int id, String name, double startingPrice, double currentPrice,
+                   String sellerName, LocalDateTime startTime, LocalDateTime endTime, String status, double stepPrice) {
         this.id = id;
         this.name = name;
-        this.owner = owner;
         this.startingPrice = startingPrice;
-        this.isActive = false;
+        this.currentPrice = currentPrice;
+        this.sellerName = sellerName;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.status = status;
+        this.stepPrice = stepPrice;
     }
 
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public double setEndingPrice(double bidAmount) {
-        endingPrice = bidAmount;
-        return bidAmount;
-    }
-    public double getEndingPrice() {
-        return endingPrice;
-    }
-    public ChronoLocalDateTime<?> getEndTime() {
-        return endTime;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public User setHighestBidder(User user) {
-        this.HighestBidder = user;
-        return user;
-    }
-    public String getOwner() {
-        return owner;
-    }
-    public int getId() {
-        return id;
-    }
-    public void setId(int id) {
-        this.id = id;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
+    public double getStartingPrice() { return startingPrice; }
+    public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
 
-    public void setStartTime(LocalDateTime start) {
-        this.startTime = start;
-    }
+    public double getCurrentPrice() { return currentPrice; }
+    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
 
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setEndTime(LocalDateTime end) {
-        this.endTime = end;
-    }
+    public String getSellerName() { return sellerName; }
+    public void setSellerName(String sellerName) { this.sellerName = sellerName; }
 
-    public void setActive(boolean b) {
-        this.isActive = b;
-    }
+    public String getOwnerName() { return ownerName; }
+    public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
 
-    public int getPrice() {
-        return (int) startingPrice;
-    }
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
 
-    public String getName() {
-        return name;
-    }
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
-    public double getStartingPrice() {
-        return startingPrice;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public ChronoLocalDateTime getStartTime() {
-        return startTime;
-
-    }
-    public void setStartingPrice(double startingPrice) {
-        this.startingPrice = startingPrice;
-    }
-
-    public String getOwnerName() {
-    }
+    public double getStepPrice() { return stepPrice; }
+    public void setStepPrice(double stepPrice) { this.stepPrice = stepPrice; }
 }

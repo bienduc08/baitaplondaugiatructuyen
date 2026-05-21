@@ -1,81 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
 
-<VBox prefHeight="540.0" prefWidth="700.0" spacing="20.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.SellerController">
-    <children>
-        <!-- Header Section -->
-        <HBox alignment="CENTER_LEFT">
-            <children>
-                <VBox spacing="5.0">
-                    <children>
-                        <Label text="Quản lý sản phẩm đấu giá">
-                            <font>
-                                <Font name="System Bold" size="20.0" />
-                            </font>
-                        </Label>
-                        <Label text="Danh sách các sản phẩm bạn đang đăng bán" textFill="#7f8c8d" />
-                    </children>
-                </VBox>
-                <Region HBox.hgrow="ALWAYS" />
-                <Button fx:id="btnAddProduct" mnemonicParsing="false" onAction="#handleAddNewProduct" prefHeight="40.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="+ Đăng sản phẩm mới" />
-            </children>
+<BorderPane fx:id="mainBorderPane" prefHeight="750.0" prefWidth="1100.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.SellerController">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-background-color: linear-gradient(to right, #15284b, #2d74c4);" styleClass="top-header">
+         <ImageView fitHeight="75.0" fitWidth="75.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+               <Image url="@../images/vnu-uet.png" />
+            </image>
+         </ImageView>
+            <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />
+            <Button onAction="#onRefreshButtonClick" styleClass="btn-refresh" text="🔄 Làm mới" />
+            <Button onAction="#onLogoutButtonClick" styleClass="btn-logout" text="Đăng xuất" />
         </HBox>
+    </top>
 
-        <!-- Statistics Row (Mini Cards) -->
-        <HBox spacing="20.0">
-            <children>
-                <VBox alignment="CENTER" prefHeight="80.0" prefWidth="150.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
-                    <children>
-                        <Label text="Đang đấu giá" textFill="#7f8c8d" />
-                        <Label fx:id="lblActiveAuctions" text="12" textFill="#2980b9">
-                            <font>
-                                <Font name="System Bold" size="20.0" />
-                            </font>
-                        </Label>
-                    </children>
-                </VBox>
-                <VBox alignment="CENTER" prefHeight="80.0" prefWidth="150.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);">
-                    <children>
-                        <Label text="Đã chốt đơn" textFill="#7f8c8d" />
-                        <Label fx:id="lblSoldItems" text="45" textFill="#27ae60">
-                            <font>
-                                <Font name="System Bold" size="20.0" />
-                            </font>
-                        </Label>
-                    </children>
-                </VBox>
-            </children>
-        </HBox>
-
-        <!-- Table Section -->
-        <VBox VBox.vgrow="ALWAYS" spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 15;">
-            <children>
-                <Label text="Chi tiết sản phẩm">
-                    <font>
-                        <Font name="System Bold" size="14.0" />
-                    </font>
-                </Label>
-                <TableView fx:id="tableSellerProducts" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
-                    <columns>
-                        <TableColumn fx:id="colId" prefWidth="50.0" text="ID" />
-                        <TableColumn fx:id="colName" prefWidth="200.0" text="Tên sản phẩm" />
-                        <TableColumn fx:id="colPrice" prefWidth="120.0" text="Giá khởi điểm" />
-                        <TableColumn fx:id="colHighestBid" prefWidth="120.0" text="Giá cao nhất" />
-                        <TableColumn fx:id="colStatus" prefWidth="100.0" text="Trạng thái" />
-                        <TableColumn fx:id="colAction" prefWidth="100.0" text="Thao tác" />
-                    </columns>
-                    <columnResizePolicy>
-                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                    </columnResizePolicy>
-                </TableView>
-            </children>
+    <left>
+        <VBox prefWidth="220.0" styleClass="sidebar">
+            <VBox spacing="5" styleClass="role-balance-box">
+                <HBox spacing="5">
+                    <Label styleClass="text-grey" text="Vai trò:" />
+                    <Label styleClass="role-text" text="Người bán" />
+                </HBox>
+                <HBox spacing="5">
+                    <Label styleClass="text-grey" text="Số dư:" />
+                    <Label fx:id="lblBalance" styleClass="balance-text" text="0 VNĐ" />
+                </HBox>
+            </VBox>
+            <Button maxWidth="Infinity" onAction="#onShowHomeClick" styleClass="menu-button" text="Trang chủ" />
+            <Button maxWidth="Infinity" onAction="#onShowAddProductClick" styleClass="menu-button" text="Tạo phiên đấu giá" />
+            <Button maxWidth="Infinity" onAction="#onShowMyProductsClick" styleClass="menu-button" text="Phiên đấu giá của tôi" />
+            <Button maxWidth="Infinity" onAction="#onProfileButtonClick" styleClass="menu-button" text="Hồ sơ cá nhân" />
         </VBox>
-    </children>
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
-</VBox>
+    </left>
+
+    <center>
+    </center>
+</BorderPane>

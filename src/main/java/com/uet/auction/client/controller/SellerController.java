@@ -1,77 +1,66 @@
 package com.uet.auction.client.controller;
 
-import com.uet.auction.client.network.SocketClient;
-import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.client.util.SceneManager;
-import com.uet.auction.common.Request.AuctionRequest;
+import com.uet.auction.client.util.SessionManager;
 import javafx.fxml.FXML;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.TextField;
-import javafx.stage.Stage;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.io.IOException;
+
 
 public class SellerController {
-    @FXML private TextField itemNameField;
-    @FXML private TextField startPriceField;
-    @FXML private DatePicker startDatePicker; // Thêm vào giao diện FXML
-    @FXML private DatePicker endDatePicker;
-
     public static SellerController instance;
-    private String currentSeller = "seller_test";
+    @FXML private BorderPane mainBorderPane;
+    @FXML private Label welcomeLabel;
+    @FXML private Label lblBalance;
+
 
     @FXML
     public void initialize() {
         instance = this;
+        if (SessionManager.getCurrentUser() != null) {
+            welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
+        onShowHomeClick();
     }
 
-    @FXML
-    public void onSellItemClick() {
-        String name = itemNameField.getText();
-        String priceStr = startPriceField.getText();
-
-        if(name.isEmpty() || priceStr.isEmpty()) {
-            AlertHelper.showError("Nhập đủ thông tin!");
-            return;
-        }
-
+    private void loadView(String fxmlPath) {
         try {
-            double price = Double.parseDouble(priceStr);
-            // Mặc định cho đấu giá 1 ngày
-            Object[] itemData = new Object[]{name, price, 1};
-            SocketClient.sendRequest(new AuctionRequest("ADD_PRODUCT", itemData));
-        } catch (Exception e) {
-            AlertHelper.showError("Giá không hợp lệ");
+            // ĐÃ SỬA: Thay vì load chết file Seller.fxml gây tràn bộ nhớ,
+            // giờ đây loader sẽ gọi đúng file fxml được truyền vào tham số fxmlPath.
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent root = loader.load();
+            mainBorderPane.setCenter(root);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    @FXML
-    public void onLogoutClick() {
-        Stage stage = (Stage) itemNameField.getScene().getWindow();
-        SceneManager.switchScene(stage, "/com/uet/auction/view/Login.fxml");
+    @FXML public void onShowHomeClick()       { loadView("/com/uet/auction/view/HomeContent.fxml"); }
+    @FXML public void onShowAddProductClick()    { loadView("/com/uet/auction/view/SellerAddProduct.fxml"); }
+    @FXML public void onShowMyProductsClick() { loadView("/com/uet/auction/view/SellerMyProduct.fxml"); }
+
+    @FXML public void onRefreshButtonClick() { onShowHomeClick(); /* Nút refresh */ }
+
+    @FXML public void onProfileButtonClick() {
+        Node previousView = mainBorderPane.getCenter();
+        ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
+        loadView("/com/uet/auction/view/ProfileContent.fxml");
     }
-    @FXML
-    public void onSellItemClick() {
+
+    @FXML public void onLogoutButtonClick() {
         try {
-            String name = itemNameField.getText();
-            double price = Double.parseDouble(startPriceField.getText());
+            SessionManager.clearSession();
+            SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
+        } catch (IOException e) { e.printStackTrace(); }
+    }
 
-            // Lấy ngày bắt đầu và kết thúc (Mặc định thời gian là 00:00, nếu muốn chính xác giờ phút, bạn có thể tự thiết kế thêm TextField nhập Giờ/Phút)
-            LocalDateTime startTime = startDatePicker.getValue().atStartOfDay();
-            LocalDateTime endTime = endDatePicker.getValue().atTime(LocalTime.MAX);
-
-            if (startTime.isAfter(endTime)) {
-                AlertHelper.showError("Thời gian kết thúc phải sau thời gian bắt đầu!");
-                return;
-            }
-
-            // Gói dữ liệu
-            Object[] itemData = new Object[]{name, price, currentSeller, startTime, endTime};
-            SocketClient.sendRequest(new AuctionRequest("ADD_PRODUCT", itemData));
-
-        } catch (Exception e) {
-            AlertHelper.showError("Vui lòng điền đủ và đúng thông tin!");
-        }
+    public BorderPane getMainBorderPane() {
+        return mainBorderPane;
     }
 }

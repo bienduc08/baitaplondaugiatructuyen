@@ -1,12 +1,15 @@
 package com.uet.auction.common.exception;
 
-public class AuctionException extends Exception {
-    private String errorCode;
+import java.io.Serializable;
 
-    public AuctionException(String message, String errorCode) {
+/**
+ * Ngoại lệ cơ bản cho toàn bộ hệ thống đấu giá.
+ * Implement Serializable để có thể gửi thông báo lỗi qua Socket.
+ */
+public class AuctionException extends Exception implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public AuctionException(String message) {
         super(message);
-        this.errorCode = errorCode;
     }
-
-    public String getErrorCode() { return errorCode; }
 }

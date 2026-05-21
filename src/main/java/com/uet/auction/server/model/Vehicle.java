@@ -1,8 +1,8 @@
-package com.uet.auction.model;
+package com.uet.auction.server.model;
 
 import java.math.BigDecimal;
 
-public class Vehicle extends com.uet.auction.model.Item {
+public class Vehicle extends Item {
     private String make;
     private String vehicleModel;
     private int year;
@@ -10,9 +10,9 @@ public class Vehicle extends com.uet.auction.model.Item {
 
     public Vehicle() { super(); }
 
-    public Vehicle(String name, String description, BigDecimal startingPrice, String sellerId,
+    public Vehicle(String name, String description, BigDecimal startingPrice, int sellerId,
                    String make, String vehicleModel, int year, int mileage) {
-        super(name, description, startingPrice, sellerId, com.uet.auction.model.ItemCategory.VEHICLE);
+        super(name, description, startingPrice, sellerId, ItemCategory.VEHICLE);
         this.make = make;
         this.vehicleModel = vehicleModel;
         this.year = year;

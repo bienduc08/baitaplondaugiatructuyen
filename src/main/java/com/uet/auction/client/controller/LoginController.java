@@ -1,62 +1,93 @@
 package com.uet.auction.client.controller;
 
 import com.uet.auction.client.network.SocketClient;
+import com.uet.auction.client.util.SceneManager;
+import com.uet.auction.client.util.SessionManager;
+import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
 import com.uet.auction.common.Request.LoginRequest;
-import com.uet.auction.client.util.AlertHelper;
+import com.uet.auction.common.Response.AuctionResponse;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.application.Platform;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.fxml.FXMLLoader;
+
+import java.io.IOException;
 
 public class LoginController {
-    @FXML private TextField usernameField;
-    @FXML private PasswordField passwordField;
 
-    // Tạo 1 biến tĩnh để ResponseListener có thể gọi lại
     public static LoginController instance;
 
+    @FXML private TextField usernameField;
+    @FXML private PasswordField passwordField;
+    @FXML private Label statusLabel;
+
+    @FXML
     public void initialize() {
         instance = this;
     }
 
     @FXML
-    public void onLoginButtonClick() {
-        String username = usernameField.getText();
-        String password = passwordField.getText();
+    private void handleLoginButton(ActionEvent event) {
+        String username = usernameField.getText().trim();
+        String password = passwordField.getText().trim();
 
         if (username.isEmpty() || password.isEmpty()) {
-            AlertHelper.showError("Vui lòng nhập đủ thông tin!");
+            statusLabel.setText("Vui lòng nhập đầy đủ thông tin!");
             return;
         }
 
-        LoginRequest loginData = new LoginRequest(username, password);
-        SocketClient.sendRequest(new AuctionRequest("LOGIN", loginData));
-        // Gửi xong là thôi, đợi ResponseListener xử lý kết quả
+        statusLabel.setText("Đang gửi yêu cầu đăng nhập...");
+
+        LoginRequest loginReq = new LoginRequest(username, password);
+        SocketClient.sendRequest(new AuctionRequest("LOGIN", loginReq));
     }
 
-    // Hàm này sẽ được ResponseListener gọi khi Server trả về kết quả Đăng nhập
-    public void handleLoginResponse(boolean success, String message) {
+    public void handleLoginResponse(AuctionResponse res) {
         Platform.runLater(() -> {
-            if (success) {
-                AlertHelper.showInfo("Đăng nhập thành công!");
-                goToUserScreen();
+            if (res.isSuccess()) {
+                try {
+                    UserDTO user = (UserDTO) res.getData();
+                    SessionManager.setCurrentUser(user);
+
+                    String role = user.getRole();
+                    if ("ADMIN".equals(role)) {
+                        SceneManager.switchScene("/com/uet/auction/view/Admin.fxml", "Quản trị viên");
+                    } else if ("SELLER".equals(role)) {
+                        SceneManager.switchScene("/com/uet/auction/view/Seller.fxml", "Người bán");
+                    } else {
+                        SceneManager.switchScene("/com/uet/auction/view/User.fxml", "Người mua");
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    statusLabel.setText("Lỗi: Không tìm thấy file giao diện!");
+                }
             } else {
-                AlertHelper.showError(message);
+                statusLabel.setText("Đăng nhập thất bại: " + res.getMessage());
             }
         });
     }
 
-    private void goToUserScreen() {
+    @FXML
+    private void handleRegisterButton(ActionEvent event) {
         try {
-            Stage stage = (Stage) usernameField.getScene().getWindow();
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/User.fxml"));
-            stage.setScene(new Scene(loader.load()));
-        } catch (Exception e) {
+            Parent root = FXMLLoader.load(
+                    getClass().getResource("/com/uet/auction/view/Register.fxml"));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Đăng ký tài khoản");
+            stage.show();
+        } catch (IOException e) {
             e.printStackTrace();
+            statusLabel.setText("Không thể mở màn hình đăng ký!");
         }
     }
 }

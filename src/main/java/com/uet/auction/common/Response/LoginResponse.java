@@ -1,6 +1,6 @@
 package com.uet.auction.common.Response;
 
-import com.uet.auction.common.dto.UserDTO;
+import com.uet.auction.common.DTO.UserDTO;
 import java.io.Serializable;
 
 public class LoginResponse implements Serializable {

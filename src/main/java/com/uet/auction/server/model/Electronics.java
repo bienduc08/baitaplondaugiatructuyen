@@ -1,4 +1,4 @@
-package com.uet.auction.model;
+package com.uet.auction.server.model;
 
 import java.math.BigDecimal;
 
@@ -9,7 +9,7 @@ public class Electronics extends Item {
 
     public Electronics() { super(); }
 
-    public Electronics(String name, String description, BigDecimal startingPrice, String sellerId,
+    public Electronics(String name, String description, BigDecimal startingPrice, int sellerId,
                        String brand, String model, int warrantyMonths) {
         super(name, description, startingPrice, sellerId, ItemCategory.ELECTRONICS);
         this.brand = brand;

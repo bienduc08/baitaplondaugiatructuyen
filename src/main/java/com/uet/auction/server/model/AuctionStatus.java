@@ -1,4 +1,4 @@
-package com.uet.auction.model;
+package com.uet.auction.server.model;
 
 public enum AuctionStatus {
     OPEN("Mở"),

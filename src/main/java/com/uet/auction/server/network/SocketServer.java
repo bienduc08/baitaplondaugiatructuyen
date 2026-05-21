@@ -1,77 +1,48 @@
 package com.uet.auction.server.network;
 
-import com.uet.auction.server.util.Logger;
+import com.uet.auction.common.Response.AuctionResponse;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SocketServer {
-    private int port;
-    private ServerSocket serverSocket;
-    private boolean isRunning;
 
-    public SocketServer(int port) {
-        this.port = port;
-        this.isRunning = false;
-    }
+    // SỬA: đổi ArrayList → synchronizedList để tránh ConcurrentModificationException
+    // khi broadcast() duyệt list đồng thời với removeClient() xóa list từ các thread khác nhau
+    private static final List<ClientHandler> clients =
+            Collections.synchronizedList(new ArrayList<>());
 
-    public void start() {
-        try {
-            // Mở cổng để lắng nghe các kết nối từ mạng
-            serverSocket = new ServerSocket(port);
-            isRunning = true;
-            Logger.info("Server started on port " + port);
-            System.out.println("Đang chờ Client kết nối...");
-
-            while (isRunning) {
-                // Chấp nhận một kết nối mới từ Client
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("Phát hiện kết nối mới từ: " + clientSocket.getInetAddress());
-
-                // Tạo một luồng (Thread) riêng để xử lý Client này thông qua ClientHandler
-                // Việc dùng Thread giúp nhiều người có thể đấu giá cùng lúc
-                ClientHandler handler = new ClientHandler(clientSocket);
+    public void start(int port) {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Server khởi động trên cổng " + port);
+            while (true) {
+                Socket socket = serverSocket.accept();
+                System.out.println("Client kết nối: " + socket.getInetAddress());
+                ClientHandler handler = new ClientHandler(socket);
+                clients.add(handler);
                 new Thread(handler).start();
             }
-        } catch (IOException e) {
-            System.err.println("Lỗi khi khởi động Server: " + e.getMessage());
-        } finally {
-            stop();
-        }
-    }
-
-    public void stop() {
-        try {
-            isRunning = false;
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close();
-            }
-            System.out.println("Server đã dừng.");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    // Thêm vào trong class SocketServer
-    private static List<ClientHandler> clients = new CopyOnWriteArrayList<>();
 
-    public static void broadcast(Object response) {
-        for (ClientHandler client : clients) {
-            client.sendResponse(response); // Gửi giá mới cho mọi người
+    /** Gửi thông báo tới tất cả client đang kết nối (dùng cho real-time update giá) */
+    public static void broadcast(AuctionResponse response) {
+        // SỬA: synchronized block để tránh lỗi khi list bị sửa đổi đồng thời
+        synchronized (clients) {
+            for (ClientHandler client : clients) {
+                client.sendResponse(response);
+            }
         }
     }
-    // Thêm vào class SocketServer
-    private static java.util.List<ClientHandler> activeClients = new java.util.concurrent.CopyOnWriteArrayList<>();
 
-    public static void addClient(ClientHandler handler) {
-        activeClients.add(handler);
-    }
-
-    public static void broadcast(Object response) {
-        for (ClientHandler client : activeClients) {
-            client.sendResponse(response); // Hàm sendResponse bạn đã viết trong ClientHandler
-        }
+    /** Xóa client khi họ ngắt kết nối */
+    public static void removeClient(ClientHandler client) {
+        clients.remove(client);
     }
 }

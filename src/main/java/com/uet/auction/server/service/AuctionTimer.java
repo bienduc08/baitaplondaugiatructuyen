@@ -1,31 +1,41 @@
 package com.uet.auction.server.service;
 
+import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.DAO.ProductDAO;
+import com.uet.auction.server.network.SocketServer;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class AuctionTimer {
+
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final ProductDAO productDAO = new ProductDAO();
 
     public void startChecking() {
-        // Lập lịch cho code chạy lặp đi lặp lại
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                // 1. Quét và Tự động MỞ các phiên đã được Admin duyệt và đến giờ
+
+                // 1. Mở các phiên APPROVED đã đến giờ start_time → OPEN
+                // openScheduledAuctions() trả về void nên ta dùng flag
                 productDAO.openScheduledAuctions();
 
-                // 2. Quét và Tự động ĐÓNG các phiên đang mở nhưng đã hết giờ
+                // Anti-sniping: gia hạn nếu có bid trong 30 giây cuối
+                productDAO.extendAuctionIfLastBid();
+                // 2. Đóng các phiên OPEN đã hết giờ end_time → CLOSED
                 productDAO.closeExpiredAuctions();
 
+                // SỬA: luôn broadcast sau mỗi chu kỳ để client tự refresh
+                // (an toàn hơn vì openScheduledAuctions/closeExpiredAuctions trả về void)
+                SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
+
             } catch (Exception e) {
-                System.err.println("Lỗi luồng AuctionTimer: " + e.getMessage());
+                System.err.println("Lỗi AuctionTimer: " + e.getMessage());
             }
-        }, 0, 1, TimeUnit.SECONDS); // 1 SECONDS: Cứ mỗi 1 giây sẽ chạy quét database 1 lần
+        }, 0, 30, TimeUnit.SECONDS); // SỬA: 30 giây thay vì 1 giây (giảm tải DB)
     }
 
-    // Đừng quên hàm tắt timer khi tắt Server
     public void stopChecking() {
         scheduler.shutdown();
     }
