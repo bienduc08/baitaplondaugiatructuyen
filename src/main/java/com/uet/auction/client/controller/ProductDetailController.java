@@ -1,176 +1,158 @@
 package com.uet.auction.client.controller;
 
 import com.uet.auction.client.network.SocketClient;
-import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.BidDTO;
 import com.uet.auction.common.DTO.ProductDTO;
+import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.ImageView;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.util.Duration;
-
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ProductDetailController {
 
     public static ProductDetailController instance;
+
+    // THÊM BIẾN NÀY: Để linh hoạt quay lại màn hình trước đó bất kể là User, Admin hay Seller
     public static Runnable onBackAction;
 
-    private static final double MIN_BID_STEP = 50_000;
-
-    @FXML private Label lblProductName, lblCurrentPrice, lblDescription, lblTimeRemaining;
-    @FXML private Label lblSellerName, lblTopBidder, lblMinStep;
-    @FXML private TextField txtBidAmount;
-    @FXML private Button btnPlaceBid;
+    @FXML private Label lblProductName, lblCurrentPrice, lblDescription, lblTimeRemaining,lblStepPrice;
+    @FXML private Label lblSellerName, lblTopBidder;
     @FXML private TableView<BidDTO> tblRecentBids;
     @FXML private TableColumn<BidDTO, String> colUser, colBidTime;
     @FXML private TableColumn<BidDTO, Double> colBidPrice;
+    @FXML private TextField txtBidAmount;
+    @FXML private ImageView imgProduct;
 
     private final ObservableList<BidDTO> recentBidsList = FXCollections.observableArrayList();
     private ProductDTO currentProduct;
     private Timeline countdown;
 
+
     @FXML
     public void initialize() {
         instance = this;
         setupTable();
-        if (lblMinStep != null) {
-            lblMinStep.setText(String.format("%,.0f VNĐ", MIN_BID_STEP));
-        }
     }
 
     public void setProductData(ProductDTO product, List<BidDTO> allBids) {
         this.currentProduct = product;
-        refreshProductUI();
 
+        lblProductName.setText(product.getName());
+        lblDescription.setText(product.getDescription());
+        lblCurrentPrice.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
+        lblStepPrice.setText(String.format("%,.0f VNĐ", product.getStepPrice()));
+
+        if (lblSellerName != null) {
+            lblSellerName.setText(product.getSellerName() != null ? product.getSellerName() : "—");
+        }
+        if (lblTopBidder != null) {
+            lblTopBidder.setText(product.getOwnerName() != null && !product.getOwnerName().isBlank() ? product.getOwnerName() : "Chưa có");
+        }
+
+        if (imgProduct != null) {
+            String imageUrl = product.getImageUrl();
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                java.io.File file = new java.io.File(imageUrl);
+                if (file.exists()) {
+                    // Nếu tìm thấy file thật trên Server/ổ cứng
+                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString()));
+                } else {
+                    loadDefaultImage();
+                }
+            } else {
+                loadDefaultImage();
+            }
+        }
+
+        // Nạp dữ liệu lịch sử đấu giá (nếu có)
         if (allBids != null && !allBids.isEmpty()) {
-            displayBidHistory(allBids);
+            List<BidDTO> sortedBids = allBids.stream()
+                    .sorted((b1, b2) -> {
+                        if (b1.getTime() == null && b2.getTime() == null) return 0;
+                        if (b1.getTime() == null) return 1;
+                        if (b2.getTime() == null) return -1;
+                        return b2.getTime().compareTo(b1.getTime());
+                    })
+                    .collect(Collectors.toList());
+            recentBidsList.setAll(sortedBids);
         } else {
             recentBidsList.clear();
-            loadBidHistory();
-        }
-    }
-
-    private void refreshProductUI() {
-        if (currentProduct == null) return;
-
-        lblProductName.setText(currentProduct.getName());
-        lblDescription.setText(currentProduct.getDescription() != null ? currentProduct.getDescription() : "");
-        lblCurrentPrice.setText(String.format("%,.0f VNĐ", currentProduct.getCurrentPrice()));
-
-        String seller = currentProduct.getSellerName() != null ? currentProduct.getSellerName() : "—";
-        String leader = (currentProduct.getOwnerName() != null && !currentProduct.getOwnerName().isBlank())
-                ? currentProduct.getOwnerName() : "Chưa có";
-        updateStatus(seller, leader);
-
-        if (currentProduct.getEndTime() != null) {
-            startCountdown(currentProduct.getEndTime());
-        } else if (lblTimeRemaining != null) {
-            lblTimeRemaining.setText("Còn lại: —");
         }
 
-        updateBidControls();
-    }
-
-    private void updateBidControls() {
-        if (btnPlaceBid == null || txtBidAmount == null || currentProduct == null) return;
-
-        boolean isClosed = "CLOSED".equals(currentProduct.getStatus());
-        String currentUser = SessionManager.getCurrentUsername();
-        boolean isOwnProduct = currentUser != null && currentUser.equals(currentProduct.getSellerName());
-        boolean isLeading = currentUser != null && currentUser.equals(currentProduct.getOwnerName());
-
-        boolean canBid = !isClosed && !isOwnProduct && !isLeading && "OPEN".equals(currentProduct.getStatus());
-        btnPlaceBid.setDisable(!canBid);
-        txtBidAmount.setDisable(!canBid);
-
-        if (isClosed) {
-            btnPlaceBid.setText("PHIÊN ĐÃ KẾT THÚC");
-        } else if (isLeading) {
-            btnPlaceBid.setText("BẠN ĐANG GIỮ ĐỈNH");
-        } else if (isOwnProduct) {
-            btnPlaceBid.setText("PHIÊN CỦA BẠN");
+        if (product.getEndTime() != null) {
+            startCountdown(product.getEndTime());
         } else {
-            btnPlaceBid.setText("ĐẶT GIÁ NGAY");
+            if (lblTimeRemaining != null) lblTimeRemaining.setText("Hết hạn: —");
         }
     }
 
     private void startCountdown(LocalDateTime endTime) {
-        if (countdown != null) countdown.stop();
+        // Dừng bộ đếm cũ nếu có trước khi chạy bộ mới
+        if (countdown != null) {
+            countdown.stop();
+        }
+
+        if (endTime == null) {
+            if (lblTimeRemaining != null) lblTimeRemaining.setText("Thời gian: Không xác định");
+            return;
+        }
 
         countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             LocalDateTime now = LocalDateTime.now();
+
+            // Nếu thời gian hiện tại đã vượt qua thời gian kết thúc
             if (now.isAfter(endTime)) {
-                lblTimeRemaining.setText("⏰ Đã kết thúc");
-                lblTimeRemaining.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                if (countdown != null) countdown.stop();
-                if (currentProduct != null) currentProduct.setStatus("CLOSED");
-                updateBidControls();
+                if (lblTimeRemaining != null) {
+                    lblTimeRemaining.setText("⏰ Phiên đấu giá đã kết thúc");
+                    lblTimeRemaining.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold; -fx-font-size: 14;");
+                }
+                txtBidAmount.setDisable(true); // Khóa ô nhập giá
+                countdown.stop();
                 return;
             }
+
+            // Tính toán số ngày, giờ, phút, giây còn lại
             long totalSeconds = ChronoUnit.SECONDS.between(now, endTime);
             long days    = totalSeconds / 86400;
             long hours   = (totalSeconds % 86400) / 3600;
             long minutes = (totalSeconds % 3600) / 60;
             long secs    = totalSeconds % 60;
 
-            String text = days > 0
-                    ? String.format("Còn lại: %d ngày %02d:%02d:%02d", days, hours, minutes, secs)
-                    : String.format("Còn lại: %02d:%02d:%02d", hours, minutes, secs);
-            lblTimeRemaining.setText(text);
-            lblTimeRemaining.setStyle(totalSeconds < 3600
-                    ? "-fx-text-fill: #e74c3c; -fx-font-weight: bold;"
-                    : "-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+            String timeString;
+            if (days > 0) {
+                timeString = String.format("Còn lại: %d Ngày %02d:%02d:%02d", days, hours, minutes, secs);
+            } else {
+                timeString = String.format("Còn lại: %02d:%02d:%02d", hours, minutes, secs);
+            }
+
+            // Cập nhật lên giao diện
+            if (lblTimeRemaining != null) {
+                lblTimeRemaining.setText(timeString);
+
+                // Hiệu ứng: Đổi màu sang đỏ khi còn dưới 1 tiếng (3600 giây)
+                if (totalSeconds < 3600) {
+                    lblTimeRemaining.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-font-size: 14;");
+                } else {
+                    lblTimeRemaining.setStyle("-fx-text-fill: #2ecc71; -fx-font-weight: bold; -fx-font-size: 14;"); // Màu xanh
+                }
+            }
         }));
-        countdown.setCycleCount(Timeline.INDEFINITE);
-        countdown.play();
-    }
 
-    public void displayBidHistory(List<BidDTO> list) {
-        if (list == null) {
-            recentBidsList.clear();
-            return;
-        }
-        List<BidDTO> sortedBids = list.stream()
-                .sorted((b1, b2) -> b2.getTime().compareTo(b1.getTime()))
-                .collect(Collectors.toList());
-        recentBidsList.setAll(sortedBids);
-    }
-
-    public void loadBidHistory() {
-        if (currentProduct == null) return;
-        SocketClient.sendRequest(new AuctionRequest("GET_BID_HISTORY", currentProduct.getId()));
-    }
-
-    public void refreshAfterBid() {
-        loadBidHistory();
-        SocketClient.sendRequest(new AuctionRequest("GET_OPEN_PRODUCTS", null));
-        if (txtBidAmount != null) txtBidAmount.clear();
-    }
-
-    public void onPriceUpdateBroadcast() {
-        loadBidHistory();
-        SocketClient.sendRequest(new AuctionRequest("GET_OPEN_PRODUCTS", null));
-    }
-
-    public void updateProductFromList(List<ProductDTO> products) {
-        if (currentProduct == null || products == null) return;
-        products.stream()
-                .filter(p -> p.getId() == currentProduct.getId())
-                .findFirst()
-                .ifPresent(p -> {
-                    currentProduct = p;
-                    refreshProductUI();
-                });
+        countdown.setCycleCount(Timeline.INDEFINITE); // Chạy lặp lại vô hạn
+        countdown.play(); // Bắt đầu đếm
     }
 
     private void setupTable() {
@@ -190,73 +172,148 @@ public class ProductDetailController {
     }
 
     public void updateStatus(String seller, String leader) {
-        if (lblSellerName != null) lblSellerName.setText(seller);
-        if (lblTopBidder != null) lblTopBidder.setText(leader != null && !leader.isBlank() ? leader : "Chưa có");
-    }
-
-    @FXML
-    public void onBidButtonClick() {
-        if (currentProduct == null || txtBidAmount == null) return;
-
-        String text = txtBidAmount.getText().trim();
-        if (text.isEmpty()) {
-            AlertHelper.showError("Vui lòng nhập số tiền muốn đặt!");
-            return;
-        }
-
-        String cleanText = text.replace(",", "");
-        try {
-            double bidAmount = Double.parseDouble(cleanText);
-
-            if (bidAmount <= 0) {
-                AlertHelper.showError("Số tiền phải lớn hơn 0!");
-                return;
-            }
-
-            String currentUser = SessionManager.getCurrentUsername();
-            if (currentUser != null && currentUser.equals(currentProduct.getSellerName())) {
-                AlertHelper.showError("Bạn không thể đấu giá sản phẩm do chính mình đăng bán!");
-                return;
-            }
-
-            String currentOwner = currentProduct.getOwnerName();
-            if (currentUser != null && currentUser.equals(currentOwner)) {
-                AlertHelper.showError("Bạn đang giữ mức giá cao nhất!\nKhông thể đặt thêm cho đến khi bị vượt qua.");
-                return;
-            }
-
-            double currentPrice = currentProduct.getCurrentPrice();
-            if (bidAmount <= currentPrice) {
-                AlertHelper.showError(String.format(
-                        "Giá đặt phải LỚN HƠN giá hiện tại!\nGiá hiện tại: %,.0f VNĐ\nBạn nhập: %,.0f VNĐ",
-                        currentPrice, bidAmount));
-                return;
-            }
-
-            double balance = SessionManager.getCurrentUser().getBalance();
-            if (balance <= bidAmount) {
-                AlertHelper.showError(String.format(
-                        "Số dư không đủ!\nSố dư hiện tại: %,.0f VNĐ\nGiá bạn muốn đặt: %,.0f VNĐ",
-                        balance, bidAmount));
-                return;
-            }
-
-            Object[] bidData = new Object[]{currentProduct.getId(), currentUser, bidAmount};
-            SocketClient.sendRequest(new AuctionRequest("PLACE_BID", bidData));
-
-        } catch (NumberFormatException e) {
-            AlertHelper.showError("Số tiền không hợp lệ!\nVui lòng chỉ nhập số (VD: 25000000)");
-        }
+        if (lblSellerName != null) lblSellerName.setText("Người bán: " + seller);
+        if (lblTopBidder != null) lblTopBidder.setText("Đang dẫn đầu: " + (leader != null ? leader : "Chưa có"));
     }
 
     @FXML
     public void onBackButtonClick() {
-        if (countdown != null) countdown.stop();
+        // Chạy hành động quay lại đã được controller cha "gài" vào
+
+        if (countdown != null) {
+            countdown.stop();
+        }
+
         instance = null;
+
         if (onBackAction != null) {
             onBackAction.run();
         } else {
             System.err.println("Lỗi: Không có hành động quay lại (onBackAction) nào được định nghĩa!");
+        }
+    }
+
+    public void reloadProductDetails() {
+        if (currentProduct != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_BID_HISTORY", currentProduct.getId()));
+        }
+    }
+
+    public void displayBidHistory(List<BidDTO> bids) {
+        if (bids != null) {
+            List<BidDTO> sortedBids = bids.stream()
+                    .sorted((b1, b2) -> {
+                        if (b1.getTime() == null && b2.getTime() == null) return 0;
+                        if (b1.getTime() == null) return 1;
+                        if (b2.getTime() == null) return -1;
+                        return b2.getTime().compareTo(b1.getTime());
+                    })
+                    .collect(Collectors.toList());
+            recentBidsList.setAll(sortedBids);
+
+            if (!sortedBids.isEmpty()) {
+                BidDTO highestBid = sortedBids.get(0);
+                if (currentProduct != null) {
+                    currentProduct.setCurrentPrice(highestBid.getPrice());
+                    currentProduct.setOwnerName(highestBid.getBidderName());
+                }
+
+                if (lblCurrentPrice != null) {
+                    lblCurrentPrice.setText(String.format("%,.0f VNĐ", highestBid.getPrice()));
+                }
+                if (lblTopBidder != null) {
+                    lblTopBidder.setText(highestBid.getBidderName() != null ? highestBid.getBidderName() : "Chưa có");
+                }
+            } else {
+                if (lblTopBidder != null) {
+                    lblTopBidder.setText("Chưa có");
+                }
+                if (currentProduct != null && lblCurrentPrice != null) {
+                    lblCurrentPrice.setText(String.format("%,.0f VNĐ", currentProduct.getStartingPrice()));
+                }
+            }
+        }
+    }
+
+    @FXML
+    public void onPlaceBidClick() {
+        String bidText = txtBidAmount.getText();
+        if (bidText == null || bidText.trim().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng nhập mức giá bạn muốn đặt!");
+            return;
+        }
+
+        try {
+            double bidAmount = Double.parseDouble(bidText.replace(",", "").trim());
+
+            // SỬ DỤNG SESSION MANAGER CỦA CLIENT
+            UserDTO sessionUser = SessionManager.getCurrentUser();
+
+            if (sessionUser == null) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!");
+                return;
+            }
+
+            // 1. KIỂM TRA QUYỀN bằng biến sessionUser
+            String role = sessionUser.getRole();
+            if ("SELLER".equals(role) || "ADMIN".equals(role)) {
+                showAlert(Alert.AlertType.ERROR, "Từ chối truy cập", "Quản trị viên và Người bán không được phép tham gia đặt giá!");
+                return; // Dừng lại, không cho đặt
+            }
+
+            if (currentProduct != null) {
+                double currentPrice = currentProduct.getCurrentPrice();
+                double stepPrice = currentProduct.getStepPrice(); // Lấy bước giá của sản phẩm
+                double minValidPrice = currentPrice + stepPrice;  // Giá hợp lệ tối thiểu
+
+                // 2. KIỂM TRA BƯỚC GIÁ
+                if (bidAmount < minValidPrice) {
+                    showAlert(Alert.AlertType.ERROR, "Lỗi đặt giá",
+                            String.format("Mức giá đặt không hợp lệ!\nGiá hiện tại: %,.0f VNĐ\nBước giá: %,.0f VNĐ\n=> Bạn phải đặt tối thiểu: %,.0f VNĐ",
+                                    currentPrice, stepPrice, minValidPrice));
+                    return;
+                }
+
+                // 3. KIỂM TRA CÓ ĐANG GIỮ ĐỈNH HAY KHÔNG bằng biến sessionUser
+                if (sessionUser.getUsername().equals(currentProduct.getOwnerName())) {
+                    showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Bạn đang giữ mức giá cao nhất, không thể tự đặt thêm!");
+                    return;
+                }
+
+                // Nếu thỏa mãn hết thì gửi Request lên Server bằng biến sessionUser
+                AuctionRequest request = new AuctionRequest("PLACE_BID", new Object[]{currentProduct.getId(), sessionUser.getUsername(), bidAmount});
+                SocketClient.sendRequest(request);
+
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã gửi yêu cầu đặt giá: " + String.format("%,.0f VNĐ", bidAmount));
+                txtBidAmount.clear();
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", "Không tìm thấy thông tin sản phẩm!");
+            }
+
+        } catch (NumberFormatException e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi định dạng", "Vui lòng chỉ nhập số hợp lệ!");
+        }
+    }
+
+    // Hàm hỗ trợ hiển thị hộp thoại thông báo
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    // Hàm hỗ trợ load ảnh mặc định an toàn
+    private void loadDefaultImage() {
+        // Sửa lại đường dẫn này cho đúng với cấu trúc thư mục resources của bạn
+        String defaultImagePath = "/com/uet/auction/images/LogoUET.png";
+
+        java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
+        if (is != null) {
+            imgProduct.setImage(new javafx.scene.image.Image(is));
+        } else {
+            // Nếu vẫn không tìm thấy ảnh, in ra dòng cảnh báo thay vì làm sập app
+            System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
         }
     }
 }

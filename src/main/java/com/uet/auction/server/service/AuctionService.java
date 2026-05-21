@@ -53,30 +53,66 @@ public class AuctionService {
                 : new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Cập nhật thất bại!", null);
     }
 
+    // Trong file AuctionService.java, tìm phương thức addProduct và thay thế bằng đoạn code sau:
+
     public AuctionResponse addProduct(ProductDTO product) {
         try {
+            // --- BẮT ĐẦU XỬ LÝ LƯU ẢNH ---
+            String imageUrl = "server_images/default.png"; // Đường dẫn mặc định nếu không có ảnh
+
+            if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
+                // 1. Tạo thư mục nếu chưa tồn tại
+                String uploadDir = "server_images";
+                java.io.File dir = new java.io.File(uploadDir);
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+
+                // 2. Tạo tên file duy nhất
+                String fileName = "sp_" + System.currentTimeMillis() + ".jpg";
+                java.io.File imageFile = new java.io.File(uploadDir + "/" + fileName);
+
+                // 3. Ghi mảng byte ra file
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(imageFile)) {
+                    fos.write(product.getImageBytes());
+                }
+
+                // 4. Lấy đường dẫn tương đối để lưu vào DB
+                imageUrl = uploadDir + "/" + fileName;
+
+                // 5. Giải phóng bộ nhớ
+                product.setImageBytes(null);
+            }
+            // Gán imageUrl vào productDTO (nếu bạn muốn lưu trữ lại trong object, dù không bắt buộc cho DAO)
+            product.setImageUrl(imageUrl);
+            // --- KẾT THÚC XỬ LÝ LƯU ẢNH ---
+
+            // Gọi DAO, truyền thêm tham số imageUrl
             boolean ok = productDAO.addProduct(
                     product.getName(),
+                    product.getDescription(),
                     product.getStartingPrice(),
+                    product.getStepPrice(),
                     product.getSellerName(),
-                    product.getStartTime() != null ? product.getStartTime() : LocalDateTime.now(),
+                    product.getStartTime(),
                     product.getEndTime(),
-                    product.getDescription()
+                    imageUrl
             );
             if (ok) return new AuctionResponse(true, "ADD_PRODUCT_RESULT",
                     "Gửi yêu cầu đăng bán thành công! Chờ Admin duyệt.", null);
         } catch (Exception e) {
-            System.err.println("[AuctionService.addProduct] " + e.getMessage());
+            System.err.println("[AuctionService.addProduct] Lỗi: " + e.getMessage());
+            e.printStackTrace();
         }
         return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Lỗi server khi đăng sản phẩm.", null);
     }
 
     public AuctionResponse placeBid(int productId, String bidderName, double bidAmount) {
         try {
-            String sellerName = productDAO.getSellerName(productId);
-            if (sellerName != null && sellerName.equals(bidderName)) {
-                return new AuctionResponse(false, "BID_RESULT",
-                        "Bạn không thể đấu giá sản phẩm do chính mình đăng bán!", null);
+            String role = userDAO.getRole(bidderName);
+            // THÊM ADMIN VÀO ĐỂ CHẶN Ở TẦNG SERVER
+            if ("SELLER".equals(role) || "ADMIN".equals(role)) {
+                return new AuctionResponse(false, "BID_RESULT", "Quản trị viên và Người bán không được phép tham gia đấu giá!", null);
             }
         } catch (Exception e) {
             System.err.println("[AuctionService] " + e.getMessage());
@@ -116,10 +152,11 @@ public class AuctionService {
 
     public AuctionResponse getJoinedProducts(String username) {
         try {
-            List<ProductDTO> list = productDAO.getJoinedProductsByUsername(username);
+            List<ProductDTO> list = productDAO.getJoinedProducts(username);
             return new AuctionResponse(true, "GET_JOINED_PRODUCTS_RESULT", list);
         } catch (Exception e) {
             return new AuctionResponse(false, "GET_JOINED_PRODUCTS_RESULT", "Lỗi: " + e.getMessage(), null);
         }
     }
+
 }

@@ -90,10 +90,21 @@ public class SellerAddProductController {
                 startTime = LocalDateTime.now();
             }
 
+            double stepPrice = 10000.0;
+            if (txtBidStep != null) {
+                String stepStr = txtBidStep.getText().trim().replace(",", "");
+                if (!stepStr.isEmpty()) {
+                    try {
+                        stepPrice = Double.parseDouble(stepStr);
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
             ProductDTO product = new ProductDTO();
             product.setName(name);
             product.setStartingPrice(startingPrice);
             product.setCurrentPrice(startingPrice);
+            product.setStepPrice(stepPrice);
             product.setDescription(txtDescription != null ? txtDescription.getText().trim() : "");
             product.setSellerName(SessionManager.getCurrentUsername());
             product.setStartTime(startTime);

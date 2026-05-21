@@ -17,7 +17,7 @@
             <children>
                 <ImageView fx:id="imgProduct" fitHeight="160.0" fitWidth="230.0" pickOnBounds="true" preserveRatio="true">
                     <image>
-                        <Image url="@../images/default-product.png" />
+                        <Image url="@../images/LogoUET.png" />
                     </image>
                 </ImageView>
             </children>

@@ -31,6 +31,7 @@ public class ProductDAO {
                 p.setId(rs.getInt("id"));
                 p.setName(rs.getString("name"));  // cột đúng là "name"
                 p.setStartingPrice(rs.getDouble("starting_price"));
+                p.setStepPrice(rs.getDouble("step_price"));
 
                 // current_price = giá đang đấu; nếu NULL thì fallback về starting_price
                 double cp = rs.getDouble("current_price");
@@ -39,6 +40,7 @@ public class ProductDAO {
                 p.setSellerName(safeGetString(rs, "seller_name"));
                 p.setOwnerName(safeGetString(rs, "owner_name"));
                 p.setStatus(rs.getString("status"));
+                p.setImageUrl(safeGetString(rs, "image_url"));
 
                 try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
                 try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
@@ -68,6 +70,7 @@ public class ProductDAO {
                 p.setId(rs.getInt("id"));
                 p.setName(rs.getString("name"));
                 p.setStartingPrice(rs.getDouble("starting_price"));
+                p.setStepPrice(rs.getDouble("step_price"));
 
                 double cp = rs.getDouble("current_price");
                 p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
@@ -75,6 +78,7 @@ public class ProductDAO {
                 p.setSellerName(safeGetString(rs, "seller_name"));
                 p.setOwnerName(safeGetString(rs, "owner_name"));
                 p.setStatus(rs.getString("status"));
+                p.setImageUrl(safeGetString(rs, "image_url"));
 
                 try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
                 try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
@@ -87,76 +91,28 @@ public class ProductDAO {
         return list;
     }
 
-// T THÊM ĐOẠN NÀY NHÉ
+    public boolean addProduct(String name, String description, double startingPrice,
+                              double stepPrice, String sellerName,
+                              LocalDateTime startTime, LocalDateTime endTime,
+                              String imageUrl) { // [THÊM MỚI] Thêm tham số imageUrl
 
-    public List<ProductDTO> getJoinedProductsByUsername(String username) {
-        List<ProductDTO> list = new ArrayList<>();
-        String sql = "SELECT DISTINCT p.* FROM products p "
-                + "JOIN bids b ON p.id = b.product_id "
-                + "WHERE b.bidder_name = ? "
-                + "ORDER BY p.end_time DESC";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                ProductDTO p = new ProductDTO();
-                p.setId(rs.getInt("id"));
-                p.setName(rs.getString("name"));
-                p.setStartingPrice(rs.getDouble("starting_price"));
-
-                double cp = rs.getDouble("current_price");
-                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
-                p.setDescription(safeGetString(rs, "description"));
-                p.setSellerName(safeGetString(rs, "seller_name"));
-                p.setOwnerName(safeGetString(rs, "owner_name"));
-                p.setStatus(rs.getString("status"));
-
-                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
-                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
-
-                list.add(p);
-            }
-        } catch (SQLException e) {
-            System.err.println("[ProductDAO.getJoinedProductsByUsername] " + e.getMessage());
-        }
-        return list;
-    }
-
-    public String getSellerName(int productId) {
-        String sql = "SELECT seller_name FROM products WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, productId);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) return safeGetString(rs, "seller_name");
-        } catch (SQLException e) {
-            System.err.println("[ProductDAO.getSellerName] " + e.getMessage());
-        }
-        return null;
-    }
-
-    public boolean addProduct(String name, double startingPrice, String sellerName,
-                              LocalDateTime startTime, LocalDateTime endTime, String description) {
-
-        String sql = "INSERT INTO products " +
-                "(name, description, starting_price, current_price, " +
-                " seller_name, start_time, end_time, status) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING')";
+        // Cập nhật câu SQL: thêm cột image_url
+        String sql = "INSERT INTO products (name, description, starting_price, current_price, " +
+                "step_price, start_time, end_time, seller_name, status, image_url) " + // [SỬA] Thêm image_url
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)"; // [SỬA] Thêm một dấu ? ở cuối
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, name);
-            pstmt.setString(2, description != null ? description : "");
+            pstmt.setString(2, description);
             pstmt.setDouble(3, startingPrice);
-            pstmt.setDouble(4, startingPrice); // current_price = starting_price ban đầu
-            pstmt.setString(5, sellerName);
+            pstmt.setDouble(4, startingPrice);
+            pstmt.setDouble(5, stepPrice);
             pstmt.setTimestamp(6, Timestamp.valueOf(startTime));
             pstmt.setTimestamp(7, Timestamp.valueOf(endTime));
+            pstmt.setString(8, sellerName);
+            pstmt.setString(9, imageUrl); // [THÊM MỚI] Truyền giá trị imageUrl
 
             boolean ok = pstmt.executeUpdate() > 0;
             if (ok) System.out.println("[ProductDAO] Đã thêm sản phẩm: " + name);
@@ -167,6 +123,7 @@ public class ProductDAO {
             return false;
         }
     }
+
 
     public boolean updateProductStatus(int productId, String newStatus) {
         String sql = "UPDATE products SET status = ? WHERE id = ?";
@@ -224,4 +181,69 @@ public class ProductDAO {
             System.err.println("Lỗi khi thực hiện anti-sniping: " + e.getMessage());
         }
     }
+    private ProductDTO mapRowToDTO(ResultSet rs) throws SQLException {
+        ProductDTO p = new ProductDTO();
+        p.setId(rs.getInt("id"));
+        p.setName(rs.getString("name"));
+        p.setDescription(rs.getString("description"));
+        p.setStartingPrice(rs.getDouble("starting_price"));
+        p.setCurrentPrice(rs.getDouble("current_price"));
+        p.setStepPrice(rs.getDouble("step_price"));
+        p.setSellerName(rs.getString("seller_name"));
+        p.setStatus(rs.getString("status"));
+        p.setImageUrl(rs.getString("image_url"));
+
+        Timestamp start = rs.getTimestamp("start_time");
+        if (start != null) p.setStartTime(start.toLocalDateTime());
+
+        Timestamp end = rs.getTimestamp("end_time");
+        if (end != null) p.setEndTime(end.toLocalDateTime());
+
+        return p;
+    }
+    public boolean updateStatus(int productId, String status) {
+        String sql = "UPDATE products SET status = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, status);
+            pstmt.setInt(2, productId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<ProductDTO> getJoinedProducts(String username) {
+        List<ProductDTO> list = new ArrayList<>();
+        String sql = "SELECT p.* FROM products p "
+                + "WHERE p.id IN (SELECT DISTINCT b.product_id FROM bids b WHERE b.bidder_name = ?) "
+                + "ORDER BY p.id DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                ProductDTO p = new ProductDTO();
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setStartingPrice(rs.getDouble("starting_price"));
+                p.setStepPrice(rs.getDouble("step_price"));
+                double cp = rs.getDouble("current_price");
+                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
+                p.setDescription(safeGetString(rs, "description"));
+                p.setSellerName(safeGetString(rs, "seller_name"));
+                p.setOwnerName(safeGetString(rs, "owner_name"));
+                p.setStatus(rs.getString("status"));
+                p.setImageUrl(safeGetString(rs, "image_url"));
+                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
+                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
+                list.add(p);
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO.getJoinedProducts] " + e.getMessage());
+        }
+        return list;
+    }
+
 }

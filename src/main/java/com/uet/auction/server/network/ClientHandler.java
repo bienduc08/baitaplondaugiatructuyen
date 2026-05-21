@@ -53,6 +53,12 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
+                    case "DEPOSIT":
+                        Object[] depData = (Object[]) request.getData();
+                        response = authService.deposit((String) depData[0], ((Number) depData[1]).doubleValue());
+                        sendResponse(response);
+                        break;
+
                     case "ADD_PRODUCT":
                         ProductDTO product = (ProductDTO) request.getData();
                         response = auctionService.addProduct(product);
@@ -124,6 +130,13 @@ public class ClientHandler implements Runnable {
                         }
                         break;
 
+
+                    case "GET_JOINED_PRODUCTS":
+                        String joinedUsername = (String) request.getData();
+                        response = auctionService.getJoinedProducts(joinedUsername);
+                        sendResponse(response);
+                        break;
+
                     case "GET_BID_HISTORY":
                         int productId = (int) request.getData();
                         response = auctionService.getBidHistory(productId);
@@ -136,13 +149,7 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
-                    case "GET_JOINED_PRODUCTS":
-                        String joinedUsername = (String) request.getData();
-                        response = auctionService.getJoinedProducts(joinedUsername);
-                        sendResponse(response);
-                        break;
 
-                    // =========================================================
                     // [THÊM MỚI] QUẢN LÝ NGƯỜI DÙNG DÀNH CHO ADMIN
                     // 4 case dưới đây hoàn toàn mới, file gốc không có
                     // =========================================================
@@ -170,18 +177,32 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
-                    case "DEPOSIT":
-                        Object[] depositData = (Object[]) request.getData();
-                        String depositUser = (String) depositData[0];
-                        double depositAmount = ((Number) depositData[1]).doubleValue();
-                        response = authService.deposit(depositUser, depositAmount);
-                        sendResponse(response);
-                        break;
-
                     // =========================================================
                     // [KẾT THÚC PHẦN THÊM MỚI]
                     // =========================================================
+                    // =========================================================
+                    // [THÊM MỚI] THỐNG KÊ CHO ADMIN DASHBOARD
+                    // =========================================================
+                    case "GET_DASHBOARD_STATS":
+                        try {
+                            // Lấy danh sách sản phẩm theo từng trạng thái và đếm số lượng
+                            // (Cách này tận dụng luôn hàm có sẵn của bạn, không cần viết thêm DAO)
+                            java.util.List<?> openList = (java.util.List<?>) auctionService.getProductsByStatus("OPEN").getData();
+                            java.util.List<?> closedList = (java.util.List<?>) auctionService.getProductsByStatus("CLOSED").getData();
+                            java.util.List<?> pendingList = (java.util.List<?>) auctionService.getProductsByStatus("PENDING").getData();
 
+                            int openCount = (openList != null) ? openList.size() : 0;
+                            int closedCount = (closedList != null) ? closedList.size() : 0;
+                            int pendingCount = (pendingList != null) ? pendingList.size() : 0;
+
+                            // Đóng gói 3 con số này vào một mảng int[] và gửi về Client
+                            int[] stats = {openCount, closedCount, pendingCount};
+                            response = new AuctionResponse(true, "GET_STATS_SUCCESS", "Lấy thống kê thành công", stats);
+                        } catch (Exception e) {
+                            response = new AuctionResponse(false, "ERROR", "Lỗi lấy thống kê: " + e.getMessage(), null);
+                        }
+                        sendResponse(response);
+                        break;
                     default:
                         sendResponse(new AuctionResponse(false, "ERROR",
                                 "Yêu cầu không hợp lệ: " + request.getType(), null));

@@ -97,4 +97,10 @@ public class UserController {
     public BorderPane getMainBorderPane() {
         return mainBorderPane;
     }
+
+    public void refreshBalance() {
+        if (SessionManager.getCurrentUser() != null && lblBalance != null) {
+            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
+    }
 }

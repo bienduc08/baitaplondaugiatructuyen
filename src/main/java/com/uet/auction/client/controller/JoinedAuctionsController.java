@@ -138,6 +138,7 @@ public class JoinedAuctionsController {
 
             ProductDetailController ctrl = loader.getController();
             ctrl.setProductData(product, null);
+            ctrl.reloadProductDetails(); // Tải động lịch sử trả giá từ server
 
             if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
                 BorderPane mainPane = UserController.instance.getMainBorderPane();

@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
                                      username VARCHAR(100) NOT NULL UNIQUE,
                                      password VARCHAR(256) NOT NULL,
                                      role     VARCHAR(20)  NOT NULL DEFAULT 'USER',
-                                     balance  DOUBLE       NOT NULL DEFAULT 0.0   -- THÊM DÒNG NÀY
+                                     balance  DOUBLE       NOT NULL DEFAULT 0.0,
+                                     status   VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE'
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS products (
@@ -14,11 +15,13 @@ CREATE TABLE IF NOT EXISTS products (
                                         description    TEXT         DEFAULT NULL,
                                         starting_price DOUBLE       NOT NULL DEFAULT 0,
                                         current_price  DOUBLE       NOT NULL DEFAULT 0,  -- tự động = starting_price khi tạo
+                                        step_price     DOUBLE       NOT NULL DEFAULT 0,
                                         seller_name    VARCHAR(100) DEFAULT NULL,
                                         owner_name     VARCHAR(100) DEFAULT NULL,
                                         start_time     DATETIME     DEFAULT NULL,
                                         end_time       DATETIME     DEFAULT NULL,
-                                        status         VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+                                        status         VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+                                        image_url      VARCHAR(255) DEFAULT NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS bids (

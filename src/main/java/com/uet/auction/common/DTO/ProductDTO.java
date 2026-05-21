@@ -23,6 +23,8 @@ public class ProductDTO implements Serializable {
     private String status;
     private String category;
     private String imageUrl;
+    private double stepPrice;
+    private byte[] imageBytes;
     // PENDING, OPEN, CLOSED, REJECTED
 
     // Constructor không tham số (Bắt buộc phải có để các thư viện như Jackson/Serialization hoạt động)
@@ -78,6 +80,12 @@ public class ProductDTO implements Serializable {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public double getStepPrice() { return stepPrice; }
+    public void setStepPrice(double stepPrice) { this.stepPrice = stepPrice; }
+
+    public byte[] getImageBytes() { return imageBytes; }
+    public void setImageBytes(byte[] imageBytes) { this.imageBytes = imageBytes; }
 
     @Override
     public String toString() {

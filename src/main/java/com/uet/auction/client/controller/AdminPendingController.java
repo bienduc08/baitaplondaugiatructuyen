@@ -4,13 +4,17 @@ import com.uet.auction.client.network.SocketClient;
 import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.Request.AuctionRequest;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -19,89 +23,140 @@ import java.util.List;
  */
 public class AdminPendingController {
 
-    @FXML private TableView<ProductDTO> tbvPendingProducts;
-    @FXML private TableColumn<ProductDTO, Integer> colId;
-    @FXML private TableColumn<ProductDTO, String> colName;
-    @FXML private TableColumn<ProductDTO, String> colSeller;
-    @FXML private TableColumn<ProductDTO, Double> colPrice;
-    @FXML private TableColumn<ProductDTO, LocalDateTime> colStartTime;
-    @FXML private TableColumn<ProductDTO, LocalDateTime> colEndTime;
-    @FXML public static AdminPendingController instance;
+    public static AdminPendingController instance;
+    @FXML private TableView<ProductDTO> pendingTable;
+    @FXML private TableColumn<ProductDTO, Integer> idCol;
+    @FXML private TableColumn<ProductDTO, String>  nameCol;
+    @FXML private TableColumn<ProductDTO, Double>  priceCol;
+    @FXML private TableColumn<ProductDTO, String>  sellerCol;
+    @FXML private TableColumn<ProductDTO, Double>  stepCol;
+    @FXML private TableColumn<ProductDTO, LocalDateTime> startTimeCol;
+    @FXML private TableColumn<ProductDTO, LocalDateTime> endTimeCol;
+    @FXML private TableColumn<ProductDTO, String>  statusCol;
 
-    private final ObservableList<ProductDTO> pendingList = FXCollections.observableArrayList();
+    // Sử dụng DUY NHẤT một danh sách này để map với TableView
+    private final ObservableList<ProductDTO> pendingListData = FXCollections.observableArrayList();
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @FXML
     public void initialize() {
-        instance =this;
-        // Ánh xạ dữ liệu từ ProductDTO vào các cột tương ứng của TableView
-        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colSeller.setCellValueFactory(new PropertyValueFactory<>("sellerName"));
-        colPrice.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
-        colStartTime.setCellValueFactory(new PropertyValueFactory<>("startTime"));
-        colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-
-        tbvPendingProducts.setItems(pendingList);
+        instance = this;
+        setupTable();
+        pendingTable.setItems(pendingListData);
 
         // Gọi hàm tải danh sách ban đầu khi vừa vào tab này
-        refreshPendingProducts();
+        loadPendingProducts();
+    }
+
+    private void setupTable() {
+        if (idCol != null) idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+        if (nameCol != null) nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        if (sellerCol != null) sellerCol.setCellValueFactory(new PropertyValueFactory<>("sellerName"));
+
+        if (priceCol != null) {
+            priceCol.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
+            priceCol.setCellFactory(col -> new TableCell<>() {
+                @Override protected void updateItem(Double v, boolean empty) {
+                    super.updateItem(v, empty);
+                    setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
+                }
+            });
+        }
+        if (stepCol != null){
+            stepCol.setCellValueFactory(new PropertyValueFactory<>("stepPrice"));
+            stepCol.setCellFactory(col -> new TableCell<>() {
+                @Override protected void updateItem(Double v, boolean empty) {
+                    super.updateItem(v, empty);
+                    setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
+                }
+            });
+        }
+
+        if (startTimeCol != null){
+            startTimeCol.setCellValueFactory(new PropertyValueFactory<>("startTime"));
+            startTimeCol.setCellFactory(col -> new TableCell<>() {
+                @Override protected void updateItem(LocalDateTime item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText((empty || item == null) ? "—" : item.format(FMT));
+                }
+            });
+        }
+        if (endTimeCol != null) {
+            endTimeCol.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+            endTimeCol.setCellFactory(col -> new TableCell<>() {
+                @Override protected void updateItem(LocalDateTime item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText((empty || item == null) ? "—" : item.format(FMT));
+                }
+            });
+        }
+        if (statusCol != null) {
+            statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+            statusCol.setCellFactory(col -> new TableCell<>() {
+                @Override protected void updateItem(String s, boolean empty) {
+                    super.updateItem(s, empty);
+                    if (empty || s == null) { setText(null); setStyle(""); return; }
+                    switch (s) {
+                        case "PENDING":  setText("⏳ Chờ duyệt"); setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;"); break;
+                        case "OPEN":     setText("🔥 Đang đấu");  setStyle("-fx-text-fill: #2980b9; -fx-font-weight: bold;"); break;
+                        case "CLOSED":   setText("🔒 Đã đóng");   setStyle("-fx-text-fill: #7f8c8d;"); break;
+                        case "REJECTED": setText("✘ Từ chối");    setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;"); break;
+                        default:         setText(s); setStyle(""); break;
+                    }
+                }
+            });
+        }
+    }
+    /**
+     * Nhận danh sách từ Server và đổ dữ liệu lên TableView
+     */
+    public void updateTableData(List<ProductDTO> products) {
+        Platform.runLater(() -> {
+            // Đổ toàn bộ dữ liệu vào bảng để hiển thị chi tiết
+            pendingListData.setAll(products);
+        });
+    }
+
+    public void loadPendingProducts() {
+        SocketClient.sendRequest(new AuctionRequest("GET_ALL_PRODUCTS", null));
+    }
+
+    /**
+     * Cập nhật lại danh sách trên TableView (Được gọi từ Socket Reader khi Server trả dữ liệu)
+     */
+
+    @FXML
+    public void onApproveButtonClick() {
+        ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
+        if (selected == null) { AlertHelper.showError("Vui lòng chọn sản phẩm!"); return; }
+        if ("OPEN".equals(selected.getStatus())) { AlertHelper.showError("Sản phẩm này đang được đấu giá!"); return; }
+        if ("CLOSED".equals(selected.getStatus())) { AlertHelper.showError("Sản phẩm này đã đóng!"); return; }
+
+        Object[] data = {selected.getId(), "OPEN"};
+        SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
+
+        // Cập nhật UI ngay lập tức
+        pendingListData.remove(selected);
+        AlertHelper.showInfo("Đã duyệt sản phẩm thành công!");
+    }
+
+    @FXML
+    public void onRejectButtonClick() {
+        ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
+        if (selected == null) { AlertHelper.showError("Vui lòng chọn sản phẩm!"); return; }
+
+        Object[] data = {selected.getId(), "REJECTED"};
+        SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
+
+        // Cập nhật UI ngay lập tức
+        pendingListData.remove(selected);
+        AlertHelper.showInfo("Đã từ chối sản phẩm!");
     }
 
     /**
      * Gửi yêu cầu lên server để lấy danh sách sản phẩm đang chờ duyệt mới nhất
      */
     public void refreshPendingProducts() {
-        pendingList.clear();
-        // Server sẽ xử lý request này và trả về kết quả qua luồng đọc Socket (Network Thread)
-        SocketClient.sendRequest(new AuctionRequest("GET_PENDING_PRODUCTS", null));
-    }
-
-    /**
-     * Xử lý khi Admin nhấn nút "✅ Phê duyệt"
-     */
-    @FXML
-    public void onApproveClick() {
-        handleProductAction("APPROVE_PRODUCT", "Đã phê duyệt sản phẩm thành công!");
-    }
-
-    /**
-     * Xử lý khi Admin nhấn nút "❌ Từ chối"
-     */
-    @FXML
-    public void onRejectClick() {
-        handleProductAction("REJECT_PRODUCT", "Đã từ chối phê duyệt sản phẩm này!");
-    }
-
-    /**
-     * Hàm dùng chung xử lý hành động với dòng dữ liệu được chọn trên bảng
-     */
-    private void handleProductAction(String requestAction, String successMessage) {
-        ProductDTO selectedProduct = tbvPendingProducts.getSelectionModel().getSelectedItem();
-
-        if (selectedProduct == null) {
-            AlertHelper.showError("Vui lòng chọn một sản phẩm trong danh sách trước!");
-            return;
-        }
-
-        try {
-            // Gửi đối tượng sản phẩm được chọn kèm hành động tương ứng lên server
-            SocketClient.sendRequest(new AuctionRequest(requestAction, selectedProduct));
-            AlertHelper.showInfo(successMessage);
-
-            // Xóa tạm thời sản phẩm khỏi giao diện tại chỗ để không cần load lại toàn bộ bảng
-            pendingList.remove(selectedProduct);
-        } catch (Exception e) {
-            e.printStackTrace();
-            AlertHelper.showError("Có lỗi xảy ra trong quá trình gửi yêu cầu xử lý!");
-        }
-    }
-
-    /**
-     * Hàm bổ trợ để cập nhật danh sách nhận về từ luồng Thread đọc Socket của Client
-     */
-    public void updateTableData(List<ProductDTO> products) {
-        if (products != null) {
-            pendingList.setAll(products);
-        }
+        SocketClient.sendRequest(new AuctionRequest("GET_ALL_PRODUCTS", null));
     }
 }

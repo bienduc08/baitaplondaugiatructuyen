@@ -110,6 +110,7 @@ public class ProductItemController {
 
             ProductDetailController ctrl = loader.getController();
             ctrl.setProductData(currentProduct, null);
+            ctrl.reloadProductDetails(); // Tải động lịch sử trả giá từ server
 
             javafx.scene.layout.BorderPane activeMainPane = null;
 
@@ -201,7 +202,7 @@ public class ProductItemController {
             }
 
             double balance = SessionManager.getCurrentUser().getBalance();
-            if (balance <= bidAmount) {
+            if (balance > 0 && balance < bidAmount) {
                 AlertHelper.showError(String.format(
                         "Số dư không đủ!\nSố dư hiện tại: %,.0f VNĐ\nGiá bạn muốn đặt: %,.0f VNĐ",
                         balance, bidAmount));

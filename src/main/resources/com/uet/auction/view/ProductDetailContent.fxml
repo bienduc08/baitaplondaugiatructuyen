@@ -4,6 +4,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
 
 <ScrollPane fitToWidth="true" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.ProductDetailController">
     <content>
@@ -17,8 +18,11 @@
                             <children>
                                 <StackPane style="-fx-background-color: white; -fx-background-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5); -fx-padding: 15;">
                                     <children>
-                                        <Rectangle arcHeight="20.0" arcWidth="20.0" fill="#f1f2f6" height="280.0" width="360.0" />
-                                        <Label text="[HÌNH ẢNH SẢN PHẨM]" textFill="#bdc3c7" />
+                                        <ImageView fx:id="imgProduct" fitHeight="280.0" fitWidth="360.0" pickOnBounds="true" preserveRatio="true">
+                                            <image>
+                                                <Image url="@../images/LogoUET.png" />
+                                            </image>
+                                        </ImageView>
                                     </children>
                                 </StackPane>
 
@@ -35,7 +39,7 @@
                                                 <HBox alignment="CENTER_LEFT" spacing="5.0">
                                                     <children>
                                                         <Label style="-fx-font-size: 12;" text="Bước giá tối thiểu:" textFill="#94a3b8" />
-                                                        <Label fx:id="lblMinStep" style="-fx-font-weight: bold; -fx-font-size: 12;" text="50,000 VNĐ" textFill="#2ecc71" />
+                                                        <Label fx:id="lblStepPrice" style="-fx-font-weight: bold; -fx-font-size: 12;" text="50,000 VNĐ" textFill="#2ecc71" />
                                                     </children>
                                                 </HBox>
                                             </children>
@@ -71,7 +75,7 @@
                                         <VBox spacing="12.0">
                                             <children>
                                                 <TextField fx:id="txtBidAmount" prefHeight="48.0" promptText="Nhập mức giá của bạn..." style="-fx-background-radius: 12; -fx-background-color: #f8fafc; -fx-border-color: #e2e8f0; -fx-border-radius: 12;" />
-                                                <Button fx:id="btnPlaceBid" maxWidth="Infinity" onAction="#onBidButtonClick" prefHeight="50.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;" text="ĐẶT GIÁ NGAY" />
+                                                <Button fx:id="btnPlaceBid" maxWidth="Infinity" onAction="#onPlaceBidClick" prefHeight="50.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;" text="ĐẶT GIÁ NGAY" />
                                             </children>
                                         </VBox>
                                     </children>

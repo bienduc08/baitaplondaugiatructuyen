@@ -65,6 +65,20 @@ public class ProfileController {
         }
     }
 
+
+
+    public void refreshBalance() {
+        UserDTO user = SessionManager.getCurrentUser();
+        if (user != null && lblBalance != null) {
+            lblBalance.setText(String.format("%,.0f VNĐ", user.getBalance()));
+        }
+
+        String username = SessionManager.getCurrentUsername();
+        if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_MY_BIDS", username));
+        }
+    }
+
     public void displayMyBids(List<BidDTO> bids) {
         Platform.runLater(() -> {
             bidList.setAll(bids != null ? bids : List.of());
@@ -153,7 +167,7 @@ public class ProfileController {
     }
 
     @FXML
-    private void onBecomeSellerClick() {
+    public void onBecomeSellerClick() {
         String username = SessionManager.getCurrentUsername();
         if (username == null) {
             AlertHelper.showError("Phiên đăng nhập không hợp lệ!");
@@ -211,7 +225,7 @@ public class ProfileController {
     }
 
     @FXML
-    private void onDepositClick() {
+    public void onDepositClick() {
         String username = SessionManager.getCurrentUsername();
         if (username == null) {
             AlertHelper.showError("Phiên đăng nhập không hợp lệ!");

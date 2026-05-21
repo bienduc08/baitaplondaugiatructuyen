@@ -2,10 +2,8 @@ package com.uet.auction.client.network;
 
 import com.uet.auction.client.controller.*;
 import com.uet.auction.client.util.AlertHelper;
-import com.uet.auction.client.util.SessionManager;
-import com.uet.auction.common.DTO.BidDTO;
 import com.uet.auction.common.DTO.ProductDTO;
-import com.uet.auction.common.DTO.UserDTO; // [THÊM MỚI] import UserDTO
+import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Response.AuctionResponse;
 import javafx.application.Platform;
 
@@ -45,21 +43,23 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (HomecontentController.instance != null)
                                 HomecontentController.instance.displayProducts(products);
-                            if (ProductDetailController.instance != null)
-                                ProductDetailController.instance.updateProductFromList(products);
                         });
                         break;
-
-                    case "GET_PENDING_PRODUCTS_RESULT":
                     case "GET_ALL_PRODUCTS_RESULT":
+                    case "GET_PENDING_PRODUCTS_RESULT": // Gộp chung xử lý vì list giống nhau
                         List<ProductDTO> allProducts = (List<ProductDTO>) res.getData();
                         Platform.runLater(() -> {
+                            // 1. Báo cho AdminController đếm số lượng (Open, Pending, Closed)
                             if (AdminController.instance != null) {
                                 AdminController.instance.updatePendingList(allProducts);
                             }
+
+                            // 2. Báo cho AdminPendingController để hiển thị chi tiết vào Bảng
+                            if (AdminPendingController.instance != null) {
+                                AdminPendingController.instance.updateTableData(allProducts);
+                            }
                         });
                         break;
-
                     case "GET_MY_PRODUCTS_RESULT":
                         List<ProductDTO> myProducts = (List<ProductDTO>) res.getData();
                         Platform.runLater(() -> {
@@ -91,9 +91,9 @@ public class ResponseListener implements Runnable {
                     case "CHANGE_STATUS_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                AlertHelper.showInfo(res.getMessage());
-                                if (AdminController.instance != null) {
-                                    AdminController.instance.loadPendingProducts();
+                                // ĐÃ SỬA: Chỉ gọi 1 hàm loadPendingProducts() để làm mới dữ liệu và cập nhật bộ đếm
+                                if (AdminPendingController.instance != null) {
+                                    AdminPendingController.instance.loadPendingProducts();
                                 }
                             } else {
                                 AlertHelper.showError(res.getMessage());
@@ -108,49 +108,73 @@ public class ResponseListener implements Runnable {
                             if (AdminPendingController.instance != null)
                                 AdminPendingController.instance.refreshPendingProducts();
                             if (ProductDetailController.instance != null)
-                                ProductDetailController.instance.onPriceUpdateBroadcast();
-                            if (JoinedAuctionsController.instance != null)
-                                JoinedAuctionsController.instance.reloadJoinedAuctions();
+                                ProductDetailController.instance.reloadProductDetails();
                         });
                         break;
 
-                    case "BID_RESULT":
-                        Platform.runLater(() -> {
-                            if (res.isSuccess()) {
-                                AlertHelper.showInfo(res.getMessage());
-                                if (HomecontentController.instance != null)
-                                    HomecontentController.instance.loadProducts();
-                                if (ProductDetailController.instance != null)
-                                    ProductDetailController.instance.refreshAfterBid();
-                            } else {
-                                AlertHelper.showError(res.getMessage());
-                            }
-                        });
-                        break;
+                    // =========================================================
+                    // XỬ LÝ RESPONSE QUẢN LÝ NGƯỜI DÙNG
+                    // =========================================================
 
-                    case "GET_BID_HISTORY_RESULT":
+                    case "GET_ALL_USERS_RESULT":
+                    case "SEARCH_USER_RESULT":
                         if (res.isSuccess()) {
-                            List<BidDTO> bidHistory = (List<BidDTO>) res.getData();
+                            List<UserDTO> users = (List<UserDTO>) res.getData();
                             Platform.runLater(() -> {
-                                if (BidHistoryController.instance != null)
-                                    BidHistoryController.instance.displayBidHistory(bidHistory);
-                                if (ProductDetailController.instance != null)
-                                    ProductDetailController.instance.displayBidHistory(bidHistory);
+                                if (AdminUserManagementController.instance != null)
+                                    AdminUserManagementController.instance.updateTableData(users);
                             });
                         } else {
                             Platform.runLater(() -> AlertHelper.showError(res.getMessage()));
                         }
                         break;
 
+                    case "LOCK_USER_RESULT":
+                    case "UNLOCK_USER_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage());
+                                if (AdminUserManagementController.instance != null)
+                                    AdminUserManagementController.instance.reloadUsers();
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                            }
+                        });
+                        break;
+
+
+
+                    case "BID_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage() != null ? res.getMessage() : "Đặt giá thành công!");
+                            } else {
+                                AlertHelper.showError(res.getMessage() != null ? res.getMessage() : "Đặt giá thất bại!");
+                            }
+                        });
+                        break;
+
+                    case "GET_BID_HISTORY_RESULT":
+                        if (res.isSuccess()) {
+                            java.util.List<com.uet.auction.common.DTO.BidDTO> bidHistory =
+                                    (java.util.List<com.uet.auction.common.DTO.BidDTO>) res.getData();
+                            Platform.runLater(() -> {
+                                if (BidHistoryController.instance != null)
+                                    BidHistoryController.instance.displayBidHistory(bidHistory);
+                                if (ProductDetailController.instance != null)
+                                    ProductDetailController.instance.displayBidHistory(bidHistory);
+                            });
+                        }
+                        break;
+
                     case "GET_MY_BIDS_RESULT":
                         if (res.isSuccess()) {
-                            List<BidDTO> myBids = (List<BidDTO>) res.getData();
+                            List<com.uet.auction.common.DTO.BidDTO> myBids =
+                                    (List<com.uet.auction.common.DTO.BidDTO>) res.getData();
                             Platform.runLater(() -> {
                                 if (ProfileController.instance != null)
                                     ProfileController.instance.displayMyBids(myBids);
                             });
-                        } else {
-                            Platform.runLater(() -> AlertHelper.showError(res.getMessage()));
                         }
                         break;
 
@@ -168,20 +192,11 @@ public class ResponseListener implements Runnable {
 
                     case "DEPOSIT_RESULT":
                         Platform.runLater(() -> {
-                            if (res.isSuccess() && res.getData() instanceof Number) {
-                                double newBalance = ((Number) res.getData()).doubleValue();
-                                if (SessionManager.getCurrentUser() != null) {
-                                    SessionManager.getCurrentUser().setBalance(newBalance);
-                                }
+                            if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
+                                double newBalance = ((Number) res.getData()).doubleValue();
                                 if (ProfileController.instance != null)
                                     ProfileController.instance.handleDepositSuccess(newBalance);
-                                if (UserController.instance != null)
-                                    UserController.instance.updateBalance();
-                                if (SellerController.instance != null)
-                                    SellerController.instance.updateBalance();
-                                if (AdminController.instance != null)
-                                    AdminController.instance.updateBalance();
                             } else {
                                 AlertHelper.showError(res.getMessage());
                                 if (ProfileController.instance != null)
@@ -190,45 +205,13 @@ public class ResponseListener implements Runnable {
                         });
                         break;
 
-                    // =========================================================
-                    // [THÊM MỚI] XỬ LÝ RESPONSE QUẢN LÝ NGƯỜI DÙNG
-                    // 3 case dưới đây hoàn toàn mới, file gốc không có
-                    // =========================================================
-
-                    case "GET_ALL_USERS_RESULT": // [THÊM MỚI]
-                    case "SEARCH_USER_RESULT":   // [THÊM MỚI]
-                        if (res.isSuccess()) {
-                            List<UserDTO> users = (List<UserDTO>) res.getData();
-                            Platform.runLater(() -> {
-                                if (AdminUserManagementController.instance != null)
-                                    AdminUserManagementController.instance.updateTableData(users);
-                            });
-                        } else {
-                            Platform.runLater(() -> AlertHelper.showError(res.getMessage()));
-                        }
+                    case "GET_STATS_SUCCESS":
                         break;
-
-                    case "LOCK_USER_RESULT":   // [THÊM MỚI]
-                    case "UNLOCK_USER_RESULT": // [THÊM MỚI]
-                        Platform.runLater(() -> {
-                            if (res.isSuccess()) {
-                                AlertHelper.showInfo(res.getMessage());
-                                // Tự động reload lại bảng sau khi thay đổi trạng thái thành công
-                                if (AdminUserManagementController.instance != null)
-                                    AdminUserManagementController.instance.reloadUsers();
-                            } else {
-                                AlertHelper.showError(res.getMessage());
-                            }
-                        });
-                        break;
-
-                    // =========================================================
-                    // [KẾT THÚC PHẦN THÊM MỚI]
-                    // =========================================================
 
                     default:
                         System.out.println("Phản hồi không xác định: " + type);
                         break;
+
                 }
             }
         } catch (IOException | ClassNotFoundException e) {
