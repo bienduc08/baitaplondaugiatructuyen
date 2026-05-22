@@ -103,7 +103,7 @@ public class BidHistoryController {
                     BidDTO b2 = list.get(i);
                     if (!java.util.Objects.equals(b1.getId(), b2.getId()) ||
                         !java.util.Objects.equals(b1.getPrice(), b2.getPrice()) ||
-                        !java.util.Objects.equals(b1.getBidderName(), b2.getBidderName()) ||
+                        !java.util.Objects.equals(b1.getUserName(), b2.getUserName()) ||
                         !java.util.Objects.equals(b1.getTime(), b2.getTime()) ||
                         !java.util.Objects.equals(b1.getStatus(), b2.getStatus())) {
                         isIdentical = false;

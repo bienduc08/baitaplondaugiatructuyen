@@ -18,8 +18,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView; // Đã thêm import ImageView
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -35,10 +33,8 @@ public class ProductItemController {
     @FXML private Label timeLabel;
     @FXML private TextField bidInput;
     @FXML private Label descriptionLabel;
-    @FXML private javafx.scene.image.ImageView imgProduct;
 
     // ĐÃ THÊM: Khai báo biến imgProduct để hiển thị ảnh
-    @FXML private ImageView imgProduct;
 
     private ProductDTO currentProduct;
     private Timeline countdown;

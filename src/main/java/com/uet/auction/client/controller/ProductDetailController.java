@@ -33,13 +33,20 @@ public class ProductDetailController {
     // THÊM BIẾN NÀY: Để linh hoạt quay lại màn hình trước đó bất kể là User, Admin hay Seller
     public static Runnable onBackAction;
 
-    @FXML private Label lblProductName, lblCurrentPrice, lblDescription, lblTimeRemaining,lblStepPrice;
-    @FXML private Label lblSellerName, lblTopBidder;
-    @FXML private TableView<BidDTO> tblRecentBids;
-    @FXML private TableColumn<BidDTO, String> colUser, colBidTime;
-    @FXML private TableColumn<BidDTO, Double> colBidPrice;
-    @FXML private TextField txtBidAmount;
-    @FXML private ImageView imgProduct;
+    @FXML
+    private Label lblProductName, lblCurrentPrice, lblDescription, lblTimeRemaining, lblStepPrice;
+    @FXML
+    private Label lblSellerName, lblTopBidder;
+    @FXML
+    private TableView<BidDTO> tblRecentBids;
+    @FXML
+    private TableColumn<BidDTO, String> colUser, colBidTime;
+    @FXML
+    private TableColumn<BidDTO, Double> colBidPrice;
+    @FXML
+    private TextField txtBidAmount;
+    @FXML
+    private ImageView imgProduct;
 
     private final ObservableList<BidDTO> recentBidsList = FXCollections.observableArrayList();
     private ProductDTO currentProduct;
@@ -55,7 +62,6 @@ public class ProductDetailController {
     public void setProductData(ProductDTO product, List<BidDTO> allBids) {
         dispose();
         this.currentProduct = product;
-
 
         lblProductName.setText(product.getName());
         lblDescription.setText(product.getDescription());
@@ -87,12 +93,6 @@ public class ProductDetailController {
         } else {
             loadDefaultImage();
         }
-        if (product.getEndTime() != null) {
-            startCountdown(product.getEndTime());
-        } else {
-            if (lblTimeRemaining != null) lblTimeRemaining.setText("Hết hạn: —");
-        }
-    }
     }
 
     private void updateBidHistory(List<BidDTO> bids) {
@@ -116,59 +116,22 @@ public class ProductDetailController {
 
 
     private void startCountdown(LocalDateTime endTime) {
-        // Dừng bộ đếm cũ nếu có trước khi chạy bộ mới
-        if (countdown != null) {
-            countdown.stop();
-        }
-
-        if (endTime == null) {
-            if (lblTimeRemaining != null) lblTimeRemaining.setText("Thời gian: Không xác định");
-            return;
-        }
-
         countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            LocalDateTime now = LocalDateTime.now();
-
-            // Nếu thời gian hiện tại đã vượt qua thời gian kết thúc
-            if (now.isAfter(endTime)) {
-                if (lblTimeRemaining != null) {
-                    lblTimeRemaining.setText("⏰ Phiên đấu giá đã kết thúc");
-                    lblTimeRemaining.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold; -fx-font-size: 14;");
-                }
-                txtBidAmount.setDisable(true); // Khóa ô nhập giá
+            long totalSeconds = ChronoUnit.SECONDS.between(LocalDateTime.now(), endTime);
+            if (totalSeconds <= 0) {
+                if (lblTimeRemaining != null) lblTimeRemaining.setText("⏰ Phiên đấu giá đã kết thúc");
+                if (txtBidAmount != null) txtBidAmount.setDisable(true);
                 countdown.stop();
                 return;
             }
-
-            // Tính toán số ngày, giờ, phút, giây còn lại
-            long totalSeconds = ChronoUnit.SECONDS.between(now, endTime);
-            long days    = totalSeconds / 86400;
-            long hours   = (totalSeconds % 86400) / 3600;
-            long minutes = (totalSeconds % 3600) / 60;
-            long secs    = totalSeconds % 60;
-
-            String timeString;
-            if (days > 0) {
-                timeString = String.format("Còn lại: %d Ngày %02d:%02d:%02d", days, hours, minutes, secs);
-            } else {
-                timeString = String.format("Còn lại: %02d:%02d:%02d", hours, minutes, secs);
-            }
-
-            // Cập nhật lên giao diện
             if (lblTimeRemaining != null) {
-                lblTimeRemaining.setText(timeString);
-
-                // Hiệu ứng: Đổi màu sang đỏ khi còn dưới 1 tiếng (3600 giây)
-                if (totalSeconds < 3600) {
-                    lblTimeRemaining.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-font-size: 14;");
-                } else {
-                    lblTimeRemaining.setStyle("-fx-text-fill: #2ecc71; -fx-font-weight: bold; -fx-font-size: 14;"); // Màu xanh
-                }
+                lblTimeRemaining.setText(String.format("Còn lại: %d ngày %02d:%02d:%02d",
+                        totalSeconds / 86400, (totalSeconds % 86400) / 3600, (totalSeconds % 3600) / 60, totalSeconds % 60));
+                lblTimeRemaining.setStyle(totalSeconds < 3600 ? "-fx-text-fill: #e74c3c; -fx-font-weight: bold;" : "-fx-text-fill: #2ecc71; -fx-font-weight: bold;");
             }
         }));
-
-        countdown.setCycleCount(Timeline.INDEFINITE); // Chạy lặp lại vô hạn
-        countdown.play(); // Bắt đầu đếm
+        countdown.setCycleCount(Timeline.INDEFINITE);
+        countdown.play();
     }
 
     private void setupTable() {
@@ -223,61 +186,23 @@ public class ProductDetailController {
 
     @FXML
     public void onPlaceBidClick() {
-        String bidText = txtBidAmount.getText();
-        if (bidText == null || bidText.trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng nhập mức giá bạn muốn đặt!");
-            return;
-        }
-
         try {
-            double bidAmount = Double.parseDouble(bidText.replace(",", "").trim());
-
-            // SỬ DỤNG SESSION MANAGER CỦA CLIENT
+            double bidAmount = Double.parseDouble(txtBidAmount.getText().replace(",", "").trim());
             UserDTO sessionUser = SessionManager.getCurrentUser();
 
-            if (sessionUser == null) {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!");
+            if (sessionUser == null) return;
+            if ("SELLER".equals(sessionUser.getRole()) || "ADMIN".equals(sessionUser.getRole())) {
+                showAlert(Alert.AlertType.ERROR, "Từ chối", "Quản trị viên/Người bán không được đấu giá!");
                 return;
             }
-
-            // 1. KIỂM TRA QUYỀN bằng biến sessionUser
-            String role = sessionUser.getRole();
-            if ("SELLER".equals(role) || "ADMIN".equals(role)) {
-                showAlert(Alert.AlertType.ERROR, "Từ chối truy cập", "Quản trị viên và Người bán không được phép tham gia đặt giá!");
-                return; // Dừng lại, không cho đặt
+            if (bidAmount < (currentProduct.getCurrentPrice() + currentProduct.getStepPrice())) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", "Giá đặt phải lớn hơn giá hiện tại + bước giá!");
+                return;
             }
-
-            if (currentProduct != null) {
-                double currentPrice = currentProduct.getCurrentPrice();
-                double stepPrice = currentProduct.getStepPrice(); // Lấy bước giá của sản phẩm
-                double minValidPrice = currentPrice + stepPrice;  // Giá hợp lệ tối thiểu
-
-                // 2. KIỂM TRA BƯỚC GIÁ
-                if (bidAmount < minValidPrice) {
-                    showAlert(Alert.AlertType.ERROR, "Lỗi đặt giá",
-                            String.format("Mức giá đặt không hợp lệ!\nGiá hiện tại: %,.0f VNĐ\nBước giá: %,.0f VNĐ\n=> Bạn phải đặt tối thiểu: %,.0f VNĐ",
-                                    currentPrice, stepPrice, minValidPrice));
-                    return;
-                }
-
-                // 3. KIỂM TRA CÓ ĐANG GIỮ ĐỈNH HAY KHÔNG bằng biến sessionUser
-                if (sessionUser.getUsername().equals(currentProduct.getOwnerName())) {
-                    showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Bạn đang giữ mức giá cao nhất, không thể tự đặt thêm!");
-                    return;
-                }
-
-                // Nếu thỏa mãn hết thì gửi Request lên Server bằng biến sessionUser
-                AuctionRequest request = new AuctionRequest("PLACE_BID", new Object[]{currentProduct.getId(), sessionUser.getUsername(), bidAmount});
-                SocketClient.sendRequest(request);
-
-                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã gửi yêu cầu đặt giá: " + String.format("%,.0f VNĐ", bidAmount));
-                txtBidAmount.clear();
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Không tìm thấy thông tin sản phẩm!");
-            }
-
+            SocketClient.sendRequest(new AuctionRequest("PLACE_BID", new Object[]{currentProduct.getId(), sessionUser.getUsername(), bidAmount}));
+            txtBidAmount.clear();
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi định dạng", "Vui lòng chỉ nhập số hợp lệ!");
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập số hợp lệ!");
         }
     }
 
@@ -288,6 +213,7 @@ public class ProductDetailController {
         a.setContentText(msg);
         a.showAndWait();
     }
+
     // Hàm hỗ trợ load ảnh mặc định an toàn
     private void loadDefaultImage() {
         try (InputStream is = getClass().getResourceAsStream("/com/uet/auction/images/macdinh.jpg")) {
@@ -296,3 +222,4 @@ public class ProductDetailController {
             System.err.println("Không thể load ảnh mặc định");
         }
     }
+}
