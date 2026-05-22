@@ -53,41 +53,53 @@ public class AuctionService {
                 : new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Cập nhật thất bại!", null);
     }
 
-    // Trong file AuctionService.java, tìm phương thức addProduct và thay thế bằng đoạn code sau:
-
     public AuctionResponse addProduct(ProductDTO product) {
         try {
-            // --- BẮT ĐẦU XỬ LÝ LƯU ẢNH ---
-            String imageUrl = "macdinh.jpg"; // Đường dẫn mặc định nếu không có ảnh
+            System.out.println("[AuctionService] Nhận yêu cầu đăng sản phẩm: " + product.getName()
+                    + " | Seller: " + product.getSellerName()
+                    + " | Giá: " + product.getStartingPrice()
+                    + " | Bước giá: " + product.getStepPrice());
+
+            // ====== VALIDATION PHÍA SERVER ======
+            if (product.getName() == null || product.getName().trim().isEmpty()) {
+                return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Tên sản phẩm không được để trống!", null);
+            }
+            if (product.getStartingPrice() <= 0) {
+                return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Giá khởi điểm phải lớn hơn 0!", null);
+            }
+            if (product.getStepPrice() <= 0) {
+                return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Bước giá phải lớn hơn 0!", null);
+            }
+            if (product.getEndTime() == null) {
+                return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Thời gian kết thúc không được để trống!", null);
+            }
+            if (product.getSellerName() == null || product.getSellerName().trim().isEmpty()) {
+                return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Không xác định được người bán!", null);
+            }
+
+            // ====== XỬ LÝ LƯU ẢNH ======
+            String imageUrl = "images/default-product.png";
 
             if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
-                // 1. Tạo thư mục nếu chưa tồn tại
-                String uploadDir = "upload_images";
+                String uploadDir = "images";
                 java.io.File dir = new java.io.File(uploadDir);
                 if (!dir.exists()) {
                     dir.mkdirs();
                 }
 
-                // 2. Tạo tên file duy nhất
                 String fileName = "sp_" + System.currentTimeMillis() + ".jpg";
                 java.io.File imageFile = new java.io.File(uploadDir + "/" + fileName);
 
-                // 3. Ghi mảng byte ra file
                 try (java.io.FileOutputStream fos = new java.io.FileOutputStream(imageFile)) {
                     fos.write(product.getImageBytes());
                 }
 
-                // 4. Lấy đường dẫn tương đối để lưu vào DB
-                imageUrl = fileName;
-
-                // 5. Giải phóng bộ nhớ
+                imageUrl = uploadDir + "/" + fileName;
                 product.setImageBytes(null);
             }
-            // Gán imageUrl vào productDTO (nếu bạn muốn lưu trữ lại trong object, dù không bắt buộc cho DAO)
             product.setImageUrl(imageUrl);
-            // --- KẾT THÚC XỬ LÝ LƯU ẢNH ---
 
-            // Gọi DAO, truyền thêm tham số imageUrl
+            // ====== GỌI DAO ĐỂ LƯU VÀO DATABASE ======
             boolean ok = productDAO.addProduct(
                     product.getName(),
                     product.getDescription(),
@@ -98,21 +110,35 @@ public class AuctionService {
                     product.getEndTime(),
                     imageUrl
             );
-            if (ok) return new AuctionResponse(true, "ADD_PRODUCT_RESULT",
-                    "Gửi yêu cầu đăng bán thành công! Chờ Admin duyệt.", null);
+
+            if (ok) {
+                System.out.println("[AuctionService] Đăng sản phẩm thành công: " + product.getName());
+                return new AuctionResponse(true, "ADD_PRODUCT_RESULT",
+                        "Gửi yêu cầu đăng bán thành công! Chờ Admin duyệt.", null);
+            } else {
+                System.err.println("[AuctionService] DAO trả về false khi thêm sản phẩm: " + product.getName());
+                return new AuctionResponse(false, "ADD_PRODUCT_RESULT",
+                        "Lỗi khi lưu sản phẩm vào cơ sở dữ liệu!", null);
+            }
         } catch (Exception e) {
-            System.err.println("[AuctionService.addProduct] Lỗi: " + e.getMessage());
+            System.err.println("[AuctionService.addProduct] Lỗi nghiêm trọng: " + e.getMessage());
             e.printStackTrace();
+            return new AuctionResponse(false, "ADD_PRODUCT_RESULT",
+                    "Lỗi server: " + e.getMessage(), null);
         }
-        return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Lỗi server khi đăng sản phẩm.", null);
     }
 
     public AuctionResponse placeBid(int productId, String bidderName, double bidAmount) {
         try {
             String role = userDAO.getRole(bidderName);
-            // THÊM ADMIN VÀO ĐỂ CHẶN Ở TẦNG SERVER
-            if ("SELLER".equals(role) || "ADMIN".equals(role)) {
-                return new AuctionResponse(false, "BID_RESULT", "Quản trị viên và Người bán không được phép tham gia đấu giá!", null);
+            if ("ADMIN".equals(role)) {
+                return new AuctionResponse(false, "BID_RESULT", "Quản trị viên không được phép tham gia đấu giá!", null);
+            }
+            if ("SELLER".equals(role)) {
+                String sellerName = productDAO.getSellerOfProduct(productId);
+                if (bidderName.equals(sellerName)) {
+                    return new AuctionResponse(false, "BID_RESULT", "Bạn không được phép tự đấu giá sản phẩm của chính mình!", null);
+                }
             }
         } catch (Exception e) {
             System.err.println("[AuctionService] " + e.getMessage());
@@ -120,10 +146,11 @@ public class AuctionService {
 
         try {
             double balance = userDAO.getBalance(bidderName);
-            if (balance > 0 && balance < bidAmount) {
+            if (balance < bidAmount) {
                 return new AuctionResponse(false, "BID_RESULT",
                         String.format("Số dư không đủ! Số dư: %,.0f VNĐ", balance), null);
             }
+
         } catch (Exception e) {}
 
         boolean ok = bidDAO.placeBid(productId, bidderName, bidAmount);

@@ -7,11 +7,13 @@ import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.Request.AuctionRequest;
 import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,10 +41,12 @@ public class SellerAddProductController {
     @FXML private TextField  txtEndH;
     @FXML private TextField  txtEndM;
     @FXML private TextField  txtEndS;
-    @FXML private ImageView imgPreview;
-    @FXML private javafx.scene.control.Button btnChooseImage;
+    @FXML private ImageView  imgPreview;   // Preview ảnh sản phẩm
+    @FXML private Label      lblImageName; // Hiển thị tên file đã chọn
     @FXML private javafx.scene.control.Button btnRemoveImage;
-    private byte[] selectedImageBytes;
+
+    // Lưu dữ liệu nhị phân của ảnh đã chọn
+    private byte[] selectedImageBytes = null;
 
     @FXML
     public void initialize() {
@@ -131,6 +135,10 @@ public class SellerAddProductController {
             product.setStartTime(startTime);
             product.setEndTime(endTime);
             product.setStatus("PENDING");
+            // Gắn dữ liệu ảnh nếu người dùng đã chọn
+            if (selectedImageBytes != null) {
+                product.setImageBytes(selectedImageBytes);
+            }
 
             SocketClient.sendRequest(new AuctionRequest("ADD_PRODUCT", product));
             AlertHelper.showInfo("⏳ Đã gửi yêu cầu đăng sản phẩm, chờ Admin duyệt!");
@@ -163,84 +171,66 @@ public class SellerAddProductController {
         if (txtEndH   != null) txtEndH.setText("23");
         if (txtEndM   != null) txtEndM.setText("59");
         if (txtEndS   != null) txtEndS.setText("00");
-
-        // --- BỔ SUNG ĐOẠN NÀY ---
-        if (imgPreview != null) imgPreview.setImage(null);
+        // Reset ảnh
         selectedImageBytes = null;
+        if (imgPreview   != null) imgPreview.setImage(null);
+        if (lblImageName != null) lblImageName.setText("");
+        if (btnRemoveImage != null) {
+            btnRemoveImage.setVisible(false);
+            btnRemoveImage.setManaged(false);
+        }
+    }
 
-        if (btnChooseImage != null) {
-            btnChooseImage.setVisible(true);
-            btnChooseImage.setManaged(true);
+    /** Xử lý nút Tải ảnh lên — mở FileChooser và đọc byte ảnh */
+    @FXML
+    public void onChooseImageClick() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Chọn ảnh sản phẩm");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Ảnh", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp")
+        );
+
+        Stage stage = (Stage) txtProductName.getScene().getWindow();
+        File file = chooser.showOpenDialog(stage);
+        if (file != null) {
+            // Giới hạn kích thước file tối đa 5MB
+            if (file.length() > 5 * 1024 * 1024) {
+                AlertHelper.showError("Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 5MB.");
+                return;
+            }
+            try {
+                selectedImageBytes = Files.readAllBytes(file.toPath());
+                // Hiển thị preview
+                if (imgPreview != null) {
+                    imgPreview.setImage(new Image(file.toURI().toString()));
+                }
+                if (lblImageName != null) {
+                    lblImageName.setText(file.getName());
+                }
+                if (btnRemoveImage != null) {
+                    btnRemoveImage.setVisible(true);
+                    btnRemoveImage.setManaged(true);
+                }
+            } catch (IOException e) {
+                AlertHelper.showError("Không thể đọc file ảnh: " + e.getMessage());
+                selectedImageBytes = null;
+            }
+        }
+    }
+
+    /** Xử lý nút Xóa ảnh — xóa dữ liệu ảnh hiện tại */
+    @FXML
+    public void onRemoveImageClick() {
+        selectedImageBytes = null;
+        if (imgPreview != null) {
+            imgPreview.setImage(null);
+        }
+        if (lblImageName != null) {
+            lblImageName.setText("");
         }
         if (btnRemoveImage != null) {
             btnRemoveImage.setVisible(false);
             btnRemoveImage.setManaged(false);
         }
-        // ------------------------
-    }
-    @FXML
-    public void onChooseImageClick() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn ảnh sản phẩm");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
-        );
-
-        File file = fileChooser.showOpenDialog(null);
-        if (file != null) {
-            try {
-                // Đọc file thành mảng byte để lưu tạm vào biến
-                selectedImageBytes = Files.readAllBytes(file.toPath());
-                if (selectedImageBytes.length > 2 * 1024 * 1024) { // Giới hạn 2MB
-                    AlertHelper.showError("Ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.");
-                    selectedImageBytes = null;
-                    return;
-                }
-
-                // Hiển thị ảnh lên giao diện cho Seller xem trước
-                Image image = new Image(file.toURI().toString());
-                if (imgPreview != null && btnRemoveImage != null) {
-                    imgPreview.setImage(image);
-
-                    // -- THÊM LOGIC ĐỔI NÚT Ở ĐÂY --
-                    // Ẩn nút Tải ảnh
-                    btnChooseImage.setVisible(false);
-                    btnChooseImage.setManaged(false);
-                    // Hiện nút Xóa ảnh
-                    btnRemoveImage.setVisible(true);
-                    btnRemoveImage.setManaged(true);
-                }
-            } catch (IOException e) {
-                AlertHelper.showError("Lỗi khi đọc file ảnh! Vui lòng thử lại.");
-                e.printStackTrace();
-            }
-        }
-    }
-    @FXML
-    public void onRemoveImageClick() {
-        System.out.println("[Hệ thống] Đang bấm nút Xóa ảnh...");
-
-        // 1. Xóa ảnh preview
-        if (imgPreview != null) {
-            imgPreview.setImage(null);
-        }
-        selectedImageBytes = null;
-
-        // 2. KIỂM TRA XEM BIẾN CÓ BỊ NULL KHÔNG
-        if (btnChooseImage == null || btnRemoveImage == null) {
-            System.err.println("[LỖI CỰC KỲ QUAN TRỌNG]: Biến btnChooseImage hoặc btnRemoveImage đang bị NULL!");
-            System.err.println("=> Nguyên nhân: Bạn chưa khai báo nút hoặc sai fx:id trong file FXML.");
-            return;
-        }
-
-        // 3. Hiện lại nút Tải ảnh lên
-        btnChooseImage.setVisible(true);
-        btnChooseImage.setManaged(true);
-
-        // 4. Ẩn nút Xóa ảnh đi
-        btnRemoveImage.setVisible(false);
-        btnRemoveImage.setManaged(false);
-
-        System.out.println("[Hệ thống] Đã hiện lại nút Tải ảnh và ẩn nút Xóa ảnh thành công!");
     }
 }

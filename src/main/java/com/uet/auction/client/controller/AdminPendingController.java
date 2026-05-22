@@ -13,6 +13,9 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -37,6 +40,7 @@ public class AdminPendingController {
     // Sử dụng DUY NHẤT một danh sách này để map với TableView
     private final ObservableList<ProductDTO> pendingListData = FXCollections.observableArrayList();
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private Timeline autoRefreshTimeline;
 
     @FXML
     public void initialize() {
@@ -46,6 +50,21 @@ public class AdminPendingController {
 
         // Gọi hàm tải danh sách ban đầu khi vừa vào tab này
         loadPendingProducts();
+
+        // Tự động làm mới mỗi 5 giây
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> refreshPendingProducts()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (pendingTable.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        pendingTable.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     private void setupTable() {

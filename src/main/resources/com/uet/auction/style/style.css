@@ -1,5 +1,10 @@
+/* ====================================
+   UET AUCTION — Global Style Sheet
+   ==================================== */
+
+/* ROOT: Font family duy nhất, không trùng */
 .root {
-    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     -fx-background-color: #f5f6fa;
 }
 
@@ -34,12 +39,13 @@
     -fx-background-radius: 4;
 }
 
-/* SIDEBAR & ROLE-BALANCE */
+/* SIDEBAR — chỉ định nghĩa một lần */
 .sidebar {
-    -fx-background-color: white;
-    -fx-border-color: #dcdde1;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #eef0f2;
     -fx-border-width: 0 1 0 0;
 }
+
 .role-balance-box {
     -fx-background-color: #f8f9fa;
     -fx-padding: 15;
@@ -78,6 +84,20 @@
     -fx-border-width: 0 0 0 4;
 }
 
+/* Menu tinh gọn */
+.menu-item-simple {
+    -fx-background-color: transparent;
+    -fx-text-fill: #4b5563;
+    -fx-padding: 14 25;
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+}
+.menu-item-simple:hover {
+    -fx-background-color: #f8fafc;
+    -fx-text-fill: #3b82f6;
+}
+
 /* TRANG CHỦ & TÌM KIẾM */
 .search-field {
     -fx-background-radius: 20;
@@ -100,13 +120,18 @@
     -fx-border-color: #2c3e50;
 }
 
-/* PRODUCT CARD (THẺ SẢN PHẨM DỌC) */
+/* PRODUCT CARD (THẺ SẢN PHẨM) — chỉ định nghĩa một lần */
 .product-card {
     -fx-background-color: white;
     -fx-background-radius: 10;
     -fx-padding: 15;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
 }
+/* FIX: -fx-transition không hợp lệ trong JavaFX CSS — đã xóa */
+.product-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 8);
+}
+
 .product-title {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
@@ -117,7 +142,7 @@
     -fx-font-weight: bold;
 }
 .text-green { -fx-text-fill: #27ae60; }
-.text-grey { -fx-text-fill: #7f8c8d; }
+.text-grey  { -fx-text-fill: #7f8c8d; }
 
 .btn-bid {
     -fx-background-color: #2ecc71;
@@ -135,15 +160,6 @@
     -fx-padding: 8;
     -fx-cursor: hand;
 }
-/* style.css */
-.root { -fx-font-family: 'Inter', 'Segoe UI', sans-serif; }
-
-/* Sidebar Sophistication */
-.sidebar {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #eef0f2;
-    -fx-border-width: 0 1 0 0;
-}
 
 /* Avatar Gradient & Glow */
 .avatar-gradient {
@@ -151,14 +167,14 @@
     -fx-effect: dropshadow(three-pass-box, rgba(79, 172, 254, 0.4), 15, 0, 0, 5);
 }
 
-/* Tên người dùng tinh tế */
+/* Tên người dùng */
 .user-name-text {
     -fx-font-size: 16px;
     -fx-font-weight: 700;
     -fx-text-fill: #1a1a1a;
-    -fx-letter-spacing: 0.5;
 }
 
+/* Role pill */
 .role-pill {
     -fx-background-color: #f1f5f9;
     -fx-text-fill: #64748b;
@@ -167,34 +183,10 @@
     -fx-background-radius: 10;
 }
 
-/* Menu tinh gọn */
-.menu-item-simple {
-    -fx-background-color: transparent;
-    -fx-text-fill: #4b5563;
-    -fx-padding: 14 25;
-    -fx-cursor: hand;
-    -fx-font-size: 14px;
-    -fx-alignment: CENTER_LEFT;
-}
-
-.menu-item-simple:hover {
-    -fx-background-color: #f8fafc;
-    -fx-text-fill: #3b82f6;
-}
-
 /* Thẻ số dư tối giản */
 .balance-card-mini {
     -fx-background-color: #fdfdfd;
     -fx-border-color: #f0f0f0;
     -fx-border-radius: 12;
     -fx-padding: 10 15;
-}
-/* Hiệu ứng nổi lên khi di chuột vào thẻ sản phẩm */
-.product-card {
-    -fx-transition: -fx-effect 0.2s, -fx-translate-y 0.2s;
-}
-
-.product-card:hover {
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 8);
-    -fx-translate-y: -3px;
 }

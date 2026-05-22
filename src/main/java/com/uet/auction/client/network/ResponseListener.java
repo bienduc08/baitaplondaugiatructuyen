@@ -110,6 +110,11 @@ public class ResponseListener implements Runnable {
                             if (ProductDetailController.instance != null)
                                 ProductDetailController.instance.reloadProductDetails();
                         });
+                        // Tự động làm mới số dư của người dùng hiện tại từ server
+                        String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
+                        if (currentUsr != null) {
+                            SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", currentUsr));
+                        }
                         break;
 
                     // =========================================================
@@ -195,14 +200,59 @@ public class ResponseListener implements Runnable {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
                                 double newBalance = ((Number) res.getData()).doubleValue();
-                                if (ProfileController.instance != null)
+                                
+                                // Cập nhật session user
+                                com.uet.auction.common.DTO.UserDTO current = com.uet.auction.client.util.SessionManager.getCurrentUser();
+                                if (current != null) {
+                                    current.setBalance(newBalance);
+                                }
+                                
+                                // Cập nhật ProfileController nếu đang hiển thị
+                                if (ProfileController.instance != null) {
                                     ProfileController.instance.handleDepositSuccess(newBalance);
+                                }
+                                
+                                // Cập nhật số dư ở thanh sidebar của các trang quản lý
+                                if (UserController.instance != null) {
+                                    UserController.instance.updateBalance();
+                                }
+                                if (SellerController.instance != null) {
+                                    SellerController.instance.updateBalance();
+                                }
+                                if (AdminController.instance != null) {
+                                    AdminController.instance.updateBalance();
+                                }
                             } else {
                                 AlertHelper.showError(res.getMessage());
                                 if (ProfileController.instance != null)
                                     ProfileController.instance.handleDepositFailure();
                             }
                         });
+                        break;
+
+                    case "GET_USER_BALANCE_RESULT":
+                        if (res.isSuccess()) {
+                            double bal = ((Number) res.getData()).doubleValue();
+                            Platform.runLater(() -> {
+                                com.uet.auction.common.DTO.UserDTO current = com.uet.auction.client.util.SessionManager.getCurrentUser();
+                                if (current != null) {
+                                    current.setBalance(bal);
+                                }
+                                // Đồng bộ số dư lên toàn bộ giao diện đang hoạt động
+                                if (UserController.instance != null) {
+                                    UserController.instance.updateBalance();
+                                }
+                                if (SellerController.instance != null) {
+                                    SellerController.instance.updateBalance();
+                                }
+                                if (AdminController.instance != null) {
+                                    AdminController.instance.updateBalance();
+                                }
+                                if (ProfileController.instance != null) {
+                                    ProfileController.instance.updateBalance();
+                                }
+                            });
+                        }
                         break;
 
                     case "GET_STATS_SUCCESS":

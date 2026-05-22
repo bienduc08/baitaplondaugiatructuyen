@@ -9,6 +9,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +31,7 @@ public class AdminUserManagementController {
     @FXML private Label lblUserCount;
     @FXML public static AdminUserManagementController instance;
     private final ObservableList<UserDTO> userList = FXCollections.observableArrayList();
+    private Timeline autoRefreshTimeline;
 
     @FXML
     public void initialize() {
@@ -38,6 +42,21 @@ public class AdminUserManagementController {
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
         colBalance.setCellValueFactory(new PropertyValueFactory<>("balance"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // Tự động làm mới mỗi 5 giây
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> reloadUsers()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (tbvUsers.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        tbvUsers.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
 
         colRole.setCellFactory(col -> new TableCell<>() {
             @Override

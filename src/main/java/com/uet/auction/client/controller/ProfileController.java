@@ -30,6 +30,7 @@ public class ProfileController {
     @FXML private Label lblBalance;
     @FXML private Label lblTotalBids;
     @FXML private Label lblTotalWins;
+    @FXML private Label lblAvatarInitial;
 
     @FXML private VBox sellerUpgradeBox;
     @FXML private Label lblSellerUpgradeHint;
@@ -53,6 +54,10 @@ public class ProfileController {
             lblUsername.setText(user.getUsername());
             lblRole.setText(roleDisplay(user.getRole()));
             lblBalance.setText(String.format("%,.0f VNĐ", user.getBalance()));
+            // Hiển thị chữ cái đầu của tên user thay vì cứng "D"
+            if (lblAvatarInitial != null && user.getUsername() != null && !user.getUsername().isEmpty()) {
+                lblAvatarInitial.setText(String.valueOf(user.getUsername().charAt(0)).toUpperCase());
+            }
             updateSellerUpgradeSection(user.getRole());
         }
 
@@ -61,6 +66,7 @@ public class ProfileController {
 
         String username = SessionManager.getCurrentUsername();
         if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
             SocketClient.sendRequest(new AuctionRequest("GET_MY_BIDS", username));
         }
     }
@@ -68,13 +74,9 @@ public class ProfileController {
 
 
     public void refreshBalance() {
-        UserDTO user = SessionManager.getCurrentUser();
-        if (user != null && lblBalance != null) {
-            lblBalance.setText(String.format("%,.0f VNĐ", user.getBalance()));
-        }
-
         String username = SessionManager.getCurrentUsername();
         if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
             SocketClient.sendRequest(new AuctionRequest("GET_MY_BIDS", username));
         }
     }
@@ -286,7 +288,11 @@ public class ProfileController {
 
     @FXML
     public void onBackButtonClick() {
-        if (onBackAction != null) {
+        UserDTO user = SessionManager.getCurrentUser();
+        if (user != null && "SELLER".equals(user.getRole()) && onBackAction != null) {
+            // Nếu đã nâng cấp lên SELLER, bắt buộc reload lại cảnh Seller.fxml thay vì dùng backAction cũ của User.fxml
+            fallbackBackAction();
+        } else if (onBackAction != null) {
             onBackAction.run();
         } else {
             fallbackBackAction();

@@ -14,6 +14,9 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +37,7 @@ public class JoinedAuctionsController {
 
     private final ObservableList<ProductDTO> joinedList = FXCollections.observableArrayList();
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private Timeline autoRefreshTimeline;
 
     @FXML
     public void initialize() {
@@ -41,6 +45,21 @@ public class JoinedAuctionsController {
         setupTable();
         tblJoinedAuctions.setItems(joinedList);
         reloadJoinedAuctions();
+
+        // Tự động làm mới mỗi 5 giây
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> reloadJoinedAuctions()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (tblJoinedAuctions.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        tblJoinedAuctions.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     public void reloadJoinedAuctions() {

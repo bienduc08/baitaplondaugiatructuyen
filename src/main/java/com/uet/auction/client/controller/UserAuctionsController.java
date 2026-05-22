@@ -133,7 +133,7 @@ public class UserAuctionsController {
     // Chuyển sang màn hình chi tiết sản phẩm (Giữ nguyên logic Callback BackAction)
     private void openProductDetail(ProductDTO product) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/client/view/ProductDetailContent.fxml")); // Chú ý đường dẫn
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProductDetailContent.fxml")); // FIX: đã bỏ /client/ khỏi đường dẫn
             Node detailNode = loader.load();
 
             ProductDetailController ctrl = loader.getController();

@@ -10,6 +10,9 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,6 +27,7 @@ public class HomecontentController {
 
     private List<ProductDTO> allProducts;
     private String currentCategory = "ALL"; // Biến lưu trạng thái lọc danh mục hiện tại
+    private Timeline autoRefreshTimeline;
 
     @FXML
     public void initialize() {
@@ -36,6 +40,21 @@ public class HomecontentController {
 
         // Tự động gọi API lấy danh sách sản phẩm đang đấu giá khi vừa load trang chủ
         loadProducts();
+
+        // Tự động làm mới mỗi 5 giây nếu màn hình còn hiển thị
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> loadProducts()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (productContainer.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        productContainer.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     /**
@@ -86,7 +105,15 @@ public class HomecontentController {
      * Hàm in danh sách sản phẩm đã lọc ra màn hình
      */
     private void renderProducts(List<ProductDTO> list) {
-        productContainer.getChildren().clear(); // Xóa sạch các ô cũ
+        // Dừng các bộ đếm ngược của các ô sản phẩm cũ để tránh rò rỉ bộ nhớ (leak timelines) gây crash ứng dụng
+        if (productContainer != null) {
+            for (Node child : productContainer.getChildren()) {
+                if (child.getUserData() instanceof ProductItemController) {
+                    ((ProductItemController) child.getUserData()).stopCountdown();
+                }
+            }
+            productContainer.getChildren().clear(); // Xóa sạch các ô cũ sau khi đã dừng timeline
+        }
 
         if (list.isEmpty()) {
             Label emptyMsg = new Label("Không tìm thấy sản phẩm nào phù hợp.");
@@ -104,6 +131,9 @@ public class HomecontentController {
                 // 2. Lấy controller của ô đó để truyền dữ liệu
                 ProductItemController controller = loader.getController();
                 controller.setProductData(product);
+
+                // Lưu trữ controller vào node để có thể truy cập dừng timeline sau này
+                productCard.setUserData(controller);
 
                 // 3. Ném ô sản phẩm vào FlowPane (Lưới sản phẩm)
                 productContainer.getChildren().add(productCard);

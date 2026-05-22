@@ -18,6 +18,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView; // Đã thêm import ImageView
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -25,6 +27,7 @@ import java.time.temporal.ChronoUnit;
 
 public class ProductItemController {
 
+    @FXML private ImageView imgProduct;
     @FXML private Label nameLabel;
     @FXML private Label priceLabel;
     @FXML private Label sellerLabel;
@@ -64,7 +67,6 @@ public class ProductItemController {
             timeLabel.setText("Hết hạn: —");
         }
 
-        // ĐÃ CHUYỂN LOGIC TẢI ẢNH VÀO ĐÚNG HÀM KHỞI TẠO DỮ LIỆU
         if (imgProduct != null) {
             imgProduct.setImage(null);
             String imageUrl = product.getImageUrl();
@@ -89,6 +91,12 @@ public class ProductItemController {
         }
 
         updateBidInputState();
+    }
+
+    public void stopCountdown() {
+        if (countdown != null) {
+            countdown.stop();
+        }
     }
 
     private void updateBidInputState() {

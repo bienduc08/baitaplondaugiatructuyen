@@ -1,0 +1,58 @@
+name: Java CI/CD with Maven
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master", "develop" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Build with Maven (Compile)
+      run: mvn -B clean compile
+
+    - name: Run Unit Tests
+      run: mvn -B test
+
+  package-and-artifact:
+    name: Package & Upload Artifacts
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Package JAR with Maven
+      run: mvn -B package -DskipTests
+
+    - name: Upload Build JAR Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: uet-auction-application
+        path: target/*.jar
+        retention-days: 7

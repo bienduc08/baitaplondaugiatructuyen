@@ -12,6 +12,9 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.util.List;
 
@@ -28,6 +31,7 @@ public class BidHistoryController {
 
     private final ObservableList<BidDTO> bidListData = FXCollections.observableArrayList();
     private Integer currentProductId;
+    private Timeline autoRefreshTimeline;
 
     // Instance tĩnh để ResponseListener có thể gọi displayBidHistory()
     public static BidHistoryController instance;
@@ -42,6 +46,21 @@ public class BidHistoryController {
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
         bidHistoryTable.setItems(bidListData);
+
+        // Tự động làm mới mỗi 3 giây
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(3), e -> loadBidHistory(true)));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (bidHistoryTable.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        bidHistoryTable.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     /**
@@ -51,7 +70,7 @@ public class BidHistoryController {
     public void setProductContext(Integer productId, String productName) {
         this.currentProductId = productId;
         productNameLabel.setText("Tên sản phẩm: " + productName);
-        loadBidHistory();
+        loadBidHistory(false);
     }
 
     /**
@@ -59,9 +78,15 @@ public class BidHistoryController {
      * ResponseListener sẽ nhận kết quả và gọi displayBidHistory().
      */
     private void loadBidHistory() {
+        loadBidHistory(false);
+    }
+
+    private void loadBidHistory(boolean isAutoRefresh) {
         if (currentProductId == null) return;
-        bidListData.clear();
-        totalBidsLabel.setText("Đang tải...");
+        if (!isAutoRefresh) {
+            bidListData.clear();
+            totalBidsLabel.setText("Đang tải...");
+        }
         SocketClient.sendRequest(new AuctionRequest("GET_BID_HISTORY", currentProductId));
     }
 
@@ -70,8 +95,25 @@ public class BidHistoryController {
      */
     public void displayBidHistory(List<BidDTO> list) {
         Platform.runLater(() -> {
-            bidListData.clear();
-            bidListData.addAll(list);
+            if (list == null) return;
+            boolean isIdentical = bidListData.size() == list.size();
+            if (isIdentical) {
+                for (int i = 0; i < list.size(); i++) {
+                    BidDTO b1 = bidListData.get(i);
+                    BidDTO b2 = list.get(i);
+                    if (!java.util.Objects.equals(b1.getId(), b2.getId()) ||
+                        !java.util.Objects.equals(b1.getPrice(), b2.getPrice()) ||
+                        !java.util.Objects.equals(b1.getBidderName(), b2.getBidderName()) ||
+                        !java.util.Objects.equals(b1.getTime(), b2.getTime()) ||
+                        !java.util.Objects.equals(b1.getStatus(), b2.getStatus())) {
+                        isIdentical = false;
+                        break;
+                    }
+                }
+            }
+            if (!isIdentical) {
+                bidListData.setAll(list);
+            }
             totalBidsLabel.setText("Tổng cộng: " + list.size() + " lượt trả giá");
         });
     }

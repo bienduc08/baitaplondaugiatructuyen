@@ -133,4 +133,8 @@ public class AuthService {
                 String.format("Nạp thành công %,.0f VNĐ!\nSố dư mới: %,.0f VNĐ", amount, newBalance),
                 newBalance);
     }
+
+    public double getUserBalance(String username) {
+        return userDAO.getBalance(username);
+    }
 }

@@ -16,6 +16,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,9 +37,11 @@ public class SellerMyProductsController {
     @FXML private TableColumn<ProductDTO, Integer> colBids;
     @FXML private TableColumn<ProductDTO, String>  colStatus;
     @FXML private TableColumn<ProductDTO, Void>    colActions;
+    @FXML private Label                             lblItemCount;
 
     private final ObservableList<ProductDTO> masterList   = FXCollections.observableArrayList();
     private       FilteredList<ProductDTO>   filteredList;
+    private Timeline autoRefreshTimeline;
 
     @FXML
     public void initialize() {
@@ -48,6 +53,21 @@ public class SellerMyProductsController {
         setupTable();
         setupFilters();
         loadMyAuctions();
+
+        // Tự động làm mới mỗi 5 giây
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> loadMyAuctions()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (tblMyAuctions.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        tblMyAuctions.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     private void setupTable() {
@@ -143,6 +163,10 @@ public class SellerMyProductsController {
         Platform.runLater(() -> {
             masterList.setAll(products);
             applyFilter();
+            // Cập nhật nhãn số lượng thực tế thay vì hardcoded
+            if (lblItemCount != null) {
+                lblItemCount.setText("Tổng: " + products.size() + " sản phẩm");
+            }
         });
     }
 
@@ -160,5 +184,11 @@ public class SellerMyProductsController {
         } catch (IOException e) {
             AlertHelper.showError("Không thể mở lịch sử đấu giá!");
         }
+    }
+
+    /** Xử lý nút Làm mới — tải lại danh sách sản phẩm từ server */
+    @FXML
+    public void onRefreshClick() {
+        loadMyAuctions();
     }
 }
