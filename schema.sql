@@ -29,7 +29,11 @@ CREATE TABLE IF NOT EXISTS products (
     
     -- Khóa ngoại đảm bảo tính toàn vẹn dữ liệu
     CONSTRAINT fk_products_seller FOREIGN KEY (seller_name) REFERENCES users(username) ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT fk_products_owner FOREIGN KEY (owner_name) REFERENCES users(username) ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT fk_products_owner FOREIGN KEY (owner_name) REFERENCES users(username) ON DELETE SET NULL ON UPDATE CASCADE,
+
+    -- Chỉ mục (Indexes) để tối ưu hiệu năng truy vấn
+    INDEX idx_products_status (status),
+    INDEX idx_products_seller (seller_name)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 4. Bảng Lịch sử Đấu giá (bids)
@@ -43,15 +47,13 @@ CREATE TABLE IF NOT EXISTS bids (
     
     -- Khóa ngoại đảm bảo tính toàn vẹn dữ liệu
     CONSTRAINT fk_bids_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    CONSTRAINT fk_bids_bidder FOREIGN KEY (bidder_name) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT fk_bids_bidder FOREIGN KEY (bidder_name) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE,
+
+    -- Chỉ mục (Indexes) để tối ưu hiệu năng truy vấn
+    INDEX idx_bids_product_amount (product_id, amount DESC)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- 5. Tạo các chỉ mục (Indexes) để tối ưu hóa hiệu năng truy vấn
-CREATE INDEX idx_products_status ON products(status);
-CREATE INDEX idx_products_seller ON products(seller_name);
-CREATE INDEX idx_bids_product_amount ON bids(product_id, amount DESC);
-
--- 6. Chèn tài khoản Admin mặc định (mật khẩu mặc định: admin123)
+-- 5. Chèn tài khoản Admin mặc định (mật khẩu mặc định: admin123)
 INSERT IGNORE INTO users (username, password, role)
 VALUES ('admin',
         '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',

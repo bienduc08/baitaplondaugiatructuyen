@@ -16,6 +16,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,6 +41,7 @@ public class SellerMyProductsController {
 
     private final ObservableList<ProductDTO> masterList   = FXCollections.observableArrayList();
     private       FilteredList<ProductDTO>   filteredList;
+    private Timeline autoRefreshTimeline;
 
     @FXML
     public void initialize() {
@@ -49,6 +53,21 @@ public class SellerMyProductsController {
         setupTable();
         setupFilters();
         loadMyAuctions();
+
+        // Tự động làm mới mỗi 5 giây
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> loadMyAuctions()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (tblMyAuctions.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        tblMyAuctions.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     private void setupTable() {

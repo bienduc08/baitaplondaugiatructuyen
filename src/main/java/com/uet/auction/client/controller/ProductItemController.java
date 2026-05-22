@@ -17,6 +17,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView; // Đã thêm import ImageView
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -24,6 +26,7 @@ import java.time.temporal.ChronoUnit;
 
 public class ProductItemController {
 
+    @FXML private ImageView imgProduct;
     @FXML private Label nameLabel;
     @FXML private Label priceLabel;
     @FXML private Label sellerLabel;
@@ -62,29 +65,31 @@ public class ProductItemController {
             timeLabel.setText("Hết hạn: —");
         }
 
-        // ĐÃ CHUYỂN LOGIC TẢI ẢNH VÀO ĐÚNG HÀM KHỞI TẠO DỮ LIỆU
         if (imgProduct != null) {
             String imageUrl = product.getImageUrl();
-
-            // Lọc bỏ rác đường dẫn (ví dụ: images\sp_...)
-            String cleanFileName = (imageUrl != null) ? new java.io.File(imageUrl.trim()).getName() : "";
-
-            if (imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.toLowerCase().contains("macdinh")) {
-                loadDefaultImage();
-            } else {
-                // Trỏ thẳng vào thư mục upload_images trong project
-                java.io.File file = new java.io.File("images/" + cleanFileName);
-
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                java.io.File file = new java.io.File(imageUrl);
                 if (file.exists()) {
-                    // Nạp ảnh có giới hạn kích thước (300x300) để tránh tràn bộ nhớ
-                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString(), 300, 300, true, true));
+                    imgProduct.setImage(new Image(file.toURI().toString()));
                 } else {
                     loadDefaultImage();
                 }
+            } else {
+                loadDefaultImage();
             }
         }
 
         updateBidInputState();
+    }
+
+    private void loadDefaultImage() {
+        String defaultImagePath = "/com/uet/auction/images/LogoUET.png";
+        java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
+        if (is != null) {
+            imgProduct.setImage(new Image(is));
+        } else {
+            System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
+        }
     }
 
     private void updateBidInputState() {

@@ -138,6 +138,23 @@ public class ProductDAO {
         }
     }
 
+    /** Lấy tên người bán của sản phẩm dựa trên ID */
+    public String getSellerOfProduct(int productId) {
+        String sql = "SELECT seller_name FROM products WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, productId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("seller_name");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO.getSellerOfProduct] " + e.getMessage());
+        }
+        return null;
+    }
+
     /** Tự động mở phiên APPROVED đến giờ start_time */
     public void openScheduledAuctions() {
         String sql = "UPDATE products SET status = 'OPEN' WHERE status = 'APPROVED' AND start_time <= NOW()";
