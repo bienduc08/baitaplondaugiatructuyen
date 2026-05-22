@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.uet.auction.client.controller.ProfileController"
+      style="-fx-background-color: #f0f4f8;">
+
+    <!-- HEADER -->
+    <HBox prefHeight="140.0"
+          style="-fx-background-color: linear-gradient(to right, #1a237e, #1565c0);
+                 -fx-padding: 30 36 30 36;"
+          alignment="CENTER_LEFT" spacing="22.0">
+        <StackPane>
+            <Circle radius="50.0" style="-fx-fill: rgba(255,255,255,0.15); -fx-stroke: rgba(255,255,255,0.4); -fx-stroke-width: 2;"/>
+            <Label text="🛡" style="-fx-font-size: 30;"/>
+        </StackPane>
+        <VBox spacing="8.0" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+            <Label fx:id="lblUsername" text="Admin" textFill="white"
+                   style="-fx-font-size: 24; -fx-font-weight: bold;"/>
+            <Label fx:id="lblRole" text="🛡 Quản trị viên"
+                   style="-fx-background-color: rgba(255,255,255,0.2); -fx-text-fill: white;
+                          -fx-font-size: 12; -fx-font-weight: bold;
+                          -fx-padding: 4 16; -fx-background-radius: 20;"/>
+        </VBox>
+        <VBox spacing="6.0" alignment="CENTER_RIGHT">
+            <Label fx:id="lblHeaderName" text="👤 Biện Minh Đức"
+                   style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;"/>
+            <Label fx:id="lblHeaderEmail" text="✉ admin@gmail.com"
+                   style="-fx-text-fill: #e3f2fd; -fx-font-size: 12;"/>
+        </VBox>
+    </HBox>
+
+    <!-- BODY -->
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+        <VBox spacing="20.0" style="-fx-padding: 28 32 32 32; -fx-background-color: #f0f4f8;">
+
+            <!-- STATS ROW -->
+            <HBox spacing="16.0">
+                <!-- Balance -->
+                <VBox HBox.hgrow="ALWAYS" spacing="10.0"
+                      style="-fx-background-color: white; -fx-background-radius: 16;
+                             -fx-padding: 24 26; -fx-effect: dropshadow(three-pass-box,rgba(0,0,0,0.07),12,0,0,4);">
+                    <Label text="💰  SỐ DƯ" style="-fx-font-size: 10; -fx-font-weight: bold; -fx-text-fill: #90a4ae;"/>
+                    <Label fx:id="lblBalance" text="0 VNĐ"
+                           style="-fx-font-size: 26; -fx-font-weight: bold; -fx-text-fill: #1565c0;"/>
+                    <Label text="Số dư hiện tại" style="-fx-font-size: 11; -fx-text-fill: #cfd8dc;"/>
+                </VBox>
+                <!-- Role Info -->
+                <VBox HBox.hgrow="ALWAYS" spacing="10.0"
+                      style="-fx-background-color: white; -fx-background-radius: 16;
+                             -fx-padding: 24 26; -fx-effect: dropshadow(three-pass-box,rgba(0,0,0,0.07),12,0,0,4);">
+                    <Label text="🔐  QUYỀN HẠN" style="-fx-font-size: 10; -fx-font-weight: bold; -fx-text-fill: #90a4ae;"/>
+                    <Label text="Toàn quyền" style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #6a1b9a;"/>
+                    <Label text="Duyệt SP · Quản lý người dùng · Xem báo cáo"
+                           style="-fx-font-size: 11; -fx-text-fill: #cfd8dc;"/>
+                </VBox>
+                <!-- Status -->
+                <VBox HBox.hgrow="ALWAYS" spacing="10.0"
+                      style="-fx-background-color: white; -fx-background-radius: 16;
+                             -fx-padding: 24 26; -fx-effect: dropshadow(three-pass-box,rgba(0,0,0,0.07),12,0,0,4);">
+                    <Label text="🔖  TRẠNG THÁI" style="-fx-font-size: 10; -fx-font-weight: bold; -fx-text-fill: #90a4ae;"/>
+                    <HBox spacing="8.0" alignment="CENTER_LEFT">
+                        <Circle radius="7.0" style="-fx-fill: #43a047;"/>
+                        <Label text="Đang hoạt động"
+                               style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #2e7d32;"/>
+                    </HBox>
+                    <Label text="Tài khoản không bị hạn chế" style="-fx-font-size: 11; -fx-text-fill: #cfd8dc;"/>
+                </VBox>
+            </HBox>
+
+            <!-- PERMISSION CARDS -->
+            <VBox spacing="14.0"
+                  style="-fx-background-color: white; -fx-background-radius: 16;
+                         -fx-padding: 26 28; -fx-effect: dropshadow(three-pass-box,rgba(0,0,0,0.07),12,0,0,4);">
+                <HBox spacing="10.0" alignment="CENTER_LEFT">
+                    <Label text="⚙️" style="-fx-font-size: 20;"/>
+                    <VBox spacing="2.0">
+                        <Label text="Chức năng quản trị"
+                               style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #1a237e;"/>
+                        <Label text="Các quyền hạn dành riêng cho tài khoản Admin"
+                               style="-fx-font-size: 11; -fx-text-fill: #b0bec5;"/>
+                    </VBox>
+                </HBox>
+                <Separator/>
+                <GridPane hgap="14.0" vgap="14.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="ALWAYS" percentWidth="33.0"/>
+                        <ColumnConstraints hgrow="ALWAYS" percentWidth="33.0"/>
+                        <ColumnConstraints hgrow="ALWAYS" percentWidth="34.0"/>
+                    </columnConstraints>
+                    <!-- Card 1 -->
+                    <VBox GridPane.columnIndex="0" spacing="8.0"
+                          style="-fx-background-color: #e8eaf6; -fx-background-radius: 12; -fx-padding: 18 20;">
+                        <Label text="📦" style="-fx-font-size: 26;"/>
+                        <Label text="Duyệt sản phẩm"
+                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #283593;"/>
+                        <Label text="Xét duyệt và phê duyệt sản phẩm đấu giá từ người bán"
+                               style="-fx-font-size: 11; -fx-text-fill: #5c6bc0; -fx-wrap-text: true;"/>
+                    </VBox>
+                    <!-- Card 2 -->
+                    <VBox GridPane.columnIndex="1" spacing="8.0"
+                          style="-fx-background-color: #fce4ec; -fx-background-radius: 12; -fx-padding: 18 20;">
+                        <Label text="👥" style="-fx-font-size: 26;"/>
+                        <Label text="Quản lý người dùng"
+                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #880e4f;"/>
+                        <Label text="Khoá, mở khoá và quản lý toàn bộ tài khoản trong hệ thống"
+                               style="-fx-font-size: 11; -fx-text-fill: #c2185b; -fx-wrap-text: true;"/>
+                    </VBox>
+                    <!-- Card 3 -->
+                    <VBox GridPane.columnIndex="2" spacing="8.0"
+                          style="-fx-background-color: #e8f5e9; -fx-background-radius: 12; -fx-padding: 18 20;">
+                        <Label text="📊" style="-fx-font-size: 26;"/>
+                        <Label text="Theo dõi hệ thống"
+                               style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #1b5e20;"/>
+                        <Label text="Xem báo cáo tổng quan về hoạt động đấu giá toàn hệ thống"
+                               style="-fx-font-size: 11; -fx-text-fill: #388e3c; -fx-wrap-text: true;"/>
+                    </VBox>
+                </GridPane>
+            </VBox>
+
+        </VBox>
+    </ScrollPane>
+</VBox>
