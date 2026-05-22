@@ -51,9 +51,12 @@ public class AdminController {
         instance = this;
         setupTable();
         pendingTable.setItems(pendingListData);
-        if (welcomeLabel != null && SessionManager.getCurrentUsername() != null)
+        if (welcomeLabel != null && SessionManager.getCurrentUsername() != null) {
             welcomeLabel.setText("Xin chào, Admin: " + SessionManager.getCurrentUsername());
+        }
+        if (lblBalance != null && SessionManager.getCurrentUser() != null) {
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+        }
         onShowHomeClick();
     }
 
@@ -184,7 +187,8 @@ public class AdminController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Node node = loader.load();
             mainBorderPane.setCenter(node);
-            loadPendingProducts();
+            // Không tự động gọi loadPendingProducts() khi đổi view;
+            // chỉ tải khi người dùng bấm vào tab "Duyệt sản phẩm" (onPendingClick)
         } catch (Exception e) {
             e.printStackTrace();
         }

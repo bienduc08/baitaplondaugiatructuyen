@@ -34,6 +34,7 @@ public class SellerMyProductsController {
     @FXML private TableColumn<ProductDTO, Integer> colBids;
     @FXML private TableColumn<ProductDTO, String>  colStatus;
     @FXML private TableColumn<ProductDTO, Void>    colActions;
+    @FXML private Label                             lblItemCount;
 
     private final ObservableList<ProductDTO> masterList   = FXCollections.observableArrayList();
     private       FilteredList<ProductDTO>   filteredList;
@@ -143,6 +144,10 @@ public class SellerMyProductsController {
         Platform.runLater(() -> {
             masterList.setAll(products);
             applyFilter();
+            // Cập nhật nhãn số lượng thực tế thay vì hardcoded
+            if (lblItemCount != null) {
+                lblItemCount.setText("Tổng: " + products.size() + " sản phẩm");
+            }
         });
     }
 
@@ -160,5 +165,11 @@ public class SellerMyProductsController {
         } catch (IOException e) {
             AlertHelper.showError("Không thể mở lịch sử đấu giá!");
         }
+    }
+
+    /** Xử lý nút Làm mới — tải lại danh sách sản phẩm từ server */
+    @FXML
+    public void onRefreshClick() {
+        loadMyAuctions();
     }
 }

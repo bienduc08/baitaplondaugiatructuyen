@@ -8,6 +8,9 @@ public class ServerApplication {
     public static void main(String[] args) {
         int port = 8080;
 
+        // BƯỚC 0: Tự động di trú / cập nhật cấu trúc cơ sở dữ liệu nếu thiếu cột
+        com.uet.auction.server.config.DbMigrator.migrate();
+
         // BƯỚC 1: Workflow kiểm tra thời gian (Chạy ngầm)
         AuctionTimer auctionTimer = new AuctionTimer();
         auctionTimer.startChecking(); // Tự động chuyển PENDING -> OPEN -> CLOSED

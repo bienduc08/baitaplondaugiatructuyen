@@ -14,7 +14,7 @@
             <children>
                 <StackPane>
                     <Circle radius="55.0" styleClass="avatar-gradient" />
-                    <Label text="D" textFill="white" style="-fx-font-size: 40; -fx-font-weight: 900;" />
+                    <Label fx:id="lblAvatarInitial" text="?" textFill="white" style="-fx-font-size: 40; -fx-font-weight: 900;" />
                 </StackPane>
                 <VBox spacing="10.0">
                     <children>

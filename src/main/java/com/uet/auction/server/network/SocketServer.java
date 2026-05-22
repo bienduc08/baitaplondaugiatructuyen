@@ -8,13 +8,18 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SocketServer {
 
-    // SỬA: đổi ArrayList → synchronizedList để tránh ConcurrentModificationException
-    // khi broadcast() duyệt list đồng thời với removeClient() xóa list từ các thread khác nhau
+    // SỬA: dùng synchronizedList để tránh ConcurrentModificationException
     private static final List<ClientHandler> clients =
             Collections.synchronizedList(new ArrayList<>());
+
+    // SỬA: dùng ThreadPool thay vì new Thread() không giới hạn
+    // Giới hạn tối đa 50 client đồng thời
+    private static final ExecutorService threadPool = Executors.newFixedThreadPool(50);
 
     public void start(int port) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -24,16 +29,16 @@ public class SocketServer {
                 System.out.println("Client kết nối: " + socket.getInetAddress());
                 ClientHandler handler = new ClientHandler(socket);
                 clients.add(handler);
-                new Thread(handler).start();
+                // SỬA: dùng thread pool thay vì new Thread().start()
+                threadPool.submit(handler);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /** Gửi thông báo tới tất cả client đang kết nối (dùng cho real-time update giá) */
+    /** Gửi thông báo tới tất cả client đang kết nối (real-time update) */
     public static void broadcast(AuctionResponse response) {
-        // SỬA: synchronized block để tránh lỗi khi list bị sửa đổi đồng thời
         synchronized (clients) {
             for (ClientHandler client : clients) {
                 client.sendResponse(response);

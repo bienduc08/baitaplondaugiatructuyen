@@ -1,0 +1,56 @@
+# =========================================================================
+# UET Auction - Git Ignore Configuration
+# =========================================================================
+
+# --- Maven Build Directory ---
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+pom.xml.versionsBackup
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/.maven-wrapper.jar
+
+# --- Compiled Java Files ---
+*.class
+*.bluej
+*.pkg
+*.ctxt
+
+# --- Server Dynamic Assets (Uploaded Images) ---
+server_images/
+server_images/*
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+cmake-build-*/
+
+# --- Eclipse ---
+.metadata/
+.classpath
+.project
+.settings/
+*.launch
+bin/
+
+# --- VS Code ---
+.vscode/
+
+# --- OS / System Files ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- Typo files & junk from command mistakes ---
+et --soft *
+.gitinore

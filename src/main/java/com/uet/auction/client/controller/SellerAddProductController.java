@@ -7,9 +7,17 @@ import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.Request.AuctionRequest;
 import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -33,6 +41,11 @@ public class SellerAddProductController {
     @FXML private TextField  txtEndH;
     @FXML private TextField  txtEndM;
     @FXML private TextField  txtEndS;
+    @FXML private ImageView  imgPreview;   // Preview ảnh sản phẩm
+    @FXML private Label      lblImageName; // Hiển thị tên file đã chọn
+
+    // Lưu dữ liệu nhị phân của ảnh đã chọn
+    private byte[] selectedImageBytes = null;
 
     @FXML
     public void initialize() {
@@ -110,6 +123,10 @@ public class SellerAddProductController {
             product.setStartTime(startTime);
             product.setEndTime(endTime);
             product.setStatus("PENDING");
+            // Gắn dữ liệu ảnh nếu người dùng đã chọn
+            if (selectedImageBytes != null) {
+                product.setImageBytes(selectedImageBytes);
+            }
 
             SocketClient.sendRequest(new AuctionRequest("ADD_PRODUCT", product));
             AlertHelper.showInfo("⏳ Đã gửi yêu cầu đăng sản phẩm, chờ Admin duyệt!");
@@ -142,5 +159,42 @@ public class SellerAddProductController {
         if (txtEndH   != null) txtEndH.setText("23");
         if (txtEndM   != null) txtEndM.setText("59");
         if (txtEndS   != null) txtEndS.setText("00");
+        // Reset ảnh
+        selectedImageBytes = null;
+        if (imgPreview   != null) imgPreview.setImage(null);
+        if (lblImageName != null) lblImageName.setText("");
+    }
+
+    /** Xử lý nút Tải ảnh lên — mở FileChooser và đọc byte ảnh */
+    @FXML
+    public void onChooseImageClick() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Chọn ảnh sản phẩm");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Ảnh", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp")
+        );
+
+        Stage stage = (Stage) txtProductName.getScene().getWindow();
+        File file = chooser.showOpenDialog(stage);
+        if (file != null) {
+            // Giới hạn kích thước file tối đa 5MB
+            if (file.length() > 5 * 1024 * 1024) {
+                AlertHelper.showError("Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 5MB.");
+                return;
+            }
+            try {
+                selectedImageBytes = Files.readAllBytes(file.toPath());
+                // Hiển thị preview
+                if (imgPreview != null) {
+                    imgPreview.setImage(new Image(file.toURI().toString()));
+                }
+                if (lblImageName != null) {
+                    lblImageName.setText(file.getName());
+                }
+            } catch (IOException e) {
+                AlertHelper.showError("Không thể đọc file ảnh: " + e.getMessage());
+                selectedImageBytes = null;
+            }
+        }
     }
 }
