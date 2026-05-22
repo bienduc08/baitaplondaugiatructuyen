@@ -30,6 +30,7 @@ public class ProductItemController {
     @FXML private Label timeLabel;
     @FXML private TextField bidInput;
     @FXML private Label descriptionLabel;
+    @FXML private javafx.scene.image.ImageView imgProduct;
 
     private ProductDTO currentProduct;
     private Timeline countdown;
@@ -56,17 +57,20 @@ public class ProductItemController {
         } else {
             timeLabel.setText("Hết hạn: —");
         }
-
-        updateBidInputState();
-    }
-
-    private void updateBidInputState() {
-        if (bidInput == null || currentProduct == null) return;
-        String currentUser = SessionManager.getCurrentUsername();
-        boolean isOwnProduct = currentUser != null && currentUser.equals(currentProduct.getSellerName());
-        boolean isLeading = currentUser != null && currentUser.equals(currentProduct.getOwnerName());
-        boolean canBid = "OPEN".equals(currentProduct.getStatus()) && !isOwnProduct && !isLeading;
-        bidInput.setDisable(!canBid);
+        if (imgProduct != null) {
+            String imageUrl = product.getImageUrl();
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                java.io.File file = new java.io.File(imageUrl);
+                if (file.exists()) {
+                    // Nếu tìm thấy file thật trên Server/ổ cứng
+                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString()));
+                } else {
+                    loadDefaultImage();
+                }
+            } else {
+                loadDefaultImage();
+            }
+        }
     }
 
     private void startCountdown(LocalDateTime endTime) {
@@ -109,8 +113,11 @@ public class ProductItemController {
             Node detailNode = loader.load();
 
             ProductDetailController ctrl = loader.getController();
-            ctrl.setProductData(currentProduct, null);
-            ctrl.reloadProductDetails(); // Tải động lịch sử trả giá từ server
+            ctrl.setProductData(currentProduct, java.util.Collections.emptyList());
+            ctrl.updateStatus(
+                    currentProduct.getSellerName() != null ? currentProduct.getSellerName() : "—",
+                    currentProduct.getOwnerName()
+            );
 
             javafx.scene.layout.BorderPane activeMainPane = null;
 
@@ -180,6 +187,12 @@ public class ProductItemController {
                 AlertHelper.showError("Số tiền phải lớn hơn 0!");
                 return;
             }
+            // 1. KIỂM TRA QUYỀN
+            String role = SessionManager.getCurrentUser().getRole();
+            if ("SELLER".equals(role) || "ADMIN".equals(role)) {
+                AlertHelper.showError("Quản trị viên và Người bán không được phép tham gia đấu giá!");
+                return;
+            }
 
             String currentUser = SessionManager.getCurrentUsername();
             if (currentUser != null && currentUser.equals(currentProduct.getSellerName())) {
@@ -194,10 +207,13 @@ public class ProductItemController {
             }
 
             double currentPrice = currentProduct.getCurrentPrice();
-            if (bidAmount <= currentPrice) {
+            double stepPrice = currentProduct.getStepPrice();
+            double minValidPrice = currentPrice + stepPrice;
+
+            if (bidAmount < minValidPrice) {
                 AlertHelper.showError(String.format(
-                        "Giá đặt phải LỚN HƠN giá hiện tại!\nGiá hiện tại: %,.0f VNĐ\nBạn nhập: %,.0f VNĐ",
-                        currentPrice, bidAmount));
+                        "Giá đặt không hợp lệ!\nGiá hiện tại: %,.0f VNĐ\nBạn phải đặt tối thiểu: %,.0f VNĐ",
+                        currentPrice, minValidPrice));
                 return;
             }
 
@@ -215,6 +231,19 @@ public class ProductItemController {
 
         } catch (NumberFormatException e) {
             AlertHelper.showError("Số tiền không hợp lệ!\nVui lòng chỉ nhập số (VD: 25000000)");
+        }
+    }
+    // Hàm hỗ trợ load ảnh mặc định an toàn
+    private void loadDefaultImage() {
+        // Sửa lại đường dẫn này cho đúng với cấu trúc thư mục resources của bạn
+        String defaultImagePath = "/com/uet/auction/images/macdinh.jpg";
+
+        java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
+        if (is != null) {
+            imgProduct.setImage(new javafx.scene.image.Image(is));
+        } else {
+            // Nếu vẫn không tìm thấy ảnh, in ra dòng cảnh báo thay vì làm sập app
+            System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
         }
     }
 }

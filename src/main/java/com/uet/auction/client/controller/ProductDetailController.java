@@ -156,7 +156,7 @@ public class ProductDetailController {
     }
 
     private void setupTable() {
-        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("bidderName"));
+        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("username"));
         if (colBidTime != null) colBidTime.setCellValueFactory(new PropertyValueFactory<>("time"));
         if (colBidPrice != null) {
             colBidPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
@@ -183,8 +183,6 @@ public class ProductDetailController {
         if (countdown != null) {
             countdown.stop();
         }
-
-        instance = null;
 
         if (onBackAction != null) {
             onBackAction.run();
@@ -306,7 +304,7 @@ public class ProductDetailController {
     // Hàm hỗ trợ load ảnh mặc định an toàn
     private void loadDefaultImage() {
         // Sửa lại đường dẫn này cho đúng với cấu trúc thư mục resources của bạn
-        String defaultImagePath = "/com/uet/auction/images/LogoUET.png";
+        String defaultImagePath = "/com/uet/auction/images/macdinh.jpg";
 
         java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
         if (is != null) {
