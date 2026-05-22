@@ -141,7 +141,6 @@ public class SellerAddProductController {
             }
 
             SocketClient.sendRequest(new AuctionRequest("ADD_PRODUCT", product));
-            AlertHelper.showInfo("⏳ Đã gửi yêu cầu đăng sản phẩm, chờ Admin duyệt!");
             clearForm();
 
         } catch (NumberFormatException e) {

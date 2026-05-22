@@ -31,6 +31,7 @@ public class AdminPendingController {
     @FXML private TableColumn<ProductDTO, Integer> idCol;
     @FXML private TableColumn<ProductDTO, String>  nameCol;
     @FXML private TableColumn<ProductDTO, Double>  priceCol;
+    @FXML private TableColumn<ProductDTO, Double>  currentCol;
     @FXML private TableColumn<ProductDTO, String>  sellerCol;
     @FXML private TableColumn<ProductDTO, Double>  stepCol;
     @FXML private TableColumn<ProductDTO, LocalDateTime> startTimeCol;
@@ -75,6 +76,15 @@ public class AdminPendingController {
         if (priceCol != null) {
             priceCol.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
             priceCol.setCellFactory(col -> new TableCell<>() {
+                @Override protected void updateItem(Double v, boolean empty) {
+                    super.updateItem(v, empty);
+                    setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
+                }
+            });
+        }
+        if (currentCol != null) {
+            currentCol.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
+            currentCol.setCellFactory(col -> new TableCell<>() {
                 @Override protected void updateItem(Double v, boolean empty) {
                     super.updateItem(v, empty);
                     setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));

@@ -1,10 +1,8 @@
 package com.uet.auction.client.controller;
 
-import com.uet.auction.client.network.SocketClient;
 import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.ProductDTO;
-import com.uet.auction.common.Request.AuctionRequest;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
@@ -17,7 +15,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView; // Đã thêm import ImageView
 import javafx.stage.Stage;
-import javafx.util.Duration;
+import java.time.LocalDateTime;
+
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -58,7 +57,7 @@ public class ProductItemController {
         if (ownerLabel != null) ownerLabel.setText("Đang giữ đỉnh: " + owner);
 
         if (product.getEndTime() != null) {
-            startCountdown(product.getEndTime());
+            startCountdown();
         } else {
             timeLabel.setText("Hết hạn: —");
         }
@@ -104,33 +103,11 @@ public class ProductItemController {
         bidInput.setDisable(!canBid);
     }
 
-    private void startCountdown(LocalDateTime endTime) {
+    private void startCountdown() {
         if (countdown != null) countdown.stop();
 
-        countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            LocalDateTime now = LocalDateTime.now();
-            if (now.isAfter(endTime)) {
-                timeLabel.setText("⏰ Đã kết thúc");
-                timeLabel.setStyle("-fx-text-fill: #e74c3c;");
-                countdown.stop();
-                return;
-            }
-            long totalSeconds = ChronoUnit.SECONDS.between(now, endTime);
-            long days    = totalSeconds / 86400;
-            long hours   = (totalSeconds % 86400) / 3600;
-            long minutes = (totalSeconds % 3600) / 60;
-            long secs    = totalSeconds % 60;
-
-            String text;
-            if (days > 0) {
-                text = String.format("⏱ Còn %d ngày %02d:%02d:%02d", days, hours, minutes, secs);
-            } else {
-                text = String.format("⏱ Còn %02d:%02d:%02d", hours, minutes, secs);
-            }
-            timeLabel.setText(text);
-            timeLabel.setStyle(totalSeconds < 3600
-                    ? "-fx-text-fill: #e74c3c; -fx-font-weight: bold;"
-                    : "-fx-text-fill: #27ae60;");
+        countdown = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), e -> {
+            updateTimeDisplay(currentProduct, timeLabel);
         }));
         countdown.setCycleCount(Timeline.INDEFINITE);
         countdown.play();
@@ -182,85 +159,7 @@ public class ProductItemController {
         }
     }
 
-    @FXML
-    public void onViewHistoryClick() {
-        if (currentProduct == null) return;
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/uet/auction/view/BidHistoryView.fxml"));
-            Parent root = loader.load();
-            BidHistoryController ctrl = loader.getController();
-            ctrl.setProductContext(currentProduct.getId(), currentProduct.getName());
 
-            Stage stage = new Stage();
-            stage.setTitle("Lịch sử đấu giá — " + currentProduct.getName());
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
-            AlertHelper.showError("Không thể mở lịch sử đấu giá!");
-        }
-    }
-
-    @FXML
-    public void onBidButtonClick() {
-        String text = bidInput.getText().trim();
-        if (text.isEmpty()) {
-            AlertHelper.showError("Vui lòng nhập số tiền muốn đặt!");
-            return;
-        }
-
-        String cleanText = text.replace(",", "");
-        try {
-            double bidAmount = Double.parseDouble(cleanText);
-
-            if (bidAmount <= 0) {
-                AlertHelper.showError("Số tiền phải lớn hơn 0!");
-                return;
-            }
-            // 1. KIỂM TRA QUYỀN
-            String role = SessionManager.getCurrentUser().getRole();
-            if ("SELLER".equals(role) || "ADMIN".equals(role)) {
-                AlertHelper.showError("Quản trị viên và Người bán không được phép tham gia đấu giá!");
-                return;
-            }
-
-            String currentUser = SessionManager.getCurrentUsername();
-            if (currentUser != null && currentUser.equals(currentProduct.getSellerName())) {
-                AlertHelper.showError("Bạn không thể đấu giá sản phẩm do chính mình đăng bán!");
-                return;
-            }
-
-            String currentOwner = currentProduct.getOwnerName();
-            if (currentUser != null && currentUser.equals(currentOwner)) {
-                AlertHelper.showError("Bạn đang giữ mức giá cao nhất!\nKhông thể đặt thêm cho đến khi bị vượt qua.");
-                return;
-            }
-
-            double currentPrice = currentProduct.getCurrentPrice();
-            if (bidAmount <= currentPrice) {
-                AlertHelper.showError(String.format(
-                        "Giá đặt phải LỚN HƠN giá hiện tại!\nGiá hiện tại: %,.0f VNĐ\nBạn nhập: %,.0f VNĐ",
-                        currentPrice, bidAmount));
-                return;
-            }
-
-            double balance = SessionManager.getCurrentUser().getBalance();
-            if (balance > 0 && balance < bidAmount) {
-                AlertHelper.showError(String.format(
-                        "Số dư không đủ!\nSố dư hiện tại: %,.0f VNĐ\nGiá bạn muốn đặt: %,.0f VNĐ",
-                        balance, bidAmount));
-                return;
-            }
-
-            Object[] bidData = new Object[]{currentProduct.getId(), currentUser, bidAmount};
-            SocketClient.sendRequest(new AuctionRequest("PLACE_BID", bidData));
-            bidInput.clear();
-
-        } catch (NumberFormatException e) {
-            AlertHelper.showError("Số tiền không hợp lệ!\nVui lòng chỉ nhập số (VD: 25000000)");
-        }
-    }
 
     private void loadDefaultImage() {
         // Nếu ảnh mặc định nằm ngay dưới thư mục resources/images/
@@ -271,6 +170,46 @@ public class ProductItemController {
             imgProduct.setImage(new javafx.scene.image.Image(is));
         } else {
             System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
+        }
+    }
+    private void updateTimeDisplay(ProductDTO product, Label timeLabel) {
+        if (product == null || product.getStartTime() == null || product.getEndTime() == null) {
+            timeLabel.setText("Thời gian không xác định");
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = product.getStartTime();
+        LocalDateTime end = product.getEndTime();
+
+        // Sử dụng tên đầy đủ java.time.Duration để không bị nhầm với javafx.util.Duration
+        if (now.isBefore(start)) {
+            java.time.Duration duration = java.time.Duration.between(now, start);
+            timeLabel.setText("Bắt đầu sau: " + formatDuration(duration));
+            timeLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;"); // Màu cam
+        }
+        else if (now.isBefore(end)) {
+            java.time.Duration duration = java.time.Duration.between(now, end);
+            timeLabel.setText("Kết thúc sau: " + formatDuration(duration));
+            timeLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;"); // Màu đỏ khẩn cấp
+        }
+        else {
+            timeLabel.setText("Đã kết thúc");
+            timeLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold;"); // Màu xám
+        }
+    }
+
+    // Hàm phụ trợ cũng phải nhận tham số là java.time.Duration
+    private String formatDuration(java.time.Duration duration) {
+        long days = duration.toDays();
+        long hours = duration.toHoursPart();
+        long minutes = duration.toMinutesPart();
+        long seconds = duration.toSecondsPart();
+
+        if (days > 0) {
+            return String.format("%d ngày %02d:%02d:%02d", days, hours, minutes, seconds);
+        } else {
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
         }
     }
 }

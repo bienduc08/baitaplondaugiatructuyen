@@ -34,8 +34,7 @@ public class AuthService {
     }
 
     public AuctionResponse register(String fullname,String gmail,String username, String password, String role) {
-        // Chỉ cho phép đăng ký tài khoản USER; ADMIN/SELLER không được tạo qua app
-        boolean success = userDAO.registerUser(fullname,gmail,username, password, "USER");
+        boolean success = userDAO.registerUser(fullname,gmail,username, password, role);
         if (success) {
             return new AuctionResponse(true, "REGISTER_RESULT", "Đăng ký thành công!", null);
         } else {

@@ -73,7 +73,7 @@ public class ProductDetailController {
         loadImage(product.getImageUrl());
         updateBidHistory(allBids);
 
-        if (product.getEndTime() != null) startCountdown(product.getEndTime());
+        if (product.getEndTime() != null) startCountdown();
         else if (lblTimeRemaining != null) lblTimeRemaining.setText("Hết hạn: —");
     }
 
@@ -115,20 +115,9 @@ public class ProductDetailController {
     }
 
 
-    private void startCountdown(LocalDateTime endTime) {
+    private void startCountdown() {
         countdown = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            long totalSeconds = ChronoUnit.SECONDS.between(LocalDateTime.now(), endTime);
-            if (totalSeconds <= 0) {
-                if (lblTimeRemaining != null) lblTimeRemaining.setText("⏰ Phiên đấu giá đã kết thúc");
-                if (txtBidAmount != null) txtBidAmount.setDisable(true);
-                countdown.stop();
-                return;
-            }
-            if (lblTimeRemaining != null) {
-                lblTimeRemaining.setText(String.format("Còn lại: %d ngày %02d:%02d:%02d",
-                        totalSeconds / 86400, (totalSeconds % 86400) / 3600, (totalSeconds % 3600) / 60, totalSeconds % 60));
-                lblTimeRemaining.setStyle(totalSeconds < 3600 ? "-fx-text-fill: #e74c3c; -fx-font-weight: bold;" : "-fx-text-fill: #2ecc71; -fx-font-weight: bold;");
-            }
+            updateTimeDisplay(currentProduct, lblTimeRemaining);
         }));
         countdown.setCycleCount(Timeline.INDEFINITE);
         countdown.play();
@@ -220,6 +209,52 @@ public class ProductDetailController {
             if (is != null) imgProduct.setImage(new Image(is));
         } catch (Exception e) {
             System.err.println("Không thể load ảnh mặc định");
+        }
+    }
+    private void updateTimeDisplay(ProductDTO product, Label timeLabel) {
+        if (product == null || product.getStartTime() == null || product.getEndTime() == null || timeLabel == null) {
+            if (timeLabel != null) timeLabel.setText("Thời gian không xác định");
+            if (txtBidAmount != null) txtBidAmount.setDisable(true);
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = product.getStartTime();
+        LocalDateTime end = product.getEndTime();
+
+        // Trường hợp 1: Chưa tới giờ bắt đầu
+        if (now.isBefore(start)) {
+            java.time.Duration duration = java.time.Duration.between(now, start);
+            timeLabel.setText("Bắt đầu sau: " + formatDuration(duration));
+            timeLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;"); // Màu cam
+            if (txtBidAmount != null) txtBidAmount.setDisable(true); // Chưa bắt đầu thì không được bid
+        }
+        // Trường hợp 2: Đang diễn ra
+        else if (now.isBefore(end)) {
+            java.time.Duration duration = java.time.Duration.between(now, end);
+            timeLabel.setText("Còn lại: " + formatDuration(duration));
+            timeLabel.setStyle("-fx-text-fill: #2ecc71; -fx-font-weight: bold;"); // Màu xanh lá
+            if (txtBidAmount != null) txtBidAmount.setDisable(false); // Đang mở thì được bid
+        }
+        // Trường hợp 3: Đã kết thúc
+        else {
+            timeLabel.setText("⏰ Phiên đấu giá đã kết thúc");
+            timeLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;"); // Màu đỏ
+            if (txtBidAmount != null) txtBidAmount.setDisable(true); // Hết hạn thì khóa nút bid
+            if (countdown != null) countdown.stop();
+        }
+    }
+
+    private String formatDuration(java.time.Duration duration) {
+        long days = duration.toDays();
+        long hours = duration.toHoursPart();
+        long minutes = duration.toMinutesPart();
+        long seconds = duration.toSecondsPart();
+
+        if (days > 0) {
+            return String.format("%d ngày %02d:%02d:%02d", days, hours, minutes, seconds);
+        } else {
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
         }
     }
 }

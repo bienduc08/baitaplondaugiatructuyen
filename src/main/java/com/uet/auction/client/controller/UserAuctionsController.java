@@ -133,30 +133,30 @@ public class UserAuctionsController {
     // Chuyển sang màn hình chi tiết sản phẩm (Giữ nguyên logic Callback BackAction)
     private void openProductDetail(ProductDTO product) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProductDetailContent.fxml")); // FIX: đã bỏ /client/ khỏi đường dẫn
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProductDetailContent.fxml"));
             Node detailNode = loader.load();
 
             ProductDetailController ctrl = loader.getController();
-            ctrl.setProductData(product, java.util.Collections.emptyList());
-            ctrl.updateStatus(
-                    product.getSellerName() != null ? product.getSellerName() : "—",
-                    product.getOwnerName()
-            );
+            ctrl.setProductData(product, null);
+            ctrl.reloadProductDetails(); // Tải động lịch sử trả giá từ server
 
-            // Tìm BorderPane chính của User
             if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
                 BorderPane mainPane = UserController.instance.getMainBorderPane();
                 Node previousCenterView = mainPane.getCenter();
 
-                // Cài đặt hành động quay lại
                 ProductDetailController.onBackAction = () -> mainPane.setCenter(previousCenterView);
 
-                // Nạp màn chi tiết
                 mainPane.setCenter(detailNode);
             }
         } catch (IOException e) {
             e.printStackTrace();
             AlertHelper.showError("Không thể mở chi tiết sản phẩm!");
+        }
+    }
+    public void reloadJoinedAuctions() {
+        String username = SessionManager.getCurrentUsername();
+        if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_JOINED_PRODUCTS", username));
         }
     }
 }

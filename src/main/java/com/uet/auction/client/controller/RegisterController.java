@@ -25,7 +25,6 @@ public class RegisterController {
     public void initialize() {
         instance = this;
         roleComboBox.getItems().addAll("USER", "SELLER");
-        roleComboBox.setValue("USER");
     }
 
     @FXML
@@ -56,12 +55,15 @@ public class RegisterController {
             statusLabel.setText("Mật khẩu xác nhận không khớp!");
             return;
         }
+        String selectedRole = roleComboBox.getSelectionModel().getSelectedItem();
+        if (selectedRole == null) {
+            selectedRole = "USER"; // Fallback an toàn
+        }
 
         statusLabel.setStyle("-fx-text-fill: black;");
         statusLabel.setText("Đang xử lý...");
 
         // 4. NÂNG CẤP MẢNG DỮ LIỆU: Bổ sung fullname và gmail vào gói tin
-        String selectedRole = roleComboBox.getValue();
         Object[] regData = new Object[]{fullname,gmail,username, password, selectedRole};
         SocketClient.sendRequest(new AuctionRequest("REGISTER", regData));
     }

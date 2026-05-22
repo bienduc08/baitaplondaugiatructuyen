@@ -40,12 +40,12 @@ public class UserDAO {
                 user.setUsername(rs.getString("username"));
                 user.setRole(rs.getString("role"));
                 try {
-                    user.setFullName(rs.getString("full_name"));
+                    user.setFullName(rs.getString("fullname"));
                 } catch (SQLException e) {
                     user.setFullName("");
                 }
                 try {
-                    user.setGmail(rs.getString("email"));
+                    user.setGmail(rs.getString("gmail"));
                 } catch (SQLException e) {
                     user.setGmail("");
                 }

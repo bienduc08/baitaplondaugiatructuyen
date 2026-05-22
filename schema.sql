@@ -4,18 +4,20 @@ USE auction_db;
 
 -- 2. Bảng Người dùng (users)
 CREATE TABLE IF NOT EXISTS users (
-                                     id       INT AUTO_INCREMENT PRIMARY KEY,
-                                     username VARCHAR(100) NOT NULL UNIQUE,
+    id       INT AUTO_INCREMENT PRIMARY KEY,
+    fullname VARCHAR(255) NOT NULL ,
+    gmail VARCHAR(255) NOT NULL UNIQUE ,
+    username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(256) NOT NULL,
-    role     VARCHAR(20)  NOT NULL DEFAULT 'USER',
+    role     VARCHAR(20)  NOT NULL ,
     balance  DECIMAL(15, 2) NOT NULL DEFAULT 0.00, -- Sử dụng DECIMAL thay cho DOUBLE để tránh sai số dấu thập phân
     status   VARCHAR(20)  NOT   NULL DEFAULT 'ACTIVE'
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 3. Bảng Sản phẩm Đấu giá (products)
 CREATE TABLE IF NOT EXISTS products (
-                                        id             INT AUTO_INCREMENT PRIMARY KEY,
-                                        name           VARCHAR(255) NOT NULL,
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    name           VARCHAR(255) NOT NULL,
     description    TEXT         DEFAULT NULL,
     starting_price DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
     current_price  DECIMAL(15, 2) NOT NULL DEFAULT 0.00, -- Mặc định bằng starting_price khi tạo sản phẩm
@@ -38,9 +40,9 @@ CREATE TABLE IF NOT EXISTS products (
 
 -- 4. Bảng Lịch sử Đấu giá (bids)
 CREATE TABLE IF NOT EXISTS bids (
-                                    id          INT AUTO_INCREMENT PRIMARY KEY,
-                                    product_id  INT          NOT NULL,
-                                    bidder_name VARCHAR(100) NOT NULL,
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    product_id  INT          NOT NULL,
+    bidder_name VARCHAR(100) NOT NULL,
     amount      DECIMAL(15, 2) NOT NULL,
     bid_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status      VARCHAR(20)  NOT NULL DEFAULT 'Hợp lệ', -- Trạng thái lượt đấu giá

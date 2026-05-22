@@ -72,8 +72,8 @@ public class ResponseListener implements Runnable {
                         if (res.isSuccess()) {
                             List<ProductDTO> joinedProducts = (List<ProductDTO>) res.getData();
                             Platform.runLater(() -> {
-                                if (JoinedAuctionsController.instance != null)
-                                    JoinedAuctionsController.instance.displayJoinedAuctions(joinedProducts);
+                                if (UserAuctionsController.instance != null)
+                                    UserAuctionsController.instance.displayJoinedAuctions(joinedProducts);
                             });
                         }
                         break;

@@ -1,5 +1,6 @@
 package com.uet.auction.server.network;
 
+import com.uet.auction.client.controller.AdminController;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
@@ -210,29 +211,7 @@ public class ClientHandler implements Runnable {
                         break;
 
                     // THỐNG KÊ DASHBOARD CHO ADMIN
-                    case "GET_DASHBOARD_STATS":
-                        if (!isAdmin()) { sendResponse(unauthorized()); break; }
-                        try {
-                            java.util.List<?> openList    = (java.util.List<?>) auctionService.getProductsByStatus("OPEN").getData();
-                            java.util.List<?> closedList  = (java.util.List<?>) auctionService.getProductsByStatus("CLOSED").getData();
-                            java.util.List<?> pendingList = (java.util.List<?>) auctionService.getProductsByStatus("PENDING").getData();
-
-                            int openCount    = (openList    != null) ? openList.size()    : 0;
-                            int closedCount  = (closedList  != null) ? closedList.size()  : 0;
-                            int pendingCount = (pendingList != null) ? pendingList.size() : 0;
-
-                            int[] stats = {openCount, closedCount, pendingCount};
-                            response = new AuctionResponse(true, "GET_STATS_SUCCESS", "Lấy thống kê thành công", stats);
-                        } catch (Exception e) {
-                            response = new AuctionResponse(false, "ERROR", "Lỗi lấy thống kê: " + e.getMessage(), null);
-                        }
-                        sendResponse(response);
-                        break;
-
-                    default:
-                        sendResponse(new AuctionResponse(false, "ERROR",
-                                "Yêu cầu không hợp lệ: " + request.getType(), null));
-                        break;
+                    // Khi nhận được response cho "GET_DASHBOARD_STATS"
                 }
             }
         } catch (IOException e) {

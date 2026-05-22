@@ -73,8 +73,8 @@ public class UserController {
 
         switch (activeView) {
             case JOINED:
-                if (JoinedAuctionsController.instance != null)
-                    JoinedAuctionsController.instance.reloadJoinedAuctions();
+                if (UserAuctionsController.instance != null)
+                    UserAuctionsController.instance.reloadJoinedAuctions();
                 else
                     onShowUserAuctionsClick();
                 break;

@@ -31,12 +31,14 @@ public class ProductDTO implements Serializable {
     }
 
     // Constructor đầy đủ để tạo nhanh đối tượng tại Server từ kết quả Database
-    public ProductDTO(int id, String name, double currentPrice, String sellerName, String ownerName, LocalDateTime endTime, String status) {
+    public ProductDTO(int id, String name, double currentPrice,double stepPrice, String sellerName, String ownerName, LocalDateTime startTime, LocalDateTime endTime, String status) {
         this.id = id;
         this.name = name;
         this.currentPrice = currentPrice;
+        this.stepPrice = stepPrice;
         this.sellerName = sellerName;
         this.ownerName = ownerName;
+        this.startTime = startTime;
         this.endTime = endTime;
         this.status = status;
     }
