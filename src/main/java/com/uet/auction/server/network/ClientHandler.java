@@ -1,7 +1,7 @@
 package com.uet.auction.server.network;
 
 import com.uet.auction.common.DTO.ProductDTO;
-import com.uet.auction.common.DTO.UserDTO; // [THÊM MỚI] import UserDTO để dùng cho LOCK/UNLOCK
+import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
 import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.service.AuctionService;
@@ -15,11 +15,14 @@ import java.net.Socket;
 public class ClientHandler implements Runnable {
 
     private final Socket socket;
-    private ObjectInputStream in;
+    private ObjectInputStream  in;
     private ObjectOutputStream out;
 
     private final AuthService    authService    = new AuthService();
     private final AuctionService auctionService = new AuctionService();
+
+    // Lưu thông tin user đã đăng nhập của kết nối này để kiểm tra quyền
+    private UserDTO loggedInUser = null;
 
     public ClientHandler(Socket socket) { this.socket = socket; }
 
@@ -37,6 +40,10 @@ public class ClientHandler implements Runnable {
 
                     case "LOGIN":
                         response = authService.login(request);
+                        // Lưu lại user đã đăng nhập thành công
+                        if (response.isSuccess() && response.getData() instanceof UserDTO) {
+                            loggedInUser = (UserDTO) response.getData();
+                        }
                         sendResponse(response);
                         break;
 
@@ -63,7 +70,6 @@ public class ClientHandler implements Runnable {
                         ProductDTO product = (ProductDTO) request.getData();
                         response = auctionService.addProduct(product);
                         sendResponse(response);
-
                         if (response.isSuccess()) {
                             SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
                         }
@@ -91,6 +97,11 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "APPROVE_PRODUCT":
+                        // SECURITY: Chỉ ADMIN mới được duyệt sản phẩm
+                        if (!isAdmin()) {
+                            sendResponse(unauthorized());
+                            break;
+                        }
                         ProductDTO pApprove = (ProductDTO) request.getData();
                         response = auctionService.changeProductStatus(pApprove.getId(), "OPEN");
                         sendResponse(response);
@@ -100,6 +111,11 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "REJECT_PRODUCT":
+                        // SECURITY: Chỉ ADMIN mới được từ chối sản phẩm
+                        if (!isAdmin()) {
+                            sendResponse(unauthorized());
+                            break;
+                        }
                         ProductDTO pReject = (ProductDTO) request.getData();
                         response = auctionService.changeProductStatus(pReject.getId(), "REJECTED");
                         sendResponse(response);
@@ -109,6 +125,11 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "CHANGE_PRODUCT_STATUS":
+                        // SECURITY: Chỉ ADMIN mới được thay đổi trạng thái sản phẩm
+                        if (!isAdmin()) {
+                            sendResponse(unauthorized());
+                            break;
+                        }
                         Object[] statusData = (Object[]) request.getData();
                         response = auctionService.changeProductStatus(
                                 (int) statusData[0], (String) statusData[1]);
@@ -130,7 +151,6 @@ public class ClientHandler implements Runnable {
                         }
                         break;
 
-
                     case "GET_JOINED_PRODUCTS":
                         String joinedUsername = (String) request.getData();
                         response = auctionService.getJoinedProducts(joinedUsername);
@@ -149,53 +169,46 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
-
-                    // [THÊM MỚI] QUẢN LÝ NGƯỜI DÙNG DÀNH CHO ADMIN
-                    // 4 case dưới đây hoàn toàn mới, file gốc không có
-                    // =========================================================
-
-                    case "GET_ALL_USERS": // [THÊM MỚI]
+                    // QUẢN LÝ NGƯỜI DÙNG — CHỈ ADMIN
+                    case "GET_ALL_USERS":
+                        if (!isAdmin()) { sendResponse(unauthorized()); break; }
                         response = authService.getAllUsers();
                         sendResponse(response);
                         break;
 
-                    case "SEARCH_USER": // [THÊM MỚI]
+                    case "SEARCH_USER":
+                        if (!isAdmin()) { sendResponse(unauthorized()); break; }
                         String searchKeyword = (String) request.getData();
                         response = authService.searchUser(searchKeyword);
                         sendResponse(response);
                         break;
 
-                    case "LOCK_USER": // [THÊM MỚI]
+                    case "LOCK_USER":
+                        if (!isAdmin()) { sendResponse(unauthorized()); break; }
                         UserDTO userToLock = (UserDTO) request.getData();
                         response = authService.changeUserStatus(userToLock.getId(), "LOCKED");
                         sendResponse(response);
                         break;
 
-                    case "UNLOCK_USER": // [THÊM MỚI]
+                    case "UNLOCK_USER":
+                        if (!isAdmin()) { sendResponse(unauthorized()); break; }
                         UserDTO userToUnlock = (UserDTO) request.getData();
                         response = authService.changeUserStatus(userToUnlock.getId(), "ACTIVE");
                         sendResponse(response);
                         break;
 
-                    // =========================================================
-                    // [KẾT THÚC PHẦN THÊM MỚI]
-                    // =========================================================
-                    // =========================================================
-                    // [THÊM MỚI] THỐNG KÊ CHO ADMIN DASHBOARD
-                    // =========================================================
+                    // THỐNG KÊ DASHBOARD CHO ADMIN
                     case "GET_DASHBOARD_STATS":
+                        if (!isAdmin()) { sendResponse(unauthorized()); break; }
                         try {
-                            // Lấy danh sách sản phẩm theo từng trạng thái và đếm số lượng
-                            // (Cách này tận dụng luôn hàm có sẵn của bạn, không cần viết thêm DAO)
-                            java.util.List<?> openList = (java.util.List<?>) auctionService.getProductsByStatus("OPEN").getData();
-                            java.util.List<?> closedList = (java.util.List<?>) auctionService.getProductsByStatus("CLOSED").getData();
+                            java.util.List<?> openList    = (java.util.List<?>) auctionService.getProductsByStatus("OPEN").getData();
+                            java.util.List<?> closedList  = (java.util.List<?>) auctionService.getProductsByStatus("CLOSED").getData();
                             java.util.List<?> pendingList = (java.util.List<?>) auctionService.getProductsByStatus("PENDING").getData();
 
-                            int openCount = (openList != null) ? openList.size() : 0;
-                            int closedCount = (closedList != null) ? closedList.size() : 0;
+                            int openCount    = (openList    != null) ? openList.size()    : 0;
+                            int closedCount  = (closedList  != null) ? closedList.size()  : 0;
                             int pendingCount = (pendingList != null) ? pendingList.size() : 0;
 
-                            // Đóng gói 3 con số này vào một mảng int[] và gửi về Client
                             int[] stats = {openCount, closedCount, pendingCount};
                             response = new AuctionResponse(true, "GET_STATS_SUCCESS", "Lấy thống kê thành công", stats);
                         } catch (Exception e) {
@@ -203,25 +216,40 @@ public class ClientHandler implements Runnable {
                         }
                         sendResponse(response);
                         break;
+
                     default:
                         sendResponse(new AuctionResponse(false, "ERROR",
                                 "Yêu cầu không hợp lệ: " + request.getType(), null));
                         break;
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.out.println("Client ngắt kết nối: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Lỗi xử lý client: " + e.getMessage());
+        } finally {
             SocketServer.removeClient(this);
+            try { socket.close(); } catch (IOException ignored) {}
         }
     }
 
-    public void sendResponse(AuctionResponse response) {
+    /** Kiểm tra người dùng hiện tại có phải ADMIN không */
+    private boolean isAdmin() {
+        return loggedInUser != null && "ADMIN".equals(loggedInUser.getRole());
+    }
+
+    /** Trả về response lỗi unauthorized */
+    private AuctionResponse unauthorized() {
+        return new AuctionResponse(false, "ERROR", "Bạn không có quyền thực hiện thao tác này!", null);
+    }
+
+    public synchronized void sendResponse(AuctionResponse response) {
         try {
             out.reset();
             out.writeObject(response);
             out.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            // Không in lỗi khi client ngắt kết nối (bình thường)
         }
     }
 }

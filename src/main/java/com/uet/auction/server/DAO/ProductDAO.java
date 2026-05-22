@@ -27,24 +27,7 @@ public class ProductDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                ProductDTO p = new ProductDTO();
-                p.setId(rs.getInt("id"));
-                p.setName(rs.getString("name"));  // cột đúng là "name"
-                p.setStartingPrice(rs.getDouble("starting_price"));
-                p.setStepPrice(rs.getDouble("step_price"));
-
-                // current_price = giá đang đấu; nếu NULL thì fallback về starting_price
-                double cp = rs.getDouble("current_price");
-                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
-                p.setDescription(safeGetString(rs, "description"));
-                p.setSellerName(safeGetString(rs, "seller_name"));
-                p.setOwnerName(safeGetString(rs, "owner_name"));
-                p.setStatus(rs.getString("status"));
-                p.setImageUrl(safeGetString(rs, "image_url"));
-
-                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
-                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
-                list.add(p);
+                list.add(mapRowToDTO(rs));
             }
         } catch (SQLException e) {
             System.err.println("[ProductDAO.getProductsByStatus] " + e.getMessage());
@@ -52,9 +35,6 @@ public class ProductDAO {
         return list;
     }
 
-    // =========================================================
-    // HÀM MỚI BỔ SUNG: Lấy danh sách sản phẩm theo người bán
-    // =========================================================
     public List<ProductDTO> getProductsBySeller(String sellerName) {
         List<ProductDTO> list = new ArrayList<>();
         String sql = "SELECT * FROM products WHERE seller_name = ? ORDER BY id DESC";
@@ -66,24 +46,7 @@ public class ProductDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                ProductDTO p = new ProductDTO();
-                p.setId(rs.getInt("id"));
-                p.setName(rs.getString("name"));
-                p.setStartingPrice(rs.getDouble("starting_price"));
-                p.setStepPrice(rs.getDouble("step_price"));
-
-                double cp = rs.getDouble("current_price");
-                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
-                p.setDescription(safeGetString(rs, "description"));
-                p.setSellerName(safeGetString(rs, "seller_name"));
-                p.setOwnerName(safeGetString(rs, "owner_name"));
-                p.setStatus(rs.getString("status"));
-                p.setImageUrl(safeGetString(rs, "image_url"));
-
-                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
-                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
-
-                list.add(p);
+                list.add(mapRowToDTO(rs));
             }
         } catch (SQLException e) {
             System.err.println("[ProductDAO.getProductsBySeller] " + e.getMessage());
@@ -91,15 +54,32 @@ public class ProductDAO {
         return list;
     }
 
+    public List<ProductDTO> getJoinedProducts(String username) {
+        List<ProductDTO> list = new ArrayList<>();
+        String sql = "SELECT p.* FROM products p "
+                + "WHERE p.id IN (SELECT DISTINCT b.product_id FROM bids b WHERE b.bidder_name = ?) "
+                + "ORDER BY p.id DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                list.add(mapRowToDTO(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO.getJoinedProducts] " + e.getMessage());
+        }
+        return list;
+    }
+
     public boolean addProduct(String name, String description, double startingPrice,
                               double stepPrice, String sellerName,
                               LocalDateTime startTime, LocalDateTime endTime,
-                              String imageUrl) { // [THÊM MỚI] Thêm tham số imageUrl
+                              String imageUrl) {
 
-        // Cập nhật câu SQL: thêm cột image_url
         String sql = "INSERT INTO products (name, description, starting_price, current_price, " +
-                "step_price, start_time, end_time, seller_name, status, image_url) " + // [SỬA] Thêm image_url
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)"; // [SỬA] Thêm một dấu ? ở cuối
+                "step_price, start_time, end_time, seller_name, status, image_url) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -107,33 +87,44 @@ public class ProductDAO {
             pstmt.setString(1, name);
             pstmt.setString(2, description);
             pstmt.setDouble(3, startingPrice);
-            pstmt.setDouble(4, startingPrice);
+            pstmt.setDouble(4, startingPrice); // current_price = starting_price lúc mới tạo
+
             pstmt.setDouble(5, stepPrice);
+
             if (startTime != null) {
                 pstmt.setTimestamp(6, Timestamp.valueOf(startTime));
             } else {
-                pstmt.setNull(6, java.sql.Types.TIMESTAMP);
+                pstmt.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
             }
 
             if (endTime != null) {
                 pstmt.setTimestamp(7, Timestamp.valueOf(endTime));
             } else {
-                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
+                pstmt.setTimestamp(7, null);
             }
+
             pstmt.setString(8, sellerName);
-            pstmt.setString(9, imageUrl); // [THÊM MỚI] Truyền giá trị imageUrl
+            pstmt.setString(9, imageUrl);
 
             boolean ok = pstmt.executeUpdate() > 0;
-            if (ok) System.out.println("[ProductDAO] Đã thêm sản phẩm: " + name);
+            if (ok) {
+                System.out.println("[ProductDAO] Đã thêm sản phẩm thành công: " + name
+                        + " | Giá: " + startingPrice + " | Bước giá: " + stepPrice
+                        + " | Seller: " + sellerName);
+            }
             return ok;
 
         } catch (SQLException e) {
-            System.err.println("[ProductDAO.addProduct] " + e.getMessage());
+            System.err.println("[ProductDAO.addProduct] Lỗi SQL: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
-
+    /**
+     * Cập nhật trạng thái sản phẩm.
+     * Đã xóa updateStatus() trùng lặp — chỉ giữ phương thức này.
+     */
     public boolean updateProductStatus(int productId, String newStatus) {
         String sql = "UPDATE products SET status = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -147,6 +138,7 @@ public class ProductDAO {
         }
     }
 
+    /** Tự động mở phiên APPROVED đến giờ start_time */
     public void openScheduledAuctions() {
         String sql = "UPDATE products SET status = 'OPEN' WHERE status = 'APPROVED' AND start_time <= NOW()";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -158,6 +150,7 @@ public class ProductDAO {
         }
     }
 
+    /** Tự động đóng phiên OPEN hết giờ end_time */
     public void closeExpiredAuctions() {
         String sql = "UPDATE products SET status = 'CLOSED' WHERE status = 'OPEN' AND end_time <= NOW()";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -169,90 +162,63 @@ public class ProductDAO {
         }
     }
 
-    private String safeGetString(ResultSet rs, String col) {
-        try { return rs.getString(col); } catch (Exception e) { return null; }
-    }
+    /**
+     * Anti-sniping: gia hạn thêm 5 phút cho phiên OPEN có bid trong 2 phút qua
+     * và còn dưới 30 giây trước khi kết thúc.
+     * FIX: Chỉ gia hạn phiên CÓ BID GẦN ĐÂY (không gia hạn tất cả phiên sắp hết giờ).
+     */
     public void extendAuctionIfLastBid() {
-        // Ví dụ một câu lệnh SQL để tự động gia hạn thêm 5 phút cho các sản phẩm
-        // đang ở trạng thái OPEN, có người vừa bid và thời gian còn lại dưới 30 giây.
-        String sql = "UPDATE products SET end_time = DATE_ADD(end_time, INTERVAL 5 MINUTE) " +
-                "WHERE status = 'OPEN' AND TIMESTAMPDIFF(SECOND, NOW(), end_time) BETWEEN 0 AND 30";
+        String sql = "UPDATE products SET end_time = DATE_ADD(end_time, INTERVAL 5 MINUTE) "
+                + "WHERE status = 'OPEN' "
+                + "AND TIMESTAMPDIFF(SECOND, NOW(), end_time) BETWEEN 0 AND 30 "
+                + "AND id IN ("
+                + "  SELECT DISTINCT product_id FROM bids "
+                + "  WHERE bid_time >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)"
+                + ")";
 
-        try (Connection conn = DatabaseConnection.getConnection(); // Sử dụng class kết nối DB của bạn
+        try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
-                System.out.println("[Anti-Sniping] Đã kích hoạt gia hạn cho " + affectedRows + " sản phẩm.");
+                System.out.println("[Anti-Sniping] Đã gia hạn " + affectedRows + " phiên có bid gần đây.");
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi khi thực hiện anti-sniping: " + e.getMessage());
+            System.err.println("Lỗi anti-sniping: " + e.getMessage());
         }
     }
+
+    /** Helper dùng chung để map ResultSet -> ProductDTO (tránh code trùng lặp) */
     private ProductDTO mapRowToDTO(ResultSet rs) throws SQLException {
         ProductDTO p = new ProductDTO();
         p.setId(rs.getInt("id"));
         p.setName(rs.getString("name"));
-        p.setDescription(rs.getString("description"));
+        p.setDescription(safeGetString(rs, "description"));
         p.setStartingPrice(rs.getDouble("starting_price"));
-        p.setCurrentPrice(rs.getDouble("current_price"));
         p.setStepPrice(rs.getDouble("step_price"));
-        p.setSellerName(rs.getString("seller_name"));
+
+        // current_price = giá đang đấu; nếu NULL thì fallback về starting_price
+        double cp = rs.getDouble("current_price");
+        p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
+
+        p.setSellerName(safeGetString(rs, "seller_name"));
+        p.setOwnerName(safeGetString(rs, "owner_name"));
         p.setStatus(rs.getString("status"));
-        p.setImageUrl(rs.getString("image_url"));
+        p.setImageUrl(safeGetString(rs, "image_url"));
 
-        Timestamp start = rs.getTimestamp("start_time");
-        if (start != null) p.setStartTime(start.toLocalDateTime());
+        try {
+            Timestamp start = rs.getTimestamp("start_time");
+            if (start != null) p.setStartTime(start.toLocalDateTime());
+        } catch (Exception ignored) {}
 
-        Timestamp end = rs.getTimestamp("end_time");
-        if (end != null) p.setEndTime(end.toLocalDateTime());
+        try {
+            Timestamp end = rs.getTimestamp("end_time");
+            if (end != null) p.setEndTime(end.toLocalDateTime());
+        } catch (Exception ignored) {}
 
         return p;
     }
-    public boolean updateStatus(int productId, String status) {
-        String sql = "UPDATE products SET status = ? WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, status);
-            pstmt.setInt(2, productId);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
-    public List<ProductDTO> getJoinedProducts(String username) {
-        List<ProductDTO> list = new ArrayList<>();
-        String sql = "SELECT p.* FROM products p "
-                + "WHERE p.id IN (SELECT DISTINCT b.product_id FROM bids b WHERE b.bidder_name = ?) "
-                + "ORDER BY p.id DESC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                ProductDTO p = new ProductDTO();
-                p.setId(rs.getInt("id"));
-                p.setName(rs.getString("name"));
-                p.setStartingPrice(rs.getDouble("starting_price"));
-                p.setStepPrice(rs.getDouble("step_price"));
-                double cp = rs.getDouble("current_price");
-                p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : cp);
-                p.setDescription(safeGetString(rs, "description"));
-                p.setSellerName(safeGetString(rs, "seller_name"));
-                p.setOwnerName(safeGetString(rs, "owner_name"));
-                p.setStatus(rs.getString("status"));
-                p.setImageUrl(safeGetString(rs, "image_url"));
-                try { if (rs.getTimestamp("start_time") != null) p.setStartTime(rs.getTimestamp("start_time").toLocalDateTime()); } catch (Exception ignored) {}
-                try { if (rs.getTimestamp("end_time")   != null) p.setEndTime(rs.getTimestamp("end_time").toLocalDateTime());   } catch (Exception ignored) {}
-                list.add(p);
-            }
-        } catch (SQLException e) {
-            System.err.println("[ProductDAO.getJoinedProducts] " + e.getMessage());
-        }
-        return list;
+    private String safeGetString(ResultSet rs, String col) {
+        try { return rs.getString(col); } catch (Exception e) { return null; }
     }
-
 }

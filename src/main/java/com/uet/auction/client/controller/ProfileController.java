@@ -30,6 +30,7 @@ public class ProfileController {
     @FXML private Label lblBalance;
     @FXML private Label lblTotalBids;
     @FXML private Label lblTotalWins;
+    @FXML private Label lblAvatarInitial;
 
     @FXML private VBox sellerUpgradeBox;
     @FXML private Label lblSellerUpgradeHint;
@@ -53,6 +54,10 @@ public class ProfileController {
             lblUsername.setText(user.getUsername());
             lblRole.setText(roleDisplay(user.getRole()));
             lblBalance.setText(String.format("%,.0f VNĐ", user.getBalance()));
+            // Hiển thị chữ cái đầu của tên user thay vì cứng "D"
+            if (lblAvatarInitial != null && user.getUsername() != null && !user.getUsername().isEmpty()) {
+                lblAvatarInitial.setText(String.valueOf(user.getUsername().charAt(0)).toUpperCase());
+            }
             updateSellerUpgradeSection(user.getRole());
         }
 

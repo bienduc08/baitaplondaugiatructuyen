@@ -221,20 +221,24 @@ public class ProductItemController {
             }
 
             double currentPrice = currentProduct.getCurrentPrice();
-            if (bidAmount <= currentPrice) {
+            double stepPrice    = currentProduct.getStepPrice();
+            double minRequired  = currentPrice + stepPrice;
+            if (bidAmount < minRequired) {
                 AlertHelper.showError(String.format(
-                        "Giá đặt phải LỚN HƠN giá hiện tại!\nGiá hiện tại: %,.0f VNĐ\nBạn nhập: %,.0f VNĐ",
-                        currentPrice, bidAmount));
+                        "Giá đặt phải >= giá hiện tại + bước giá!\nGiá hiện tại: %,.0f VNĐ\nBước giá: %,.0f VNĐ\n=> Tối thiểu phải đặt: %,.0f VNĐ",
+                        currentPrice, stepPrice, minRequired));
                 return;
             }
 
+
             double balance = SessionManager.getCurrentUser().getBalance();
-            if (balance > 0 && balance < bidAmount) {
+            if (balance < bidAmount) {
                 AlertHelper.showError(String.format(
                         "Số dư không đủ!\nSố dư hiện tại: %,.0f VNĐ\nGiá bạn muốn đặt: %,.0f VNĐ",
                         balance, bidAmount));
                 return;
             }
+
 
             Object[] bidData = new Object[]{currentProduct.getId(), currentUser, bidAmount};
             SocketClient.sendRequest(new AuctionRequest("PLACE_BID", bidData));
