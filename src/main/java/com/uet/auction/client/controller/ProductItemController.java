@@ -14,6 +14,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView; // Đã thêm import ImageView
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -61,6 +62,7 @@ public class ProductItemController {
 
         // ĐÃ CHUYỂN LOGIC TẢI ẢNH VÀO ĐÚNG HÀM KHỞI TẠO DỮ LIỆU
         if (imgProduct != null) {
+            imgProduct.setImage(null);
             String imageUrl = product.getImageUrl();
 
             // Lọc bỏ rác đường dẫn (ví dụ: images\sp_...)
@@ -73,8 +75,9 @@ public class ProductItemController {
                 java.io.File file = new java.io.File("images/" + cleanFileName);
 
                 if (file.exists()) {
-                    // Nạp ảnh có giới hạn kích thước (300x300) để tránh tràn bộ nhớ
-                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString(), 300, 300, true, true));
+                    // Nạp ảnh ở chế độ Background để không làm treo giao diện chính
+                    Image img = new Image(file.toURI().toString(), 300, 300, true, true, true);
+                    imgProduct.setImage(img);
                 } else {
                     loadDefaultImage();
                 }

@@ -43,7 +43,12 @@ public class ClientHandler implements Runnable {
                     case "REGISTER":
                         Object[] regData = (Object[]) request.getData();
                         response = authService.register(
-                                (String) regData[0], (String) regData[1], (String) regData[2]);
+                                (String) regData[0],
+                                (String) regData[1],
+                                (String) regData[2],
+                                (String) regData[3],
+                                (String) regData[4]
+                        );
                         sendResponse(response);
                         break;
 

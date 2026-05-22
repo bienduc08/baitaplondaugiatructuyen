@@ -6,6 +6,8 @@ public class UserDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int id;
+    private String fullName;
+    private String gmail;
     private String username;
     private String role;
     private String message;
@@ -14,14 +16,22 @@ public class UserDTO implements Serializable {
 
     public UserDTO() {}
 
-    public UserDTO(int id, String username, String role) {
+    public UserDTO(String fullName,String gmail,int id, String username, String role) {
         this.id = id;
+        this.fullName = fullName;
+        this.gmail = gmail;
         this.username = username;
         this.role = role;
     }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
+
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public String getGmail() { return gmail; }
+    public void setGmail(String gmail) { this.gmail = gmail; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }

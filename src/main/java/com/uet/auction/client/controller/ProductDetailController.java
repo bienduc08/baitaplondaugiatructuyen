@@ -11,15 +11,20 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
+
+import java.io.File;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 public class ProductDetailController {
 
@@ -48,62 +53,67 @@ public class ProductDetailController {
     }
 
     public void setProductData(ProductDTO product, List<BidDTO> allBids) {
+        dispose();
         this.currentProduct = product;
+
 
         lblProductName.setText(product.getName());
         lblDescription.setText(product.getDescription());
         lblCurrentPrice.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
         lblStepPrice.setText(String.format("%,.0f VNĐ", product.getStepPrice()));
+        lblSellerName.setText(product.getSellerName() != null ? product.getSellerName() : "—");
+        lblTopBidder.setText(product.getOwnerName() != null && !product.getOwnerName().isBlank() ? product.getOwnerName() : "Chưa có");
 
-        if (lblSellerName != null) {
-            lblSellerName.setText(product.getSellerName() != null ? product.getSellerName() : "—");
-        }
-        if (lblTopBidder != null) {
-            lblTopBidder.setText(product.getOwnerName() != null && !product.getOwnerName().isBlank() ? product.getOwnerName() : "Chưa có");
-        }
+        loadImage(product.getImageUrl());
+        updateBidHistory(allBids);
 
-        if (imgProduct != null) {
-            String imageUrl = product.getImageUrl();
+        if (product.getEndTime() != null) startCountdown(product.getEndTime());
+        else if (lblTimeRemaining != null) lblTimeRemaining.setText("Hết hạn: —");
+    }
 
-            // Lọc bỏ rác đường dẫn (ví dụ: images\sp_...)
-            String cleanFileName = (imageUrl != null) ? new java.io.File(imageUrl.trim()).getName() : "";
+    private void loadImage(String imageUrl) {
+        if (imgProduct == null) return;
+        imgProduct.setImage(null); // Giải phóng ảnh cũ
 
-            if (imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.toLowerCase().contains("macdinh")) {
-                loadDefaultImage();
-            } else {
-                // Trỏ thẳng vào thư mục upload_images trong project
-                java.io.File file = new java.io.File("images/" + cleanFileName);
-
-                if (file.exists()) {
-                    // Nạp ảnh có giới hạn kích thước (300x300) để tránh tràn bộ nhớ
-                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString(), 300, 300, true, true));
-                } else {
-                    loadDefaultImage();
-                }
-            }
+        if (imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.toLowerCase().contains("macdinh")) {
+            loadDefaultImage();
+            return;
         }
 
-        // Nạp dữ liệu lịch sử đấu giá (nếu có)
-        if (allBids != null && !allBids.isEmpty()) {
-            List<BidDTO> sortedBids = allBids.stream()
-                    .sorted((b1, b2) -> {
-                        if (b1.getTime() == null && b2.getTime() == null) return 0;
-                        if (b1.getTime() == null) return 1;
-                        if (b2.getTime() == null) return -1;
-                        return b2.getTime().compareTo(b1.getTime());
-                    })
-                    .collect(Collectors.toList());
-            recentBidsList.setAll(sortedBids);
+        File file = new File("images/" + new File(imageUrl.trim()).getName());
+        if (file.exists()) {
+            // Resize 360x280 đúng khung hình, tắt background loading (false) để tránh tràn heap
+            imgProduct.setImage(new Image(file.toURI().toString(), 360, 280, true, true, false));
         } else {
-            recentBidsList.clear();
+            loadDefaultImage();
         }
-
         if (product.getEndTime() != null) {
             startCountdown(product.getEndTime());
         } else {
             if (lblTimeRemaining != null) lblTimeRemaining.setText("Hết hạn: —");
         }
     }
+    }
+
+    private void updateBidHistory(List<BidDTO> bids) {
+        if (bids != null) {
+            recentBidsList.setAll(bids.stream()
+                    .sorted((b1, b2) -> b2.getTime().compareTo(b1.getTime()))
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    public void dispose() {
+        if (countdown != null) {
+            countdown.stop();
+            countdown = null;
+        }
+        if (imgProduct != null) {
+            imgProduct.setImage(null);
+        }
+        recentBidsList.clear();
+    }
+
 
     private void startCountdown(LocalDateTime endTime) {
         // Dừng bộ đếm cũ nếu có trước khi chạy bộ mới
@@ -162,13 +172,12 @@ public class ProductDetailController {
     }
 
     private void setupTable() {
-        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("username"));
+        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("userName"));
         if (colBidTime != null) colBidTime.setCellValueFactory(new PropertyValueFactory<>("time"));
         if (colBidPrice != null) {
             colBidPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
             colBidPrice.setCellFactory(col -> new TableCell<>() {
-                @Override
-                protected void updateItem(Double amount, boolean empty) {
+                @Override protected void updateItem(Double amount, boolean empty) {
                     super.updateItem(amount, empty);
                     setText(empty || amount == null ? null : String.format("%,.0f VNĐ", amount));
                 }
@@ -184,17 +193,8 @@ public class ProductDetailController {
 
     @FXML
     public void onBackButtonClick() {
-        // Chạy hành động quay lại đã được controller cha "gài" vào
-
-        if (countdown != null) {
-            countdown.stop();
-        }
-
-        if (onBackAction != null) {
-            onBackAction.run();
-        } else {
-            System.err.println("Lỗi: Không có hành động quay lại (onBackAction) nào được định nghĩa!");
-        }
+        dispose();
+        if (onBackAction != null) onBackAction.run();
     }
 
     public void reloadProductDetails() {
@@ -205,36 +205,18 @@ public class ProductDetailController {
 
     public void displayBidHistory(List<BidDTO> bids) {
         if (bids != null) {
-            List<BidDTO> sortedBids = bids.stream()
-                    .sorted((b1, b2) -> {
-                        if (b1.getTime() == null && b2.getTime() == null) return 0;
-                        if (b1.getTime() == null) return 1;
-                        if (b2.getTime() == null) return -1;
-                        return b2.getTime().compareTo(b1.getTime());
-                    })
-                    .collect(Collectors.toList());
-            recentBidsList.setAll(sortedBids);
+            recentBidsList.setAll(bids.stream()
+                    .sorted((b1, b2) -> (b1.getTime() == null ? 1 : b2.getTime().compareTo(b1.getTime())))
+                    .collect(Collectors.toList()));
 
-            if (!sortedBids.isEmpty()) {
-                BidDTO highestBid = sortedBids.get(0);
+            if (!recentBidsList.isEmpty()) {
+                BidDTO top = recentBidsList.get(0);
                 if (currentProduct != null) {
-                    currentProduct.setCurrentPrice(highestBid.getPrice());
-                    currentProduct.setOwnerName(highestBid.getBidderName());
+                    currentProduct.setCurrentPrice(top.getPrice());
+                    currentProduct.setOwnerName(top.getUserName());
                 }
-
-                if (lblCurrentPrice != null) {
-                    lblCurrentPrice.setText(String.format("%,.0f VNĐ", highestBid.getPrice()));
-                }
-                if (lblTopBidder != null) {
-                    lblTopBidder.setText(highestBid.getBidderName() != null ? highestBid.getBidderName() : "Chưa có");
-                }
-            } else {
-                if (lblTopBidder != null) {
-                    lblTopBidder.setText("Chưa có");
-                }
-                if (currentProduct != null && lblCurrentPrice != null) {
-                    lblCurrentPrice.setText(String.format("%,.0f VNĐ", currentProduct.getStartingPrice()));
-                }
+                if (lblCurrentPrice != null) lblCurrentPrice.setText(String.format("%,.0f VNĐ", top.getPrice()));
+                if (lblTopBidder != null) lblTopBidder.setText(top.getUserName());
             }
         }
     }
@@ -300,24 +282,17 @@ public class ProductDetailController {
     }
 
     // Hàm hỗ trợ hiển thị hộp thoại thông báo
-    private void showAlert(Alert.AlertType alertType, String title, String message) {
-        Alert alert = new Alert(alertType);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    private void showAlert(Alert.AlertType type, String title, String msg) {
+        Alert a = new Alert(type);
+        a.setTitle(title);
+        a.setContentText(msg);
+        a.showAndWait();
     }
     // Hàm hỗ trợ load ảnh mặc định an toàn
     private void loadDefaultImage() {
-        // Sửa lại đường dẫn này cho đúng với cấu trúc thư mục resources của bạn
-        String defaultImagePath = "/com/uet/auction/images/macdinh.jpg";
-
-        java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
-        if (is != null) {
-            imgProduct.setImage(new javafx.scene.image.Image(is));
-        } else {
-            // Nếu vẫn không tìm thấy ảnh, in ra dòng cảnh báo thay vì làm sập app
-            System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
+        try (InputStream is = getClass().getResourceAsStream("/com/uet/auction/images/macdinh.jpg")) {
+            if (is != null) imgProduct.setImage(new Image(is));
+        } catch (Exception e) {
+            System.err.println("Không thể load ảnh mặc định");
         }
     }
-}

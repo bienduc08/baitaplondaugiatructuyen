@@ -40,6 +40,16 @@ public class UserDAO {
                 user.setUsername(rs.getString("username"));
                 user.setRole(rs.getString("role"));
                 try {
+                    user.setFullName(rs.getString("full_name"));
+                } catch (SQLException e) {
+                    user.setFullName("");
+                }
+                try {
+                    user.setGmail(rs.getString("email"));
+                } catch (SQLException e) {
+                    user.setGmail("");
+                }
+                try {
                     user.setBalance(rs.getDouble("balance"));
                 } catch (SQLException e) {
                     user.setBalance(0.0);
@@ -49,7 +59,7 @@ public class UserDAO {
                 } catch (SQLException e) {
                     user.setStatus("ACTIVE"); // mặc định nếu cột chưa có
                 }
-                // [KẾT THÚC SỬA]
+
 
                 return user;
             }
@@ -120,10 +130,10 @@ public class UserDAO {
         return null;
     }
 
-    public boolean registerUser(String username, String password, String role) {
+    public boolean registerUser(String fullname,String gmail,String username, String password, String role) {
         String checkSql  = "SELECT id FROM users WHERE username = ?";
         // Mặc định đăng ký xong thì status là ACTIVE
-        String insertSql = "INSERT INTO users (username, password, role, status) VALUES (?, ?, ?, 'ACTIVE')";
+        String insertSql = "INSERT INTO users ( fullname, gmail,username, password, role, status) VALUES (?, ? ,?, ?, ?, 'ACTIVE')";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement checkStmt  = conn.prepareStatement(checkSql);
              PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
@@ -131,14 +141,17 @@ public class UserDAO {
             checkStmt.setString(1, username);
             if (checkStmt.executeQuery().next()) return false;
 
-            insertStmt.setString(1, username);
-            insertStmt.setString(2, hashPassword(password));
-            insertStmt.setString(3, role);
+            insertStmt.setString(1, fullname);
+            insertStmt.setString(2, gmail);
+            insertStmt.setString(3, username);
+            insertStmt.setString(4, hashPassword(password));
+            insertStmt.setString(5, role);
+
             return insertStmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
             System.err.println("Lỗi đăng ký tài khoản: " + e.getMessage());
-            return fallbackRegisterUser(username, password, role);
+            return fallbackRegisterUser(fullname, gmail, username, password, role);
         }
     }
 
@@ -156,13 +169,15 @@ public class UserDAO {
     }
 
     // Hàm dự phòng khi bảng chưa có cột status
-    private boolean fallbackRegisterUser(String username, String password, String role) {
-        String insertSql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+    private boolean fallbackRegisterUser(String fullname, String gmail,  String username, String password, String role) {
+        String insertSql = "INSERT INTO users (fullname,gmail,username, password, role) VALUES (? , ? , ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
-            insertStmt.setString(1, username);
-            insertStmt.setString(2, hashPassword(password));
-            insertStmt.setString(3, role);
+            insertStmt.setString(1, fullname);
+            insertStmt.setString(2, gmail);
+            insertStmt.setString(3, username);
+            insertStmt.setString(4, hashPassword(password));
+            insertStmt.setString(5, role);
             return insertStmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Lỗi đăng ký (fallback): " + e.getMessage());
@@ -176,7 +191,7 @@ public class UserDAO {
 
     public List<UserDTO> getAllUsers() {
         List<UserDTO> users = new ArrayList<>();
-        String sql = "SELECT id, username, role, balance, status FROM users";
+        String sql = "SELECT id,fullname,gmail, username, role, balance, status FROM users";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -188,11 +203,9 @@ public class UserDAO {
                 user.setRole(rs.getString("role"));
                 user.setBalance(rs.getDouble("balance"));
 
-                try {
-                    user.setStatus(rs.getString("status"));
-                } catch (SQLException e) {
-                    user.setStatus("ACTIVE");
-                }
+                try { user.setStatus(rs.getString("status")); } catch (SQLException e) { user.setStatus("ACTIVE"); }
+                try { user.setFullName(rs.getString("fullname")); } catch (SQLException e) { user.setFullName(""); }
+                try { user.setGmail(rs.getString("gmail")); } catch (SQLException e) { user.setGmail(""); }
 
                 users.add(user);
             }
@@ -205,7 +218,7 @@ public class UserDAO {
 
     public List<UserDTO> searchUser(String keyword) {
         List<UserDTO> users = new ArrayList<>();
-        String sql = "SELECT id, username, role, balance, status FROM users WHERE username LIKE ?";
+        String sql = "SELECT id,fullname,gmail, username, role, balance, status FROM users WHERE username LIKE ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -218,11 +231,9 @@ public class UserDAO {
                     user.setRole(rs.getString("role"));
                     user.setBalance(rs.getDouble("balance"));
 
-                    try {
-                        user.setStatus(rs.getString("status"));
-                    } catch (SQLException e) {
-                        user.setStatus("ACTIVE");
-                    }
+                    try { user.setStatus(rs.getString("status")); } catch (SQLException e) { user.setStatus("ACTIVE"); }
+                    try { user.setFullName(rs.getString("fullname")); } catch (SQLException e) { user.setFullName(""); }
+                    try { user.setGmail(rs.getString("gmail")); } catch (SQLException e) { user.setGmail(""); }
 
                     users.add(user);
                 }
