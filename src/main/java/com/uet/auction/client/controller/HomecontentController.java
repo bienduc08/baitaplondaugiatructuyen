@@ -10,6 +10,9 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,6 +27,7 @@ public class HomecontentController {
 
     private List<ProductDTO> allProducts;
     private String currentCategory = "ALL"; // Biến lưu trạng thái lọc danh mục hiện tại
+    private Timeline autoRefreshTimeline;
 
     @FXML
     public void initialize() {
@@ -36,6 +40,21 @@ public class HomecontentController {
 
         // Tự động gọi API lấy danh sách sản phẩm đang đấu giá khi vừa load trang chủ
         loadProducts();
+
+        // Tự động làm mới mỗi 5 giây nếu màn hình còn hiển thị
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> loadProducts()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (productContainer.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        productContainer.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     /**

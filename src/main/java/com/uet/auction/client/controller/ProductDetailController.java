@@ -39,12 +39,28 @@ public class ProductDetailController {
     private final ObservableList<BidDTO> recentBidsList = FXCollections.observableArrayList();
     private ProductDTO currentProduct;
     private Timeline countdown;
+    private Timeline autoRefreshTimeline;
 
 
     @FXML
     public void initialize() {
         instance = this;
         setupTable();
+
+        // Tự động làm mới mỗi 3 giây
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(3), e -> reloadProductDetails()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (tblRecentBids.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        tblRecentBids.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     public void setProductData(ProductDTO product, List<BidDTO> allBids) {
@@ -183,6 +199,9 @@ public class ProductDetailController {
         if (countdown != null) {
             countdown.stop();
         }
+        if (autoRefreshTimeline != null) {
+            autoRefreshTimeline.stop();
+        }
 
         instance = null;
 
@@ -256,9 +275,15 @@ public class ProductDetailController {
 
             // 1. KIỂM TRA QUYỀN bằng biến sessionUser
             String role = sessionUser.getRole();
-            if ("SELLER".equals(role) || "ADMIN".equals(role)) {
-                showAlert(Alert.AlertType.ERROR, "Từ chối truy cập", "Quản trị viên và Người bán không được phép tham gia đặt giá!");
+            if ("ADMIN".equals(role)) {
+                showAlert(Alert.AlertType.ERROR, "Từ chối truy cập", "Quản trị viên không được phép tham gia đặt giá!");
                 return; // Dừng lại, không cho đặt
+            }
+            if ("SELLER".equals(role)) {
+                if (currentProduct != null && sessionUser.getUsername().equals(currentProduct.getSellerName())) {
+                    showAlert(Alert.AlertType.ERROR, "Từ chối truy cập", "Bạn không được phép tự đặt giá cho sản phẩm của chính mình!");
+                    return; // Dừng lại, không cho đặt
+                }
             }
 
             if (currentProduct != null) {

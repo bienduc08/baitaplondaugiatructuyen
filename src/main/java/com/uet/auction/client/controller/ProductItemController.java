@@ -16,6 +16,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -23,6 +25,7 @@ import java.time.temporal.ChronoUnit;
 
 public class ProductItemController {
 
+    @FXML private ImageView imgProduct;
     @FXML private Label nameLabel;
     @FXML private Label priceLabel;
     @FXML private Label sellerLabel;
@@ -57,7 +60,31 @@ public class ProductItemController {
             timeLabel.setText("Hết hạn: —");
         }
 
+        if (imgProduct != null) {
+            String imageUrl = product.getImageUrl();
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                java.io.File file = new java.io.File(imageUrl);
+                if (file.exists()) {
+                    imgProduct.setImage(new Image(file.toURI().toString()));
+                } else {
+                    loadDefaultImage();
+                }
+            } else {
+                loadDefaultImage();
+            }
+        }
+
         updateBidInputState();
+    }
+
+    private void loadDefaultImage() {
+        String defaultImagePath = "/com/uet/auction/images/LogoUET.png";
+        java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
+        if (is != null) {
+            imgProduct.setImage(new Image(is));
+        } else {
+            System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
+        }
     }
 
     private void updateBidInputState() {

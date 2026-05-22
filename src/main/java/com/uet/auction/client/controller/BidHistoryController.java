@@ -12,6 +12,9 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.util.List;
 
@@ -28,6 +31,7 @@ public class BidHistoryController {
 
     private final ObservableList<BidDTO> bidListData = FXCollections.observableArrayList();
     private Integer currentProductId;
+    private Timeline autoRefreshTimeline;
 
     // Instance tĩnh để ResponseListener có thể gọi displayBidHistory()
     public static BidHistoryController instance;
@@ -42,6 +46,21 @@ public class BidHistoryController {
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
         bidHistoryTable.setItems(bidListData);
+
+        // Tự động làm mới mỗi 3 giây
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(3), e -> loadBidHistory()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        if (bidHistoryTable.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
+        bidHistoryTable.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
+        });
     }
 
     /**
