@@ -64,16 +64,22 @@ public class ProductDetailController {
 
         if (imgProduct != null) {
             String imageUrl = product.getImageUrl();
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                java.io.File file = new java.io.File(imageUrl);
+
+            // Lọc bỏ rác đường dẫn (ví dụ: images\sp_...)
+            String cleanFileName = (imageUrl != null) ? new java.io.File(imageUrl.trim()).getName() : "";
+
+            if (imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.toLowerCase().contains("macdinh")) {
+                loadDefaultImage();
+            } else {
+                // Trỏ thẳng vào thư mục upload_images trong project
+                java.io.File file = new java.io.File("images/" + cleanFileName);
+
                 if (file.exists()) {
-                    // Nếu tìm thấy file thật trên Server/ổ cứng
-                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString()));
+                    // Nạp ảnh có giới hạn kích thước (300x300) để tránh tràn bộ nhớ
+                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString(), 300, 300, true, true));
                 } else {
                     loadDefaultImage();
                 }
-            } else {
-                loadDefaultImage();
             }
         }
 
@@ -91,6 +97,7 @@ public class ProductDetailController {
         } else {
             recentBidsList.clear();
         }
+
 
         if (product.getEndTime() != null) {
             startCountdown(product.getEndTime());
@@ -156,7 +163,7 @@ public class ProductDetailController {
     }
 
     private void setupTable() {
-        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("bidderName"));
+        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("username"));
         if (colBidTime != null) colBidTime.setCellValueFactory(new PropertyValueFactory<>("time"));
         if (colBidPrice != null) {
             colBidPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
@@ -183,8 +190,6 @@ public class ProductDetailController {
         if (countdown != null) {
             countdown.stop();
         }
-
-        instance = null;
 
         if (onBackAction != null) {
             onBackAction.run();
@@ -306,7 +311,7 @@ public class ProductDetailController {
     // Hàm hỗ trợ load ảnh mặc định an toàn
     private void loadDefaultImage() {
         // Sửa lại đường dẫn này cho đúng với cấu trúc thư mục resources của bạn
-        String defaultImagePath = "/com/uet/auction/images/LogoUET.png";
+        String defaultImagePath = "/com/uet/auction/images/macdinh.jpg";
 
         java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
         if (is != null) {

@@ -50,6 +50,10 @@ public class SellerAddProductController {
     @FXML
     public void initialize() {
         // Giá trị mặc định đã được đặt trong FXML
+        if (btnRemoveImage != null) {
+            btnRemoveImage.setVisible(false);
+            btnRemoveImage.setManaged(false); // Quan trọng: Bỏ quản lý layout để nút ẩn không để lại khoảng trống
+        }
     }
 
     /**
@@ -81,6 +85,14 @@ public class SellerAddProductController {
                 return;
             }
 
+            // BẠN CẦN THÊM ĐOẠN ĐỌC BƯỚC GIÁ NÀY VÀO
+            String stepStr = (txtBidStep != null && !txtBidStep.getText().trim().isEmpty()) ? txtBidStep.getText().trim() : "10000";
+            double stepPrice = Double.parseDouble(stepStr.replace(",", ""));
+            if (stepPrice <= 0) {
+                AlertHelper.showError("Bước giá phải lớn hơn 0!");
+                return;
+            }
+
             // Đọc giờ/phút/giây kết thúc
             int endH = parseTimeField(txtEndH, 23);
             int endM = parseTimeField(txtEndM, 59);
@@ -95,7 +107,7 @@ public class SellerAddProductController {
             // Đọc giờ/phút/giây bắt đầu
             LocalDateTime startTime;
             if (dpStartDate != null && dpStartDate.getValue() != null) {
-                int startH = parseTimeField(txtStartH, 8);
+                int startH = parseTimeField(txtStartH, 0);
                 int startM = parseTimeField(txtStartM, 0);
                 int startS = parseTimeField(txtStartS, 0);
                 startTime = LocalDateTime.of(dpStartDate.getValue(), LocalTime.of(startH, startM, startS));
@@ -103,14 +115,9 @@ public class SellerAddProductController {
                 startTime = LocalDateTime.now();
             }
 
-            double stepPrice = 10000.0;
-            if (txtBidStep != null) {
-                String stepStr = txtBidStep.getText().trim().replace(",", "");
-                if (!stepStr.isEmpty()) {
-                    try {
-                        stepPrice = Double.parseDouble(stepStr);
-                    } catch (NumberFormatException ignored) {}
-                }
+            if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
+                AlertHelper.showError("Thời gian bắt đầu phải trước thời gian kết thúc!");
+                return;
             }
 
             ProductDTO product = new ProductDTO();
@@ -118,6 +125,10 @@ public class SellerAddProductController {
             product.setStartingPrice(startingPrice);
             product.setCurrentPrice(startingPrice);
             product.setStepPrice(stepPrice);
+            if (selectedImageBytes != null) {
+                product.setImageBytes(selectedImageBytes);
+            }
+
             product.setDescription(txtDescription != null ? txtDescription.getText().trim() : "");
             product.setSellerName(SessionManager.getCurrentUsername());
             product.setStartTime(startTime);
@@ -153,7 +164,7 @@ public class SellerAddProductController {
         if (txtBidStep       != null) txtBidStep.setText("10,000");
         if (dpStartDate      != null) dpStartDate.setValue(null);
         if (dpEndDate        != null) dpEndDate.setValue(null);
-        if (txtStartH != null) txtStartH.setText("08");
+        if (txtStartH != null) txtStartH.setText("00");
         if (txtStartM != null) txtStartM.setText("00");
         if (txtStartS != null) txtStartS.setText("00");
         if (txtEndH   != null) txtEndH.setText("23");

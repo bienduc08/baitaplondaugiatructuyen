@@ -18,11 +18,7 @@
                             <children>
                                 <StackPane style="-fx-background-color: white; -fx-background-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5); -fx-padding: 15;">
                                     <children>
-                                        <ImageView fx:id="imgProduct" fitHeight="280.0" fitWidth="360.0" pickOnBounds="true" preserveRatio="true">
-                                            <image>
-                                                <Image url="@../images/LogoUET.png" />
-                                            </image>
-                                        </ImageView>
+                                        <ImageView fx:id="imgProduct" fitHeight="280.0" fitWidth="360.0" pickOnBounds="true" preserveRatio="true"/>
                                     </children>
                                 </StackPane>
 

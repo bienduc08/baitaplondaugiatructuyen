@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
+<?import javafx.scene.image.ImageView?>
 <VBox spacing="20.0" style="-fx-padding: 30; -fx-background-color: #f8fafc;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.SellerAddProductController">
     <children>
         <VBox spacing="5.0">
@@ -20,18 +21,18 @@
             <children>
                 <VBox spacing="20.0" HBox.hgrow="ALWAYS">
                     <children>
-                        <VBox spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);">
+                        <VBox prefHeight="510.0" prefWidth="528.0" spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);">
                             <children>
                                 <Label style="-fx-font-weight: bold; -fx-font-size: 12;" text="THÔNG TIN CHI TIẾT" textFill="#3498db" />
                                 <VBox spacing="8.0">
                                     <Label style="-fx-font-weight: bold;" text="Tên sản phẩm" textFill="#475569" />
                                     <TextField fx:id="txtProductName" prefHeight="45.0" promptText="Nhập tên sản phẩm..." style="-fx-background-radius: 8;" />
                                 </VBox>
-                                <VBox spacing="8.0">
+                                <VBox prefHeight="122.0" prefWidth="478.0" spacing="8.0">
                                     <Label style="-fx-font-weight: bold;" text="Mô tả sản phẩm" textFill="#475569" />
                                     <TextArea fx:id="txtDescription" prefHeight="200.0" promptText="Mô tả chi tiết..." style="-fx-background-radius: 8;" wrapText="true" />
                                 </VBox>
-                                <VBox spacing="8.0">
+                                <VBox prefHeight="247.0" prefWidth="478.0" spacing="8.0">
                                     <Label style="-fx-font-weight: bold;" text="Hình ảnh" textFill="#475569" />
                                     <VBox spacing="6.0" style="-fx-border-color: #cbd5e1; -fx-border-style: dashed; -fx-border-radius: 10; -fx-background-color: #f1f5f9; -fx-padding: 10; -fx-alignment: center;">
                                         <ImageView fx:id="imgPreview" fitHeight="100.0" fitWidth="200.0" preserveRatio="true" />
