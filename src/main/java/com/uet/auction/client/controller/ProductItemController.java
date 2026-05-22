@@ -34,6 +34,9 @@ public class ProductItemController {
     @FXML private Label descriptionLabel;
     @FXML private javafx.scene.image.ImageView imgProduct;
 
+    // ĐÃ THÊM: Khai báo biến imgProduct để hiển thị ảnh
+    @FXML private ImageView imgProduct;
+
     private ProductDTO currentProduct;
     private Timeline countdown;
 
@@ -43,6 +46,7 @@ public class ProductItemController {
         nameLabel.setText(product.getName());
         priceLabel.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
         sellerLabel.setText("Người bán: " + (product.getSellerName() != null ? product.getSellerName() : "—"));
+
         if (descriptionLabel != null) {
             String desc = product.getDescription();
             descriptionLabel.setText((desc != null && !desc.isBlank()) ? desc : "");
