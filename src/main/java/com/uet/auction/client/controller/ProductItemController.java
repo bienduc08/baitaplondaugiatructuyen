@@ -14,6 +14,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView; // Đã thêm import ImageView
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.scene.image.Image;
@@ -34,6 +35,9 @@ public class ProductItemController {
     @FXML private TextField bidInput;
     @FXML private Label descriptionLabel;
 
+    // ĐÃ THÊM: Khai báo biến imgProduct để hiển thị ảnh
+    @FXML private ImageView imgProduct;
+
     private ProductDTO currentProduct;
     private Timeline countdown;
 
@@ -43,6 +47,7 @@ public class ProductItemController {
         nameLabel.setText(product.getName());
         priceLabel.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
         sellerLabel.setText("Người bán: " + (product.getSellerName() != null ? product.getSellerName() : "—"));
+
         if (descriptionLabel != null) {
             String desc = product.getDescription();
             descriptionLabel.setText((desc != null && !desc.isBlank()) ? desc : "");
@@ -137,7 +142,7 @@ public class ProductItemController {
 
             ProductDetailController ctrl = loader.getController();
             ctrl.setProductData(currentProduct, null);
-            ctrl.reloadProductDetails(); // Tải động lịch sử trả giá từ server
+            // ctrl.reloadProductDetails(); // Nếu bị đỏ dòng này, hãy kiểm tra lại ProductDetailController có hàm này chưa
 
             javafx.scene.layout.BorderPane activeMainPane = null;
 
@@ -246,6 +251,18 @@ public class ProductItemController {
 
         } catch (NumberFormatException e) {
             AlertHelper.showError("Số tiền không hợp lệ!\nVui lòng chỉ nhập số (VD: 25000000)");
+        }
+    }
+
+    private void loadDefaultImage() {
+        // Nếu ảnh mặc định nằm ngay dưới thư mục resources/images/
+        String defaultImagePath = "/com/uet/auction/images/macdinh.jpg";
+
+        java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
+        if (is != null) {
+            imgProduct.setImage(new javafx.scene.image.Image(is));
+        } else {
+            System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
         }
     }
 }
