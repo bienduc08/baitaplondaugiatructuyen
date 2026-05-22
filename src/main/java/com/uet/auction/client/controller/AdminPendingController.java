@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class AdminPendingController {
 
-    @FXML public static AdminPendingController instance;
+    public static AdminPendingController instance;
     @FXML private TableView<ProductDTO> pendingTable;
     @FXML private TableColumn<ProductDTO, Integer> idCol;
     @FXML private TableColumn<ProductDTO, String>  nameCol;

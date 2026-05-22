@@ -10,8 +10,7 @@ import java.util.List;
 public class BidDAO {
 
     public synchronized boolean placeBid(int productId, String username, double bidAmount) {
-        // SELECT THÊM step_price
-        String checkSql  = "SELECT current_price, step_price, owner_name FROM products WHERE id = ? AND status = 'OPEN'";
+        String checkSql  = "SELECT current_price, owner_name, seller_name FROM products WHERE id = ? AND status = 'OPEN'";
         String updateSql = "UPDATE products SET current_price = ?, owner_name = ? WHERE id = ?";
         String insertSql = "INSERT INTO bids (product_id, bidder_name, amount, bid_time, status) "
                 + "VALUES (?, ?, ?, NOW(), 'Hợp lệ')";
@@ -26,6 +25,7 @@ public class BidDAO {
                 ResultSet rs = pstmt.executeQuery();
 
                 if (!rs.next()) {
+                    System.err.println("[BidDAO] Sản phẩm id=" + productId + " không tồn tại hoặc không OPEN");
                     conn.rollback();
                     return false;
                 }
@@ -33,25 +33,28 @@ public class BidDAO {
                 double currentPrice = rs.getDouble("current_price");
                 if (rs.wasNull()) currentPrice = 0;
 
-                // LẤY BƯỚC GIÁ TỪ DATABASE
-                double stepPrice = rs.getDouble("step_price");
-                if (rs.wasNull()) stepPrice = 0;
-
                 String currentOwner = rs.getString("owner_name");
+                String sellerName = rs.getString("seller_name");
 
+                if (sellerName != null && sellerName.equals(username)) {
+                    System.err.println("[BidDAO] " + username + " không thể đấu giá sản phẩm của chính mình");
+                    conn.rollback();
+                    return false;
+                }
+
+                // KIỂM TRA: đang giữ đỉnh thì không được đặt tiếp
                 if (username.equals(currentOwner)) {
+                    System.err.println("[BidDAO] " + username + " đang giữ đỉnh, không thể đặt thêm");
                     conn.rollback();
                     return false;
                 }
 
-                // KIỂM TRA BƯỚC GIÁ TẠI SERVER
-                double minValidPrice = currentPrice + stepPrice;
-                if (bidAmount < minValidPrice) {
-                    System.err.println("[BidDAO] Từ chối do giá đặt " + bidAmount + " không đạt mức tối thiểu " + minValidPrice);
+                // KIỂM TRA: giá đặt phải lớn hơn giá hiện tại
+                if (bidAmount <= currentPrice) {
+                    System.err.println("[BidDAO] Giá đặt " + bidAmount + " <= giá hiện tại " + currentPrice);
                     conn.rollback();
                     return false;
                 }
-
 
                 System.out.println("[BidDAO] currentPrice=" + currentPrice
                         + " | owner=" + currentOwner + " | bidAmount=" + bidAmount);

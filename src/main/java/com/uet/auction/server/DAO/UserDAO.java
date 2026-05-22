@@ -72,6 +72,41 @@ public class UserDAO {
         return 0.0;
     }
 
+    public String getStatus(String username) {
+        String sql = "SELECT status FROM users WHERE username = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                try {
+                    return rs.getString("status");
+                } catch (SQLException e) {
+                    return "ACTIVE";
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi lấy status: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /** Cộng tiền vào số dư; trả về số dư mới hoặc null nếu thất bại. */
+    public Double deposit(String username, double amount) {
+        String sql = "UPDATE users SET balance = balance + ? WHERE username = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setDouble(1, amount);
+            pstmt.setString(2, username);
+            if (pstmt.executeUpdate() > 0) {
+                return getBalance(username);
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi nạp tiền: " + e.getMessage());
+        }
+        return null;
+    }
+
     public String getRole(String username) {
         String sql = "SELECT role FROM users WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -104,6 +139,19 @@ public class UserDAO {
         } catch (SQLException e) {
             System.err.println("Lỗi đăng ký tài khoản: " + e.getMessage());
             return fallbackRegisterUser(username, password, role);
+        }
+    }
+
+    public boolean updateRole(String username, String newRole) {
+        String sql = "UPDATE users SET role = ? WHERE username = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newRole);
+            pstmt.setString(2, username);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi cập nhật role: " + e.getMessage());
+            return false;
         }
     }
 

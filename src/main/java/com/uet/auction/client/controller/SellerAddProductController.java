@@ -137,7 +137,7 @@ public class SellerAddProductController {
             clearForm();
 
         } catch (NumberFormatException e) {
-            AlertHelper.showError("Giá khởi điểm/Bước giá phải là số hợp lệ (VD: 5000000)!");
+            AlertHelper.showError("Giá khởi điểm phải là số hợp lệ (VD: 5000000)!");
         }
     }
 

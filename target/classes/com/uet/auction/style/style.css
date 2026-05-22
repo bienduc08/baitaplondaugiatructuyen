@@ -198,19 +198,3 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 8);
     -fx-translate-y: -3px;
 }
-/* Trạng thái bình thường của nút menu (đã set trong FXML, đây là dự phòng) */
-.menu-btn {
-    -fx-background-radius: 8;
-    -fx-transition: all 0.2s ease;
-}
-
-/* Khi di chuột (hover) vào nút -> Nền chuyển sang màu xanh dương nhạt, chữ thành màu xanh dương đậm */
-.menu-btn:hover {
-    -fx-background-color: #e0f2fe !important;
-    -fx-text-fill: #0284c7 !important;
-}
-
-/* Khi click chuột vào nút */
-.menu-btn:pressed {
-    -fx-background-color: #bae6fd !important;
-}

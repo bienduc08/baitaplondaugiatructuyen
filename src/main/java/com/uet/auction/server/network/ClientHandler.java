@@ -47,6 +47,18 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
+                    case "UPGRADE_TO_SELLER":
+                        String upgradeUsername = (String) request.getData();
+                        response = authService.upgradeToSeller(upgradeUsername);
+                        sendResponse(response);
+                        break;
+
+                    case "DEPOSIT":
+                        Object[] depData = (Object[]) request.getData();
+                        response = authService.deposit((String) depData[0], ((Number) depData[1]).doubleValue());
+                        sendResponse(response);
+                        break;
+
                     case "ADD_PRODUCT":
                         ProductDTO product = (ProductDTO) request.getData();
                         response = auctionService.addProduct(product);
@@ -118,6 +130,13 @@ public class ClientHandler implements Runnable {
                         }
                         break;
 
+
+                    case "GET_JOINED_PRODUCTS":
+                        String joinedUsername = (String) request.getData();
+                        response = auctionService.getJoinedProducts(joinedUsername);
+                        sendResponse(response);
+                        break;
+
                     case "GET_BID_HISTORY":
                         int productId = (int) request.getData();
                         response = auctionService.getBidHistory(productId);
@@ -130,7 +149,7 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
-                    // =========================================================
+
                     // [THÊM MỚI] QUẢN LÝ NGƯỜI DÙNG DÀNH CHO ADMIN
                     // 4 case dưới đây hoàn toàn mới, file gốc không có
                     // =========================================================

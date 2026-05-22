@@ -14,12 +14,11 @@ public class Product implements Serializable {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String status;
-    private double stepPrice;
 
     public Product() {}
 
     public Product(int id, String name, double startingPrice, double currentPrice,
-                   String sellerName, LocalDateTime startTime, LocalDateTime endTime, String status, double stepPrice) {
+                   String sellerName, LocalDateTime startTime, LocalDateTime endTime, String status) {
         this.id = id;
         this.name = name;
         this.startingPrice = startingPrice;
@@ -28,7 +27,6 @@ public class Product implements Serializable {
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = status;
-        this.stepPrice = stepPrice;
     }
 
     public int getId() { return id; }
@@ -60,7 +58,4 @@ public class Product implements Serializable {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
-    public double getStepPrice() { return stepPrice; }
-    public void setStepPrice(double stepPrice) { this.stepPrice = stepPrice; }
 }

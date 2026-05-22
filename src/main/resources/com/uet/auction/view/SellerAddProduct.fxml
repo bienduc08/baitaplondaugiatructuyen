@@ -130,7 +130,8 @@
 
                         <VBox spacing="10.0">
                             <children>
-                                <Button maxWidth="Infinity" onAction="#onSubmitClick" prefHeight="55.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;" text="ĐĂNG SẢN PHẨM" />
+                                <Button onAction="#onSubmitClick" maxWidth="Infinity" prefHeight="55.0"
+                                        style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 16; -fx-background-radius: 12; -fx-cursor: hand;" text="ĐĂNG SẢN PHẨM" />
                             </children>
                         </VBox>
                     </children>
