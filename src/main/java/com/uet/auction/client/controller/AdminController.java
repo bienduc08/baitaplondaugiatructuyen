@@ -56,6 +56,12 @@ public class AdminController {
         }
         if (lblBalance != null && SessionManager.getCurrentUser() != null) {
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+            
+            // Tải số dư mới nhất từ server
+            String username = SessionManager.getCurrentUsername();
+            if (username != null) {
+                SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+            }
         }
         onShowHomeClick();
     }
@@ -145,6 +151,11 @@ public class AdminController {
     }
 
     @FXML public void onRefreshButtonClick() {
+        // Tải số dư mới nhất từ server khi nhấn làm mới
+        String username = SessionManager.getCurrentUsername();
+        if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+        }
         onShowHomeClick();
     }
 

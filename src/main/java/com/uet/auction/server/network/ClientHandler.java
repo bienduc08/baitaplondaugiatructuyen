@@ -66,6 +66,13 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
+                    case "GET_USER_BALANCE":
+                        String balanceUsername = (String) request.getData();
+                        double bal = authService.getUserBalance(balanceUsername);
+                        response = new AuctionResponse(true, "GET_USER_BALANCE_RESULT", bal);
+                        sendResponse(response);
+                        break;
+
                     case "ADD_PRODUCT":
                         ProductDTO product = (ProductDTO) request.getData();
                         response = auctionService.addProduct(product);

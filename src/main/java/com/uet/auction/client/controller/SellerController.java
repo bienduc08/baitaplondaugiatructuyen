@@ -1,5 +1,7 @@
 package com.uet.auction.client.controller;
 
+import com.uet.auction.client.network.SocketClient;
+import com.uet.auction.common.Request.AuctionRequest;
 import com.uet.auction.client.util.SceneManager;
 import com.uet.auction.client.util.SessionManager;
 import javafx.fxml.FXML;
@@ -25,6 +27,12 @@ public class SellerController {
         if (SessionManager.getCurrentUser() != null) {
             welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+            
+            // Tải số dư mới nhất từ server
+            String username = SessionManager.getCurrentUsername();
+            if (username != null) {
+                SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+            }
         }
         onShowHomeClick();
     }
@@ -51,7 +59,14 @@ public class SellerController {
     @FXML public void onShowAddProductClick()    { loadView("/com/uet/auction/view/SellerAddProduct.fxml"); }
     @FXML public void onShowMyProductsClick() { loadView("/com/uet/auction/view/SellerMyProduct.fxml"); }
 
-    @FXML public void onRefreshButtonClick() { onShowHomeClick(); /* Nút refresh */ }
+    @FXML public void onRefreshButtonClick() {
+        // Tải số dư mới nhất từ server khi nhấn làm mới
+        String username = SessionManager.getCurrentUsername();
+        if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+        }
+        onShowHomeClick(); /* Nút refresh */
+    }
 
     @FXML public void onProfileButtonClick() {
         Node previousView = mainBorderPane.getCenter();

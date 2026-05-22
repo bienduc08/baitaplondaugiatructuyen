@@ -133,7 +133,7 @@ public class BidDAO {
         List<BidDTO> list = new ArrayList<>();
         String sql = "SELECT id, product_id, bidder_name, amount, "
                 + "DATE_FORMAT(bid_time, '%d-%m-%Y %H:%i:%s') AS bid_time_str, status "
-                + "FROM bids WHERE product_id = ? ORDER BY bid_time DESC";
+                + "FROM bids WHERE product_id = ? ORDER BY bid_time DESC, id DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, productId);
@@ -158,7 +158,7 @@ public class BidDAO {
         List<BidDTO> list = new ArrayList<>();
         String sql = "SELECT id, product_id, bidder_name, amount, "
                 + "DATE_FORMAT(bid_time, '%d-%m-%Y %H:%i:%s') AS bid_time_str, status "
-                + "FROM bids WHERE bidder_name = ? ORDER BY bid_time DESC";
+                + "FROM bids WHERE bidder_name = ? ORDER BY bid_time DESC, id DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);

@@ -105,7 +105,15 @@ public class HomecontentController {
      * Hàm in danh sách sản phẩm đã lọc ra màn hình
      */
     private void renderProducts(List<ProductDTO> list) {
-        productContainer.getChildren().clear(); // Xóa sạch các ô cũ
+        // Dừng các bộ đếm ngược của các ô sản phẩm cũ để tránh rò rỉ bộ nhớ (leak timelines) gây crash ứng dụng
+        if (productContainer != null) {
+            for (Node child : productContainer.getChildren()) {
+                if (child.getUserData() instanceof ProductItemController) {
+                    ((ProductItemController) child.getUserData()).stopCountdown();
+                }
+            }
+            productContainer.getChildren().clear(); // Xóa sạch các ô cũ sau khi đã dừng timeline
+        }
 
         if (list.isEmpty()) {
             Label emptyMsg = new Label("Không tìm thấy sản phẩm nào phù hợp.");
@@ -123,6 +131,9 @@ public class HomecontentController {
                 // 2. Lấy controller của ô đó để truyền dữ liệu
                 ProductItemController controller = loader.getController();
                 controller.setProductData(product);
+
+                // Lưu trữ controller vào node để có thể truy cập dừng timeline sau này
+                productCard.setUserData(controller);
 
                 // 3. Ném ô sản phẩm vào FlowPane (Lưới sản phẩm)
                 productContainer.getChildren().add(productCard);

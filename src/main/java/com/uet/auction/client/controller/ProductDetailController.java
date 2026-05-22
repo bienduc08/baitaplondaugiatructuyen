@@ -101,17 +101,10 @@ public class ProductDetailController {
 
         // Nạp dữ liệu lịch sử đấu giá (nếu có)
         if (allBids != null && !allBids.isEmpty()) {
-            List<BidDTO> sortedBids = allBids.stream()
-                    .sorted((b1, b2) -> {
-                        if (b1.getTime() == null && b2.getTime() == null) return 0;
-                        if (b1.getTime() == null) return 1;
-                        if (b2.getTime() == null) return -1;
-                        return b2.getTime().compareTo(b1.getTime());
-                    })
-                    .collect(Collectors.toList());
-            recentBidsList.setAll(sortedBids);
+            recentBidsList.setAll(allBids);
         } else {
             recentBidsList.clear();
+            reloadProductDetails(); // Tải ngay lịch sử đấu giá khi mở trang chi tiết
         }
 
 
@@ -179,7 +172,7 @@ public class ProductDetailController {
     }
 
     private void setupTable() {
-        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("username"));
+        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("bidderName"));
         if (colBidTime != null) colBidTime.setCellValueFactory(new PropertyValueFactory<>("time"));
         if (colBidPrice != null) {
             colBidPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
@@ -225,35 +218,53 @@ public class ProductDetailController {
 
     public void displayBidHistory(List<BidDTO> bids) {
         if (bids != null) {
-            List<BidDTO> sortedBids = bids.stream()
-                    .sorted((b1, b2) -> {
-                        if (b1.getTime() == null && b2.getTime() == null) return 0;
-                        if (b1.getTime() == null) return 1;
-                        if (b2.getTime() == null) return -1;
-                        return b2.getTime().compareTo(b1.getTime());
-                    })
-                    .collect(Collectors.toList());
-            recentBidsList.setAll(sortedBids);
+            // Tối ưu hóa: Chỉ cập nhật bảng khi danh sách có sự thay đổi thực sự để tránh giật giao diện
+            boolean isIdentical = recentBidsList.size() == bids.size();
+            if (isIdentical) {
+                for (int i = 0; i < bids.size(); i++) {
+                    BidDTO b1 = recentBidsList.get(i);
+                    BidDTO b2 = bids.get(i);
+                    if (!java.util.Objects.equals(b1.getId(), b2.getId()) ||
+                        !java.util.Objects.equals(b1.getPrice(), b2.getPrice()) ||
+                        !java.util.Objects.equals(b1.getBidderName(), b2.getBidderName()) ||
+                        !java.util.Objects.equals(b1.getTime(), b2.getTime())) {
+                        isIdentical = false;
+                        break;
+                    }
+                }
+            }
+            if (!isIdentical) {
+                recentBidsList.setAll(bids);
+            }
 
-            if (!sortedBids.isEmpty()) {
-                BidDTO highestBid = sortedBids.get(0);
+            if (!bids.isEmpty()) {
+                BidDTO highestBid = bids.get(0);
                 if (currentProduct != null) {
                     currentProduct.setCurrentPrice(highestBid.getPrice());
                     currentProduct.setOwnerName(highestBid.getBidderName());
                 }
 
                 if (lblCurrentPrice != null) {
-                    lblCurrentPrice.setText(String.format("%,.0f VNĐ", highestBid.getPrice()));
+                    String newPriceText = String.format("%,.0f VNĐ", highestBid.getPrice());
+                    if (!newPriceText.equals(lblCurrentPrice.getText())) {
+                        lblCurrentPrice.setText(newPriceText);
+                    }
                 }
                 if (lblTopBidder != null) {
-                    lblTopBidder.setText(highestBid.getBidderName() != null ? highestBid.getBidderName() : "Chưa có");
+                    String newBidderText = highestBid.getBidderName() != null ? highestBid.getBidderName() : "Chưa có";
+                    if (!newBidderText.equals(lblTopBidder.getText())) {
+                        lblTopBidder.setText(newBidderText);
+                    }
                 }
             } else {
-                if (lblTopBidder != null) {
+                if (lblTopBidder != null && !"Chưa có".equals(lblTopBidder.getText())) {
                     lblTopBidder.setText("Chưa có");
                 }
                 if (currentProduct != null && lblCurrentPrice != null) {
-                    lblCurrentPrice.setText(String.format("%,.0f VNĐ", currentProduct.getStartingPrice()));
+                    String newPriceText = String.format("%,.0f VNĐ", currentProduct.getStartingPrice());
+                    if (!newPriceText.equals(lblCurrentPrice.getText())) {
+                        lblCurrentPrice.setText(newPriceText);
+                    }
                 }
             }
         }
@@ -313,8 +324,6 @@ public class ProductDetailController {
                 // Nếu thỏa mãn hết thì gửi Request lên Server bằng biến sessionUser
                 AuctionRequest request = new AuctionRequest("PLACE_BID", new Object[]{currentProduct.getId(), sessionUser.getUsername(), bidAmount});
                 SocketClient.sendRequest(request);
-
-                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã gửi yêu cầu đặt giá: " + String.format("%,.0f VNĐ", bidAmount));
                 txtBidAmount.clear();
             } else {
                 showAlert(Alert.AlertType.ERROR, "Lỗi", "Không tìm thấy thông tin sản phẩm!");
