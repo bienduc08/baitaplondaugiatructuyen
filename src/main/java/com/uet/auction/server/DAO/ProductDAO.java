@@ -109,8 +109,17 @@ public class ProductDAO {
             pstmt.setDouble(3, startingPrice);
             pstmt.setDouble(4, startingPrice);
             pstmt.setDouble(5, stepPrice);
-            pstmt.setTimestamp(6, Timestamp.valueOf(startTime));
-            pstmt.setTimestamp(7, Timestamp.valueOf(endTime));
+            if (startTime != null) {
+                pstmt.setTimestamp(6, Timestamp.valueOf(startTime));
+            } else {
+                pstmt.setNull(6, java.sql.Types.TIMESTAMP);
+            }
+
+            if (endTime != null) {
+                pstmt.setTimestamp(7, Timestamp.valueOf(endTime));
+            } else {
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
+            }
             pstmt.setString(8, sellerName);
             pstmt.setString(9, imageUrl); // [THÊM MỚI] Truyền giá trị imageUrl
 

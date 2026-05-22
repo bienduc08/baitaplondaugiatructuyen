@@ -9,7 +9,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -33,10 +39,18 @@ public class SellerAddProductController {
     @FXML private TextField  txtEndH;
     @FXML private TextField  txtEndM;
     @FXML private TextField  txtEndS;
+    @FXML private ImageView imgPreview;
+    @FXML private javafx.scene.control.Button btnChooseImage;
+    @FXML private javafx.scene.control.Button btnRemoveImage;
+    private byte[] selectedImageBytes;
 
     @FXML
     public void initialize() {
         // Giá trị mặc định đã được đặt trong FXML
+        if (btnRemoveImage != null) {
+            btnRemoveImage.setVisible(false);
+            btnRemoveImage.setManaged(false); // Quan trọng: Bỏ quản lý layout để nút ẩn không để lại khoảng trống
+        }
     }
 
     /**
@@ -68,6 +82,14 @@ public class SellerAddProductController {
                 return;
             }
 
+            // BẠN CẦN THÊM ĐOẠN ĐỌC BƯỚC GIÁ NÀY VÀO
+            String stepStr = (txtBidStep != null && !txtBidStep.getText().trim().isEmpty()) ? txtBidStep.getText().trim() : "10000";
+            double stepPrice = Double.parseDouble(stepStr.replace(",", ""));
+            if (stepPrice <= 0) {
+                AlertHelper.showError("Bước giá phải lớn hơn 0!");
+                return;
+            }
+
             // Đọc giờ/phút/giây kết thúc
             int endH = parseTimeField(txtEndH, 23);
             int endM = parseTimeField(txtEndM, 59);
@@ -82,7 +104,7 @@ public class SellerAddProductController {
             // Đọc giờ/phút/giây bắt đầu
             LocalDateTime startTime;
             if (dpStartDate != null && dpStartDate.getValue() != null) {
-                int startH = parseTimeField(txtStartH, 8);
+                int startH = parseTimeField(txtStartH, 0);
                 int startM = parseTimeField(txtStartM, 0);
                 int startS = parseTimeField(txtStartS, 0);
                 startTime = LocalDateTime.of(dpStartDate.getValue(), LocalTime.of(startH, startM, startS));
@@ -90,14 +112,9 @@ public class SellerAddProductController {
                 startTime = LocalDateTime.now();
             }
 
-            double stepPrice = 10000.0;
-            if (txtBidStep != null) {
-                String stepStr = txtBidStep.getText().trim().replace(",", "");
-                if (!stepStr.isEmpty()) {
-                    try {
-                        stepPrice = Double.parseDouble(stepStr);
-                    } catch (NumberFormatException ignored) {}
-                }
+            if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
+                AlertHelper.showError("Thời gian bắt đầu phải trước thời gian kết thúc!");
+                return;
             }
 
             ProductDTO product = new ProductDTO();
@@ -105,6 +122,10 @@ public class SellerAddProductController {
             product.setStartingPrice(startingPrice);
             product.setCurrentPrice(startingPrice);
             product.setStepPrice(stepPrice);
+            if (selectedImageBytes != null) {
+                product.setImageBytes(selectedImageBytes);
+            }
+
             product.setDescription(txtDescription != null ? txtDescription.getText().trim() : "");
             product.setSellerName(SessionManager.getCurrentUsername());
             product.setStartTime(startTime);
@@ -136,11 +157,90 @@ public class SellerAddProductController {
         if (txtBidStep       != null) txtBidStep.setText("10,000");
         if (dpStartDate      != null) dpStartDate.setValue(null);
         if (dpEndDate        != null) dpEndDate.setValue(null);
-        if (txtStartH != null) txtStartH.setText("08");
+        if (txtStartH != null) txtStartH.setText("00");
         if (txtStartM != null) txtStartM.setText("00");
         if (txtStartS != null) txtStartS.setText("00");
         if (txtEndH   != null) txtEndH.setText("23");
         if (txtEndM   != null) txtEndM.setText("59");
         if (txtEndS   != null) txtEndS.setText("00");
+
+        // --- BỔ SUNG ĐOẠN NÀY ---
+        if (imgPreview != null) imgPreview.setImage(null);
+        selectedImageBytes = null;
+
+        if (btnChooseImage != null) {
+            btnChooseImage.setVisible(true);
+            btnChooseImage.setManaged(true);
+        }
+        if (btnRemoveImage != null) {
+            btnRemoveImage.setVisible(false);
+            btnRemoveImage.setManaged(false);
+        }
+        // ------------------------
+    }
+    @FXML
+    public void onChooseImageClick() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Chọn ảnh sản phẩm");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
+        );
+
+        File file = fileChooser.showOpenDialog(null);
+        if (file != null) {
+            try {
+                // Đọc file thành mảng byte để lưu tạm vào biến
+                selectedImageBytes = Files.readAllBytes(file.toPath());
+                if (selectedImageBytes.length > 2 * 1024 * 1024) { // Giới hạn 2MB
+                    AlertHelper.showError("Ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.");
+                    selectedImageBytes = null;
+                    return;
+                }
+
+                // Hiển thị ảnh lên giao diện cho Seller xem trước
+                Image image = new Image(file.toURI().toString());
+                if (imgPreview != null && btnRemoveImage != null) {
+                    imgPreview.setImage(image);
+
+                    // -- THÊM LOGIC ĐỔI NÚT Ở ĐÂY --
+                    // Ẩn nút Tải ảnh
+                    btnChooseImage.setVisible(false);
+                    btnChooseImage.setManaged(false);
+                    // Hiện nút Xóa ảnh
+                    btnRemoveImage.setVisible(true);
+                    btnRemoveImage.setManaged(true);
+                }
+            } catch (IOException e) {
+                AlertHelper.showError("Lỗi khi đọc file ảnh! Vui lòng thử lại.");
+                e.printStackTrace();
+            }
+        }
+    }
+    @FXML
+    public void onRemoveImageClick() {
+        System.out.println("[Hệ thống] Đang bấm nút Xóa ảnh...");
+
+        // 1. Xóa ảnh preview
+        if (imgPreview != null) {
+            imgPreview.setImage(null);
+        }
+        selectedImageBytes = null;
+
+        // 2. KIỂM TRA XEM BIẾN CÓ BỊ NULL KHÔNG
+        if (btnChooseImage == null || btnRemoveImage == null) {
+            System.err.println("[LỖI CỰC KỲ QUAN TRỌNG]: Biến btnChooseImage hoặc btnRemoveImage đang bị NULL!");
+            System.err.println("=> Nguyên nhân: Bạn chưa khai báo nút hoặc sai fx:id trong file FXML.");
+            return;
+        }
+
+        // 3. Hiện lại nút Tải ảnh lên
+        btnChooseImage.setVisible(true);
+        btnChooseImage.setManaged(true);
+
+        // 4. Ẩn nút Xóa ảnh đi
+        btnRemoveImage.setVisible(false);
+        btnRemoveImage.setManaged(false);
+
+        System.out.println("[Hệ thống] Đã hiện lại nút Tải ảnh và ẩn nút Xóa ảnh thành công!");
     }
 }
