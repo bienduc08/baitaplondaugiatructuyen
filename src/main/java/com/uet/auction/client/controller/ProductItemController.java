@@ -233,7 +233,7 @@ public class ProductItemController {
     // Hàm hỗ trợ load ảnh mặc định an toàn
     private void loadDefaultImage() {
         // Sửa lại đường dẫn này cho đúng với cấu trúc thư mục resources của bạn
-        String defaultImagePath = "/com/uet/auction/images/default-product.png";
+        String defaultImagePath = "/com/uet/auction/images/macdinh.jpg";
 
         java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
         if (is != null) {

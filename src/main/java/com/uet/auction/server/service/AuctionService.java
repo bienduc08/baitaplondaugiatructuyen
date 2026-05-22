@@ -58,11 +58,11 @@ public class AuctionService {
     public AuctionResponse addProduct(ProductDTO product) {
         try {
             // --- BẮT ĐẦU XỬ LÝ LƯU ẢNH ---
-            String imageUrl = "server_images/default.png"; // Đường dẫn mặc định nếu không có ảnh
+            String imageUrl = "macdinh.jpg"; // Đường dẫn mặc định nếu không có ảnh
 
             if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
                 // 1. Tạo thư mục nếu chưa tồn tại
-                String uploadDir = "server_images";
+                String uploadDir = "images";
                 java.io.File dir = new java.io.File(uploadDir);
                 if (!dir.exists()) {
                     dir.mkdirs();

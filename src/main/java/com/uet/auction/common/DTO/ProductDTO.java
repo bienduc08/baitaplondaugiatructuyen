@@ -16,8 +16,8 @@ public class ProductDTO implements Serializable {
     private double startingPrice;
     private double currentPrice;
     private String description;
-    private String sellerName;    // Người đăng bán
-    private String ownerName;     // Người đang giữ mức giá cao nhất
+    private String sellerName;
+    private String ownerName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String status;
@@ -25,7 +25,6 @@ public class ProductDTO implements Serializable {
     private String category;
     private String imageUrl;
     private byte[] imageBytes;
-    // PENDING, OPEN, CLOSED, REJECTED
 
     // Constructor không tham số (Bắt buộc phải có để các thư viện như Jackson/Serialization hoạt động)
     public ProductDTO() {

@@ -40,11 +40,17 @@ public class SellerAddProductController {
     @FXML private TextField  txtEndM;
     @FXML private TextField  txtEndS;
     @FXML private ImageView imgPreview;
+    @FXML private javafx.scene.control.Button btnChooseImage;
+    @FXML private javafx.scene.control.Button btnRemoveImage;
     private byte[] selectedImageBytes;
 
     @FXML
     public void initialize() {
         // Giá trị mặc định đã được đặt trong FXML
+        if (btnRemoveImage != null) {
+            btnRemoveImage.setVisible(false);
+            btnRemoveImage.setManaged(false); // Quan trọng: Bỏ quản lý layout để nút ẩn không để lại khoảng trống
+        }
     }
 
     /**
@@ -164,7 +170,6 @@ public class SellerAddProductController {
     public void onChooseImageClick() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Chọn ảnh sản phẩm");
-        // Chỉ cho phép chọn các file định dạng ảnh
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
         );
@@ -177,13 +182,48 @@ public class SellerAddProductController {
 
                 // Hiển thị ảnh lên giao diện cho Seller xem trước
                 Image image = new Image(file.toURI().toString());
-                if (imgPreview != null) {
+                if (imgPreview != null && btnRemoveImage != null) {
                     imgPreview.setImage(image);
+
+                    // -- THÊM LOGIC ĐỔI NÚT Ở ĐÂY --
+                    // Ẩn nút Tải ảnh
+                    btnChooseImage.setVisible(false);
+                    btnChooseImage.setManaged(false);
+                    // Hiện nút Xóa ảnh
+                    btnRemoveImage.setVisible(true);
+                    btnRemoveImage.setManaged(true);
                 }
             } catch (IOException e) {
                 AlertHelper.showError("Lỗi khi đọc file ảnh! Vui lòng thử lại.");
                 e.printStackTrace();
             }
         }
+    }
+    @FXML
+    public void onRemoveImageClick() {
+        System.out.println("[Hệ thống] Đang bấm nút Xóa ảnh...");
+
+        // 1. Xóa ảnh preview
+        if (imgPreview != null) {
+            imgPreview.setImage(null);
+        }
+        selectedImageBytes = null;
+
+        // 2. KIỂM TRA XEM BIẾN CÓ BỊ NULL KHÔNG
+        if (btnChooseImage == null || btnRemoveImage == null) {
+            System.err.println("[LỖI CỰC KỲ QUAN TRỌNG]: Biến btnChooseImage hoặc btnRemoveImage đang bị NULL!");
+            System.err.println("=> Nguyên nhân: Bạn chưa khai báo nút hoặc sai fx:id trong file FXML.");
+            return;
+        }
+
+        // 3. Hiện lại nút Tải ảnh lên
+        btnChooseImage.setVisible(true);
+        btnChooseImage.setManaged(true);
+
+        // 4. Ẩn nút Xóa ảnh đi
+        btnRemoveImage.setVisible(false);
+        btnRemoveImage.setManaged(false);
+
+        System.out.println("[Hệ thống] Đã hiện lại nút Tải ảnh và ẩn nút Xóa ảnh thành công!");
     }
 }
