@@ -35,9 +35,6 @@ public class ProductItemController {
     @FXML private TextField bidInput;
     @FXML private Label descriptionLabel;
 
-    // ĐÃ THÊM: Khai báo biến imgProduct để hiển thị ảnh
-    @FXML private ImageView imgProduct;
-
     private ProductDTO currentProduct;
     private Timeline countdown;
 
@@ -70,7 +67,7 @@ public class ProductItemController {
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 java.io.File file = new java.io.File(imageUrl);
                 if (file.exists()) {
-                    imgProduct.setImage(new Image(file.toURI().toString()));
+                    imgProduct.setImage(new Image(file.toURI().toString(), 150, 150, true, true));
                 } else {
                     loadDefaultImage();
                 }
@@ -82,13 +79,9 @@ public class ProductItemController {
         updateBidInputState();
     }
 
-    private void loadDefaultImage() {
-        String defaultImagePath = "/com/uet/auction/images/LogoUET.png";
-        java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
-        if (is != null) {
-            imgProduct.setImage(new Image(is));
-        } else {
-            System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
+    public void stopCountdown() {
+        if (countdown != null) {
+            countdown.stop();
         }
     }
 

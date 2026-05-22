@@ -43,6 +43,7 @@ public class SellerAddProductController {
     @FXML private TextField  txtEndS;
     @FXML private ImageView  imgPreview;   // Preview ảnh sản phẩm
     @FXML private Label      lblImageName; // Hiển thị tên file đã chọn
+    @FXML private javafx.scene.control.Button btnRemoveImage;
 
     // Lưu dữ liệu nhị phân của ảnh đã chọn
     private byte[] selectedImageBytes = null;
@@ -174,6 +175,10 @@ public class SellerAddProductController {
         selectedImageBytes = null;
         if (imgPreview   != null) imgPreview.setImage(null);
         if (lblImageName != null) lblImageName.setText("");
+        if (btnRemoveImage != null) {
+            btnRemoveImage.setVisible(false);
+            btnRemoveImage.setManaged(false);
+        }
     }
 
     /** Xử lý nút Tải ảnh lên — mở FileChooser và đọc byte ảnh */
@@ -202,10 +207,30 @@ public class SellerAddProductController {
                 if (lblImageName != null) {
                     lblImageName.setText(file.getName());
                 }
+                if (btnRemoveImage != null) {
+                    btnRemoveImage.setVisible(true);
+                    btnRemoveImage.setManaged(true);
+                }
             } catch (IOException e) {
                 AlertHelper.showError("Không thể đọc file ảnh: " + e.getMessage());
                 selectedImageBytes = null;
             }
+        }
+    }
+
+    /** Xử lý nút Xóa ảnh — xóa dữ liệu ảnh hiện tại */
+    @FXML
+    public void onRemoveImageClick() {
+        selectedImageBytes = null;
+        if (imgPreview != null) {
+            imgPreview.setImage(null);
+        }
+        if (lblImageName != null) {
+            lblImageName.setText("");
+        }
+        if (btnRemoveImage != null) {
+            btnRemoveImage.setVisible(false);
+            btnRemoveImage.setManaged(false);
         }
     }
 }

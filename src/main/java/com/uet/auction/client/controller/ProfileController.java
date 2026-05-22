@@ -66,6 +66,7 @@ public class ProfileController {
 
         String username = SessionManager.getCurrentUsername();
         if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
             SocketClient.sendRequest(new AuctionRequest("GET_MY_BIDS", username));
         }
     }
@@ -73,13 +74,9 @@ public class ProfileController {
 
 
     public void refreshBalance() {
-        UserDTO user = SessionManager.getCurrentUser();
-        if (user != null && lblBalance != null) {
-            lblBalance.setText(String.format("%,.0f VNĐ", user.getBalance()));
-        }
-
         String username = SessionManager.getCurrentUsername();
         if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
             SocketClient.sendRequest(new AuctionRequest("GET_MY_BIDS", username));
         }
     }
@@ -291,7 +288,11 @@ public class ProfileController {
 
     @FXML
     public void onBackButtonClick() {
-        if (onBackAction != null) {
+        UserDTO user = SessionManager.getCurrentUser();
+        if (user != null && "SELLER".equals(user.getRole()) && onBackAction != null) {
+            // Nếu đã nâng cấp lên SELLER, bắt buộc reload lại cảnh Seller.fxml thay vì dùng backAction cũ của User.fxml
+            fallbackBackAction();
+        } else if (onBackAction != null) {
             onBackAction.run();
         } else {
             fallbackBackAction();

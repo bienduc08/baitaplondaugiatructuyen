@@ -28,6 +28,12 @@ public class UserController {
         if (SessionManager.getCurrentUser() != null) {
             welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
+            
+            // Tải số dư mới nhất từ server
+            String username = SessionManager.getCurrentUsername();
+            if (username != null) {
+                SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+            }
         }
         onShowHomeClick();
     }
@@ -59,6 +65,12 @@ public class UserController {
 
     @FXML
     public void onRefreshButtonClick() {
+        // Tải số dư mới nhất từ server khi nhấn làm mới
+        String username = SessionManager.getCurrentUsername();
+        if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+        }
+
         switch (activeView) {
             case JOINED:
                 if (JoinedAuctionsController.instance != null)
@@ -68,7 +80,6 @@ public class UserController {
                 break;
             case PROFILE:
                 if (ProfileController.instance != null) {
-                    String username = SessionManager.getCurrentUsername();
                     if (username != null)
                         SocketClient.sendRequest(new AuctionRequest("GET_MY_BIDS", username));
                 } else {

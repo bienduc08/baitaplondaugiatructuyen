@@ -78,10 +78,10 @@ public class AuctionService {
             }
 
             // ====== XỬ LÝ LƯU ẢNH ======
-            String imageUrl = "server_images/default.png";
+            String imageUrl = "images/default-product.png";
 
             if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
-                String uploadDir = "server_images";
+                String uploadDir = "images";
                 java.io.File dir = new java.io.File(uploadDir);
                 if (!dir.exists()) {
                     dir.mkdirs();
