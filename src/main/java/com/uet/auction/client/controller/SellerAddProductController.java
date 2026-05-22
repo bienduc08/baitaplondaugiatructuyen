@@ -163,8 +163,20 @@ public class SellerAddProductController {
         if (txtEndH   != null) txtEndH.setText("23");
         if (txtEndM   != null) txtEndM.setText("59");
         if (txtEndS   != null) txtEndS.setText("00");
+
+        // --- BỔ SUNG ĐOẠN NÀY ---
         if (imgPreview != null) imgPreview.setImage(null);
         selectedImageBytes = null;
+
+        if (btnChooseImage != null) {
+            btnChooseImage.setVisible(true);
+            btnChooseImage.setManaged(true);
+        }
+        if (btnRemoveImage != null) {
+            btnRemoveImage.setVisible(false);
+            btnRemoveImage.setManaged(false);
+        }
+        // ------------------------
     }
     @FXML
     public void onChooseImageClick() {
@@ -179,6 +191,11 @@ public class SellerAddProductController {
             try {
                 // Đọc file thành mảng byte để lưu tạm vào biến
                 selectedImageBytes = Files.readAllBytes(file.toPath());
+                if (selectedImageBytes.length > 2 * 1024 * 1024) { // Giới hạn 2MB
+                    AlertHelper.showError("Ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.");
+                    selectedImageBytes = null;
+                    return;
+                }
 
                 // Hiển thị ảnh lên giao diện cho Seller xem trước
                 Image image = new Image(file.toURI().toString());
