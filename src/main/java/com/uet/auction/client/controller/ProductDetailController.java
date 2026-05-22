@@ -64,16 +64,22 @@ public class ProductDetailController {
 
         if (imgProduct != null) {
             String imageUrl = product.getImageUrl();
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                java.io.File file = new java.io.File(imageUrl);
+
+            // Lọc bỏ rác đường dẫn (ví dụ: images\sp_...)
+            String cleanFileName = (imageUrl != null) ? new java.io.File(imageUrl.trim()).getName() : "";
+
+            if (imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.toLowerCase().contains("macdinh")) {
+                loadDefaultImage();
+            } else {
+                // Trỏ thẳng vào thư mục upload_images trong project
+                java.io.File file = new java.io.File("images/" + cleanFileName);
+
                 if (file.exists()) {
-                    // Nếu tìm thấy file thật trên Server/ổ cứng
-                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString()));
+                    // Nạp ảnh có giới hạn kích thước (300x300) để tránh tràn bộ nhớ
+                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString(), 300, 300, true, true));
                 } else {
                     loadDefaultImage();
                 }
-            } else {
-                loadDefaultImage();
             }
         }
 

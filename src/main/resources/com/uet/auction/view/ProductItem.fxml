@@ -15,11 +15,7 @@
     <children>
         <StackPane style="-fx-background-color: #f8fafc; -fx-background-radius: 12; -fx-overflow: hidden;">
             <children>
-                <ImageView fx:id="imgProduct" fitHeight="160.0" fitWidth="230.0" pickOnBounds="true" preserveRatio="true">
-                    <image>
-                        <Image url="@../images/LogoUET.png" />
-                    </image>
-                </ImageView>
+                <ImageView fx:id="imgProduct" fitHeight="160.0" fitWidth="230.0" pickOnBounds="true" preserveRatio="true"/>
             </children>
         </StackPane>
 
@@ -52,6 +48,7 @@
             </children>
         </HBox>
 
+        <Region VBox.vgrow="ALWAYS" />
         <Button onAction="#onProductCardClick" maxWidth="Infinity" text="THAM GIA ĐẤU GIÁ"
                 style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 10 0; -fx-cursor: hand;" />
     </children>

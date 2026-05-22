@@ -14,6 +14,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView; // Đã thêm import ImageView
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -57,20 +58,39 @@ public class ProductItemController {
         } else {
             timeLabel.setText("Hết hạn: —");
         }
+
+        // ĐÃ CHUYỂN LOGIC TẢI ẢNH VÀO ĐÚNG HÀM KHỞI TẠO DỮ LIỆU
         if (imgProduct != null) {
             String imageUrl = product.getImageUrl();
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                java.io.File file = new java.io.File(imageUrl);
+
+            // Lọc bỏ rác đường dẫn (ví dụ: images\sp_...)
+            String cleanFileName = (imageUrl != null) ? new java.io.File(imageUrl.trim()).getName() : "";
+
+            if (imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.toLowerCase().contains("macdinh")) {
+                loadDefaultImage();
+            } else {
+                // Trỏ thẳng vào thư mục upload_images trong project
+                java.io.File file = new java.io.File("images/" + cleanFileName);
+
                 if (file.exists()) {
-                    // Nếu tìm thấy file thật trên Server/ổ cứng
-                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString()));
+                    // Nạp ảnh có giới hạn kích thước (300x300) để tránh tràn bộ nhớ
+                    imgProduct.setImage(new javafx.scene.image.Image(file.toURI().toString(), 300, 300, true, true));
                 } else {
                     loadDefaultImage();
                 }
-            } else {
-                loadDefaultImage();
             }
         }
+
+        updateBidInputState();
+    }
+
+    private void updateBidInputState() {
+        if (bidInput == null || currentProduct == null) return;
+        String currentUser = SessionManager.getCurrentUsername();
+        boolean isOwnProduct = currentUser != null && currentUser.equals(currentProduct.getSellerName());
+        boolean isLeading = currentUser != null && currentUser.equals(currentProduct.getOwnerName());
+        boolean canBid = "OPEN".equals(currentProduct.getStatus()) && !isOwnProduct && !isLeading;
+        bidInput.setDisable(!canBid);
     }
 
     private void startCountdown(LocalDateTime endTime) {
@@ -207,13 +227,10 @@ public class ProductItemController {
             }
 
             double currentPrice = currentProduct.getCurrentPrice();
-            double stepPrice = currentProduct.getStepPrice();
-            double minValidPrice = currentPrice + stepPrice;
-
-            if (bidAmount < minValidPrice) {
+            if (bidAmount <= currentPrice) {
                 AlertHelper.showError(String.format(
-                        "Giá đặt không hợp lệ!\nGiá hiện tại: %,.0f VNĐ\nBạn phải đặt tối thiểu: %,.0f VNĐ",
-                        currentPrice, minValidPrice));
+                        "Giá đặt phải LỚN HƠN giá hiện tại!\nGiá hiện tại: %,.0f VNĐ\nBạn nhập: %,.0f VNĐ",
+                        currentPrice, bidAmount));
                 return;
             }
 
@@ -233,16 +250,15 @@ public class ProductItemController {
             AlertHelper.showError("Số tiền không hợp lệ!\nVui lòng chỉ nhập số (VD: 25000000)");
         }
     }
-    // Hàm hỗ trợ load ảnh mặc định an toàn
+
     private void loadDefaultImage() {
-        // Sửa lại đường dẫn này cho đúng với cấu trúc thư mục resources của bạn
+        // Nếu ảnh mặc định nằm ngay dưới thư mục resources/images/
         String defaultImagePath = "/com/uet/auction/images/macdinh.jpg";
 
         java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
         if (is != null) {
             imgProduct.setImage(new javafx.scene.image.Image(is));
         } else {
-            // Nếu vẫn không tìm thấy ảnh, in ra dòng cảnh báo thay vì làm sập app
             System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
         }
     }

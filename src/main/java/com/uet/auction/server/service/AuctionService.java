@@ -62,7 +62,7 @@ public class AuctionService {
 
             if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
                 // 1. Tạo thư mục nếu chưa tồn tại
-                String uploadDir = "images";
+                String uploadDir = "upload_images";
                 java.io.File dir = new java.io.File(uploadDir);
                 if (!dir.exists()) {
                     dir.mkdirs();
@@ -78,7 +78,7 @@ public class AuctionService {
                 }
 
                 // 4. Lấy đường dẫn tương đối để lưu vào DB
-                imageUrl = uploadDir + "/" + fileName;
+                imageUrl = fileName;
 
                 // 5. Giải phóng bộ nhớ
                 product.setImageBytes(null);
