@@ -32,7 +32,7 @@
                 <TableView fx:id="bidHistoryTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="timeCol" prefWidth="180.0" text="Thời gian" />
-                        <TableColumn fx:id="bidderCol" prefWidth="200.0" text="Người trả giá" />
+                        <TableColumn fx:id="userCol" prefWidth="200.0" text="Người trả giá" />
                         <TableColumn fx:id="priceCol" prefWidth="150.0" text="Số tiền (VNĐ)" />
                         <TableColumn fx:id="statusCol" prefWidth="130.0" text="Trạng thái" />
                     </columns>

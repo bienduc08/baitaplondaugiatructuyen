@@ -9,7 +9,7 @@ public class BidDTO implements Serializable {
 
     private Integer id;             // ID của lượt trả giá
     private Integer productId;      // ID của sản phẩm
-    private String userName;      // Tên người trả giá (Khớp với PropertyValueFactory)
+    private String biddername;      // Tên người trả giá (Khớp với PropertyValueFactory)
     private Double price;           // Số tiền trả giá
     private String time;            // Thời gian (để String cho dễ hiển thị lên JavaFX)
     private String status;          // Trạng thái (VD: "Hợp lệ", "Bị hủy")
@@ -19,10 +19,10 @@ public class BidDTO implements Serializable {
     }
 
     // 2. Constructor đầy đủ tham số (Dùng để tạo object nhanh hoặc test)
-    public BidDTO(Integer id, Integer productId, String userName, Double price, String time, String status) {
+    public BidDTO(Integer id, Integer productId, String biddername, Double price, String time, String status) {
         this.id = id;
         this.productId = productId;
-        this.userName = userName;
+        this.biddername = biddername;
         this.price = price;
         this.time = time;
         this.status = status;
@@ -48,12 +48,12 @@ public class BidDTO implements Serializable {
         this.productId = productId;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getBiddername() {
+        return biddername;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUserName(String biddername) {
+        this.biddername = biddername;
     }
 
     public Double getPrice() {
@@ -88,7 +88,7 @@ public class BidDTO implements Serializable {
         return "BidDTO{" +
                 "id=" + id +
                 ", productId=" + productId +
-                ", userName='" + userName + '\'' +
+                ", biddername='" + biddername + '\'' +
                 ", price=" + price +
                 ", time='" + time + '\'' +
                 ", status='" + status + '\'' +

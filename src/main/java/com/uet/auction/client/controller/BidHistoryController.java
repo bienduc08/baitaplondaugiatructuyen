@@ -25,7 +25,7 @@ public class BidHistoryController {
 
     @FXML private TableView<BidDTO> bidHistoryTable;
     @FXML private TableColumn<BidDTO, String> timeCol;
-    @FXML private TableColumn<BidDTO, String> bidderCol;
+    @FXML private TableColumn<BidDTO, String> userCol;
     @FXML private TableColumn<BidDTO, Double> priceCol;
     @FXML private TableColumn<BidDTO, String> statusCol;
 
@@ -41,7 +41,7 @@ public class BidHistoryController {
         instance = this;
 
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
-        bidderCol.setCellValueFactory(new PropertyValueFactory<>("bidderName"));
+        userCol.setCellValueFactory(new PropertyValueFactory<>("username"));
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 
@@ -103,7 +103,7 @@ public class BidHistoryController {
                     BidDTO b2 = list.get(i);
                     if (!java.util.Objects.equals(b1.getId(), b2.getId()) ||
                         !java.util.Objects.equals(b1.getPrice(), b2.getPrice()) ||
-                        !java.util.Objects.equals(b1.getUserName(), b2.getUserName()) ||
+                        !java.util.Objects.equals(b1.getBiddername(), b2.getBiddername()) ||
                         !java.util.Objects.equals(b1.getTime(), b2.getTime()) ||
                         !java.util.Objects.equals(b1.getStatus(), b2.getStatus())) {
                         isIdentical = false;

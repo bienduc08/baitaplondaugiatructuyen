@@ -124,17 +124,22 @@ public class ProductDetailController {
     }
 
     private void setupTable() {
-        if (colUser != null) colUser.setCellValueFactory(new PropertyValueFactory<>("userName"));
-        if (colBidTime != null) colBidTime.setCellValueFactory(new PropertyValueFactory<>("time"));
-        if (colBidPrice != null) {
-            colBidPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
-            colBidPrice.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(Double amount, boolean empty) {
-                    super.updateItem(amount, empty);
-                    setText(empty || amount == null ? null : String.format("%,.0f VNĐ", amount));
-                }
-            });
+        // Gọi trực tiếp hàm getUsername() của BidDTO
+        if (colUser != null) {
+            colUser.setCellValueFactory(cellData ->
+                    new javafx.beans.property.SimpleStringProperty(cellData.getValue().getBiddername()));
         }
+
+        if (colBidTime != null) {
+            colBidTime.setCellValueFactory(cellData ->
+                    new javafx.beans.property.SimpleStringProperty(cellData.getValue().getTime()));
+        }
+
+        if (colBidPrice != null) {
+            colBidPrice.setCellValueFactory(cellData ->
+                    new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getPrice()));
+        }
+
         if (tblRecentBids != null) tblRecentBids.setItems(recentBidsList);
     }
 
@@ -165,10 +170,10 @@ public class ProductDetailController {
                 BidDTO top = recentBidsList.get(0);
                 if (currentProduct != null) {
                     currentProduct.setCurrentPrice(top.getPrice());
-                    currentProduct.setOwnerName(top.getUserName());
+                    currentProduct.setOwnerName(top.getBiddername());
                 }
                 if (lblCurrentPrice != null) lblCurrentPrice.setText(String.format("%,.0f VNĐ", top.getPrice()));
-                if (lblTopBidder != null) lblTopBidder.setText(top.getUserName());
+                if (lblTopBidder != null) lblTopBidder.setText(top.getBiddername());
             }
         }
     }
