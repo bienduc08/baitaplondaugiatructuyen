@@ -71,7 +71,7 @@ public class SellerController {
     @FXML public void onProfileButtonClick() {
         Node previousView = mainBorderPane.getCenter();
         ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
-        loadView("/com/uet/auction/view/ProfileContent.fxml");
+        loadView("/com/uet/auction/view/ProfileSeller.fxml");
     }
 
     @FXML public void onLogoutButtonClick() {

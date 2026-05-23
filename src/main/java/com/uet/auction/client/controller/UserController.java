@@ -60,7 +60,7 @@ public class UserController {
     @FXML public void onProfileButtonClick() {
         Node previousView = mainBorderPane.getCenter();
         ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
-        loadView("/com/uet/auction/view/ProfileContent.fxml", ActiveView.PROFILE);
+        loadView("/com/uet/auction/view/ProfileUser.fxml", ActiveView.PROFILE);
     }
 
     @FXML

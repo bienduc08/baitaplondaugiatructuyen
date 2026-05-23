@@ -60,6 +60,9 @@ public class AdminController {
     private final ObservableList<ProductDTO> pendingListData = FXCollections.observableArrayList();
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    private enum ActiveView { HOME, PENDING,MANAGEMENT, PROFILE }
+    private AdminController.ActiveView activeView = AdminController.ActiveView.HOME;
+
     @FXML
     public void initialize() {
         instance = this;
@@ -162,33 +165,34 @@ public class AdminController {
 
     @FXML
     public void onShowHomeClick() {
-        loadView("/com/uet/auction/view/HomeContent.fxml");
+        loadView("/com/uet/auction/view/HomeContent.fxml",ActiveView.HOME);
     }
 
     @FXML
     public void onPendingClick() {
-        loadView("/com/uet/auction/view/AdminPending.fxml");
+        loadView("/com/uet/auction/view/AdminPending.fxml",ActiveView.PENDING);
     }
 
     @FXML
     public void onUserManageClick() {
-        loadView("/com/uet/auction/view/AdminUserManagement.fxml");
+        loadView("/com/uet/auction/view/AdminUserManagement.fxml",ActiveView.MANAGEMENT);
     }
+
 
     @FXML
     public void onProfileButtonClick() {
-        loadView("/com/uet/auction/view/ProfileContent.fxml");
-
+        Node previousView = mainBorderPane.getCenter();
+        ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
+        loadView("/com/uet/auction/view/ProfileAdmin.fxml", AdminController.ActiveView.PROFILE);
     }
 
-    private void loadView(String fxmlPath) {
+    private void loadView(String fxmlPath, AdminController.ActiveView view) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Node node = loader.load();
             mainBorderPane.setCenter(node);
-            // Không tự động gọi loadPendingProducts() khi đổi view;
-            // chỉ tải khi người dùng bấm vào tab "Duyệt sản phẩm" (onPendingClick)
-        } catch (Exception e) {
+            activeView = view;
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
