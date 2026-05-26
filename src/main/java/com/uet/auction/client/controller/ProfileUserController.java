@@ -190,23 +190,4 @@ public class ProfileUserController {
         }
     }
 
-    @FXML
-    public void onLogoutButtonClick() {
-        try {
-            SessionManager.clearSession();
-            SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
-        } catch (IOException e) { e.printStackTrace(); }
-    }
-
-    @FXML
-    public void onBackButtonClick() {
-        try {
-            UserDTO user = SessionManager.getCurrentUser();
-            if (user != null && "SELLER".equals(user.getRole())) {
-                SceneManager.switchScene("/com/uet/auction/view/Seller.fxml", "Người bán");
-            } else {
-                SceneManager.switchScene("/com/uet/auction/view/User.fxml", "Trang chủ");
-            }
-        } catch (IOException e) { e.printStackTrace(); }
-    }
 }

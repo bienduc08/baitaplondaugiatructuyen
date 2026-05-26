@@ -31,6 +31,8 @@ public class ProfileSellerController {
     @FXML private Label lblTotalBids;
     public static Runnable onBackAction;
 
+    @FXML private Button btnDeposit;
+
     @FXML private TableView<ProductDTO>            tblMyProducts;
     @FXML private TableColumn<ProductDTO, String>  colProdName;
     @FXML private TableColumn<ProductDTO, Double>  colProdPrice;
@@ -152,6 +154,7 @@ public class ProfileSellerController {
             catch (NumberFormatException e) { AlertHelper.showError("Số tiền không hợp lệ!"); return; }
             if (amount <= 0) { AlertHelper.showError("Số tiền nạp phải lớn hơn 0!"); return; }
             if (amount > 500_000_000) { AlertHelper.showError("Mỗi lần nạp tối đa 500.000.000 VNĐ!"); return; }
+            if (btnDeposit != null) btnDeposit.setDisable(true);
             SocketClient.sendRequest(new AuctionRequest("DEPOSIT", new Object[]{username, amount}));
         });
     }
@@ -161,21 +164,11 @@ public class ProfileSellerController {
             UserDTO user = SessionManager.getCurrentUser();
             if (user != null) user.setBalance(newBalance);
             updateBalance();
+            if (btnDeposit != null) btnDeposit.setDisable(false);
         });
     }
-
-    @FXML
-    public void onLogoutButtonClick() {
-        try {
-            SessionManager.clearSession();
-            SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
-        } catch (IOException e) { e.printStackTrace(); }
+    public void handleDepositFailure() {
+        if (btnDeposit != null) btnDeposit.setDisable(false);
     }
 
-    @FXML
-    public void onBackButtonClick() {
-        try {
-            SceneManager.switchScene("/com/uet/auction/view/Seller.fxml", "Người bán");
-        } catch (IOException e) { e.printStackTrace(); }
-    }
 }

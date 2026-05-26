@@ -179,22 +179,10 @@ public class ResponseListener implements Runnable {
                             List<com.uet.auction.common.DTO.BidDTO> myBids =
                                     (List<com.uet.auction.common.DTO.BidDTO>) res.getData();
                             Platform.runLater(() -> {
-                                if (ProfileController.instance != null)
-                                    ProfileController.instance.displayMyBids(myBids);
+                                if (ProfileUserController.instance != null)
+                                    ProfileUserController.instance.displayMyBids(myBids);
                             });
                         }
-                        break;
-
-                    case "UPGRADE_TO_SELLER_RESULT":
-                        Platform.runLater(() -> {
-                            if (res.isSuccess()) {
-                                AlertHelper.showInfo(res.getMessage());
-                                if (ProfileController.instance != null)
-                                    ProfileController.instance.handleUpgradeToSellerSuccess();
-                            } else {
-                                AlertHelper.showError(res.getMessage());
-                            }
-                        });
                         break;
 
                     case "DEPOSIT_RESULT":
@@ -202,32 +190,44 @@ public class ResponseListener implements Runnable {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
                                 double newBalance = ((Number) res.getData()).doubleValue();
-                                
-                                // Cập nhật session user
+
+                                // 1. Cập nhật Session
                                 com.uet.auction.common.DTO.UserDTO current = com.uet.auction.client.util.SessionManager.getCurrentUser();
                                 if (current != null) {
                                     current.setBalance(newBalance);
                                 }
-                                
-                                // Cập nhật ProfileController nếu đang hiển thị
-                                if (ProfileController.instance != null) {
-                                    ProfileController.instance.handleDepositSuccess(newBalance);
-                                }
-                                
-                                // Cập nhật số dư ở thanh sidebar của các trang quản lý
+
+                                // 2. Cập nhật ĐỒNG THỜI khung chính (Sidebar) VÀ trang Profile của User
                                 if (UserController.instance != null) {
-                                    UserController.instance.updateBalance();
+                                    UserController.instance.updateBalance(); // Cập nhật sidebar của User
                                 }
+                                if (ProfileUserController.instance != null) {
+                                    ProfileUserController.instance.handleDepositSuccess(newBalance); // Cập nhật Profile của User
+                                }
+
+                                // 3. Cập nhật ĐỒNG THỜI khung chính (Sidebar) VÀ trang Profile của Seller
                                 if (SellerController.instance != null) {
-                                    SellerController.instance.updateBalance();
+                                    SellerController.instance.updateBalance(); // Cập nhật sidebar của Seller
                                 }
+                                if (ProfileSellerController.instance != null) {
+                                    ProfileSellerController.instance.handleDepositSuccess(newBalance); // Cập nhật Profile của Seller
+                                }
+
+                                // 4. Cập nhật ĐỒNG THỜI khung chính (Sidebar) VÀ trang Profile của Admin
                                 if (AdminController.instance != null) {
-                                    AdminController.instance.updateBalance();
+                                    AdminController.instance.updateBalance(); // Cập nhật sidebar của Admin
                                 }
+                                if (ProfileAdminController.instance != null) {
+                                    ProfileAdminController.instance.handleDepositSuccess(newBalance); // Cập nhật Profile của Admin
+                                }
+
                             } else {
                                 AlertHelper.showError(res.getMessage());
-                                if (ProfileController.instance != null)
-                                    ProfileController.instance.handleDepositFailure();
+
+                                // Xử lý thất bại (Tắt vòng loading, reset input...)
+                                if (ProfileUserController.instance != null) ProfileUserController.instance.handleDepositFailure();
+                                if (ProfileSellerController.instance != null) ProfileSellerController.instance.handleDepositFailure();
+                                if (ProfileAdminController.instance != null) ProfileAdminController.instance.handleDepositFailure();
                             }
                         });
                         break;
@@ -236,23 +236,23 @@ public class ResponseListener implements Runnable {
                         if (res.isSuccess()) {
                             double bal = ((Number) res.getData()).doubleValue();
                             Platform.runLater(() -> {
+                                // 1. Cập nhật Session
                                 com.uet.auction.common.DTO.UserDTO current = com.uet.auction.client.util.SessionManager.getCurrentUser();
                                 if (current != null) {
                                     current.setBalance(bal);
                                 }
-                                // Đồng bộ số dư lên toàn bộ giao diện đang hoạt động
-                                if (UserController.instance != null) {
-                                    UserController.instance.updateBalance();
-                                }
-                                if (SellerController.instance != null) {
-                                    SellerController.instance.updateBalance();
-                                }
-                                if (AdminController.instance != null) {
-                                    AdminController.instance.updateBalance();
-                                }
-                                if (ProfileController.instance != null) {
-                                    ProfileController.instance.updateBalance();
-                                }
+
+                                // 2. Cập nhật ĐỒNG THỜI Sidebar và Profile của User
+                                if (UserController.instance != null) UserController.instance.updateBalance();
+                                if (ProfileUserController.instance != null) ProfileUserController.instance.handleDepositSuccess(bal); // Hoặc gọi hàm updateBalance(bal) nếu bạn viết riêng
+
+                                // 3. Cập nhật ĐỒNG THỜI Sidebar và Profile của Seller
+                                if (SellerController.instance != null) SellerController.instance.updateBalance();
+                                if (ProfileSellerController.instance != null) ProfileSellerController.instance.handleDepositSuccess(bal);
+
+                                // 4. Cập nhật ĐỒNG THỜI Sidebar và Profile của Admin
+                                if (AdminController.instance != null) AdminController.instance.updateBalance();
+                                if (ProfileAdminController.instance != null) ProfileAdminController.instance.handleDepositSuccess(bal);
                             });
                         }
                         break;

@@ -8,6 +8,7 @@ import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class ProfileAdminController {
     @FXML private Label lblCurrentTime;
     @FXML private Label lblSystemStatus;
     public static Runnable onBackAction;
+    @FXML private Button btnDeposit;
 
     @FXML
     public void initialize() {
@@ -91,6 +93,7 @@ public class ProfileAdminController {
             catch (NumberFormatException e) { AlertHelper.showError("Số tiền không hợp lệ!"); return; }
             if (amount <= 0) { AlertHelper.showError("Số tiền nạp phải lớn hơn 0!"); return; }
             if (amount > 500_000_000) { AlertHelper.showError("Mỗi lần nạp tối đa 500.000.000 VNĐ!"); return; }
+            if (btnDeposit != null) btnDeposit.setDisable(true);
             SocketClient.sendRequest(new AuctionRequest("DEPOSIT", new Object[]{username, amount}));
         });
     }
@@ -100,21 +103,12 @@ public class ProfileAdminController {
             UserDTO user = SessionManager.getCurrentUser();
             if (user != null) user.setBalance(newBalance);
             updateBalance();
+            if (btnDeposit != null) btnDeposit.setDisable(false);
         });
     }
 
-    @FXML
-    public void onLogoutButtonClick() {
-        try {
-            SessionManager.clearSession();
-            SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
-        } catch (IOException e) { e.printStackTrace(); }
+    public void handleDepositFailure() {
+        if (btnDeposit != null) btnDeposit.setDisable(false);
     }
 
-    @FXML
-    public void onBackButtonClick() {
-        try {
-            SceneManager.switchScene("/com/uet/auction/view/Admin.fxml", "Quản trị viên");
-        } catch (IOException e) { e.printStackTrace(); }
-    }
 }
