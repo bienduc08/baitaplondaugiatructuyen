@@ -63,8 +63,12 @@ public class ResponseListener implements Runnable {
                     case "GET_MY_PRODUCTS_RESULT":
                         List<ProductDTO> myProducts = (List<ProductDTO>) res.getData();
                         Platform.runLater(() -> {
-                            if (SellerMyProductsController.instance != null)
+                            if (SellerMyProductsController.instance != null) {
                                 SellerMyProductsController.instance.displayMyProducts(myProducts);
+                            }
+                            if (ProfileSellerController.instance != null) {
+                                ProfileSellerController.instance.displayMyProducts(myProducts);
+                            }
                         });
                         break;
 
@@ -111,12 +115,13 @@ public class ResponseListener implements Runnable {
                                 ProductDetailController.instance.reloadProductDetails();
                             if (SellerMyProductsController.instance != null)       // ← thêm
                                 SellerMyProductsController.instance.loadMyAuctions(); // ← thêm
+                            String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
+                            if (currentUsr != null) {
+                                SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", currentUsr));
+                            }
                         });
-                        // Tự động làm mới số dư của người dùng hiện tại từ server
-                        String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
-                        if (currentUsr != null) {
-                            SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", currentUsr));
-                        }
+
+
                         break;
 
                     // =========================================================

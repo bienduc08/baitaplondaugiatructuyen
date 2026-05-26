@@ -37,7 +37,8 @@ public class ProfileSellerController {
     @FXML private TableColumn<ProductDTO, String>  colProdName;
     @FXML private TableColumn<ProductDTO, Double>  colProdPrice;
     @FXML private TableColumn<ProductDTO, String>  colProdStatus;
-    @FXML private TableColumn<ProductDTO, LocalDateTime> colProdTime;
+    @FXML private TableColumn<ProductDTO, LocalDateTime> colProdTimeStart;
+    @FXML private TableColumn<ProductDTO, LocalDateTime> colProdTimeEnd;
 
     private final ObservableList<ProductDTO> productList = FXCollections.observableArrayList();
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -111,9 +112,19 @@ public class ProfileSellerController {
             });
         }
 
-        if (colProdTime != null) {
-            colProdTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-            colProdTime.setCellFactory(col -> new TableCell<>() {
+        if (colProdTimeStart != null) {
+            colProdTimeStart.setCellValueFactory(new PropertyValueFactory<>("startTime"));
+            colProdTimeStart.setCellFactory(col -> new TableCell<>() {
+                @Override protected void updateItem(LocalDateTime item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty || item == null ? "—" : item.format(FMT));
+                }
+            });
+        }
+
+        if (colProdTimeEnd != null) {
+            colProdTimeEnd.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+            colProdTimeEnd.setCellFactory(col -> new TableCell<>() {
                 @Override protected void updateItem(LocalDateTime item, boolean empty) {
                     super.updateItem(item, empty);
                     setText(empty || item == null ? "—" : item.format(FMT));

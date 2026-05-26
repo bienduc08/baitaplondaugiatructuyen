@@ -131,14 +131,8 @@ public class AuctionService {
     public AuctionResponse placeBid(int productId, String bidderName, double bidAmount) {
         try {
             String role = userDAO.getRole(bidderName);
-            if ("ADMIN".equals(role)) {
-                return new AuctionResponse(false, "BID_RESULT", "Quản trị viên không được phép tham gia đấu giá!", null);
-            }
-            if ("SELLER".equals(role)) {
-                String sellerName = productDAO.getSellerOfProduct(productId);
-                if (bidderName.equals(sellerName)) {
-                    return new AuctionResponse(false, "BID_RESULT", "Bạn không được phép tự đấu giá sản phẩm của chính mình!", null);
-                }
+            if ("ADMIN".equals(role) || "SELLER".equals(role)) {
+                return new AuctionResponse(false, "BID_RESULT", "Tài khoản Người bán và Quản trị viên không được phép tham gia đấu giá!", null);
             }
         } catch (Exception e) {
             System.err.println("[AuctionService] " + e.getMessage());
