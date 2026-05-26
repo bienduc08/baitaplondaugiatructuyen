@@ -37,8 +37,11 @@ public class ProductDAO {
 
     public List<ProductDTO> getProductsBySeller(String sellerName) {
         List<ProductDTO> list = new ArrayList<>();
-        String sql = "SELECT * FROM products WHERE seller_name = ? ORDER BY id DESC";
-
+        String sql = "SELECT p.*, COUNT(b.id) AS bid_count " +
+                "FROM products p " +
+                "LEFT JOIN bids b ON b.product_id = p.id " +
+                "WHERE p.seller_name = ? " +
+                "GROUP BY p.id ORDER BY p.id DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -168,14 +171,59 @@ public class ProductDAO {
     }
 
     /** Tự động đóng phiên OPEN hết giờ end_time */
+    // MỚI - đổi status + cộng tiền seller nếu có người thắng
     public void closeExpiredAuctions() {
-        String sql = "UPDATE products SET status = 'CLOSED' WHERE status = 'OPEN' AND end_time <= NOW()";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            int n = pstmt.executeUpdate();
-            if (n > 0) System.out.println(">>> Đã đóng tự động " + n + " phiên.");
+        // Lấy danh sách các phiên sắp đóng (còn OPEN, có người thắng)
+        String selectSql = "SELECT id, current_price, seller_name, owner_name " +
+                "FROM products WHERE status = 'OPEN' AND end_time <= NOW()";
+
+        String closeSql  = "UPDATE products SET status = 'CLOSED' WHERE id = ?";
+
+        String paySql    = "UPDATE users SET balance = balance + ? WHERE username = ?";
+
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                ResultSet rs = selectStmt.executeQuery();
+                while (rs.next()) {
+                    int    productId    = rs.getInt("id");
+                    double finalPrice   = rs.getDouble("current_price");
+                    String sellerName   = rs.getString("seller_name");
+                    String winnerName   = rs.getString("owner_name"); // null nếu không ai đặt
+
+                    // Đóng phiên
+                    try (PreparedStatement closeStmt = conn.prepareStatement(closeSql)) {
+                        closeStmt.setInt(1, productId);
+                        closeStmt.executeUpdate();
+                    }
+
+                    // Cộng tiền cho seller nếu có người thắng
+                    if (winnerName != null && !winnerName.isBlank()) {
+                        try (PreparedStatement payStmt = conn.prepareStatement(paySql)) {
+                            payStmt.setDouble(1, finalPrice);
+                            payStmt.setString(2, sellerName);
+                            payStmt.executeUpdate();
+                            System.out.println("[closeExpiredAuctions] Cộng " + finalPrice
+                                    + " cho seller " + sellerName
+                                    + " | Người thắng: " + winnerName
+                                    + " | SP id=" + productId);
+                        }
+                    } else {
+                        System.out.println("[closeExpiredAuctions] SP id=" + productId
+                                + " không có người đặt giá, seller không nhận tiền.");
+                    }
+                }
+            }
+
+            conn.commit();
         } catch (SQLException e) {
             System.err.println("[closeExpiredAuctions] " + e.getMessage());
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+        } finally {
+            if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
     }
 
@@ -231,6 +279,10 @@ public class ProductDAO {
             Timestamp end = rs.getTimestamp("end_time");
             if (end != null) p.setEndTime(end.toLocalDateTime());
         } catch (Exception ignored) {}
+
+        try {
+            p.setBidCount(rs.getInt("bid_count"));
+        } catch (SQLException ignored) {}
 
         return p;
     }

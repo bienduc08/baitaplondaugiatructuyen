@@ -24,6 +24,7 @@ public class ProductDTO implements Serializable {
     private String category;
     private String imageUrl;
     private double stepPrice;
+    private int bidCount;
     private byte[] imageBytes;
 
     // Constructor không tham số (Bắt buộc phải có để các thư viện như Jackson/Serialization hoạt động)
@@ -84,6 +85,9 @@ public class ProductDTO implements Serializable {
 
     public double getStepPrice() { return stepPrice; }
     public void setStepPrice(double stepPrice) { this.stepPrice = stepPrice; }
+
+    public int getBidCount() { return bidCount; }
+    public void setBidCount(int bidCount) { this.bidCount = bidCount; }
 
     public byte[] getImageBytes() { return imageBytes; }
     public void setImageBytes(byte[] imageBytes) { this.imageBytes = imageBytes; }

@@ -10,7 +10,7 @@
     <name>baitaplondaugiatructuyen</name>
 
     <properties>
-        <javafx.version>26</javafx.version>
+        <javafx.version>21</javafx.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -22,20 +22,9 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>8.0.33</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
             <version>${javafx.version}</version>
         </dependency>
 

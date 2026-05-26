@@ -29,6 +29,7 @@ public class ProfileSellerController {
     @FXML private Label lblHeaderName;
     @FXML private Label lblHeaderEmail;
     @FXML private Label lblTotalBids;
+    public static Runnable onBackAction;
 
     @FXML private TableView<ProductDTO>            tblMyProducts;
     @FXML private TableColumn<ProductDTO, String>  colProdName;

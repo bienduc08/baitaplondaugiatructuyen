@@ -25,6 +25,7 @@ public class ProfileAdminController {
     @FXML private Label lblHeaderEmail;
     @FXML private Label lblCurrentTime;
     @FXML private Label lblSystemStatus;
+    public static Runnable onBackAction;
 
     @FXML
     public void initialize() {

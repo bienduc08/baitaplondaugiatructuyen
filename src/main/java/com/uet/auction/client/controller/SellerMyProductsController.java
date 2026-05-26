@@ -37,7 +37,7 @@ public class SellerMyProductsController {
     @FXML private TableColumn<ProductDTO, Integer> colBids;
     @FXML private TableColumn<ProductDTO, String>  colStatus;
     @FXML private TableColumn<ProductDTO, Void>    colActions;
-    @FXML private Label                             lblItemCount;
+    @FXML private Label                            lblItemCount;
 
     private final ObservableList<ProductDTO> masterList   = FXCollections.observableArrayList();
     private       FilteredList<ProductDTO>   filteredList;
@@ -85,6 +85,7 @@ public class SellerMyProductsController {
         }
 
         if (colBids != null) {
+            colBids.setCellValueFactory(new PropertyValueFactory<>("bidCount")); // ← thêm dòng này
             colBids.setCellFactory(col -> new TableCell<>() {
                 @Override protected void updateItem(Integer v, boolean empty) {
                     super.updateItem(v, empty);
@@ -153,7 +154,7 @@ public class SellerMyProductsController {
         });
     }
 
-    private void loadMyAuctions() {
+    public void loadMyAuctions() {
         String username = SessionManager.getCurrentUsername();
         if (username != null)
             SocketClient.sendRequest(new AuctionRequest("GET_MY_PRODUCTS", username));

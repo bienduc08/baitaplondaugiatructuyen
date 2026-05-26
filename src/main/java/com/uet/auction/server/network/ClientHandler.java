@@ -1,6 +1,5 @@
 package com.uet.auction.server.network;
 
-import com.uet.auction.client.controller.AdminController;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;

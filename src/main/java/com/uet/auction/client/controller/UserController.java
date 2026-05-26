@@ -19,6 +19,7 @@ public class UserController {
     @FXML private BorderPane mainBorderPane;
     @FXML private Label welcomeLabel;
     @FXML private Label lblBalance;
+    @FXML public static Runnable onBackAction;
 
     private ActiveView activeView = ActiveView.HOME;
 
@@ -59,7 +60,7 @@ public class UserController {
 
     @FXML public void onProfileButtonClick() {
         Node previousView = mainBorderPane.getCenter();
-        ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
+        ProfileUserController.onBackAction = () -> mainBorderPane.setCenter(previousView);
         loadView("/com/uet/auction/view/ProfileUser.fxml", ActiveView.PROFILE);
     }
 
@@ -79,7 +80,7 @@ public class UserController {
                     onShowUserAuctionsClick();
                 break;
             case PROFILE:
-                if (ProfileController.instance != null) {
+                if (ProfileUserController.instance != null) {
                     if (username != null)
                         SocketClient.sendRequest(new AuctionRequest("GET_MY_BIDS", username));
                 } else {

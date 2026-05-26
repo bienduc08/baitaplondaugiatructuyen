@@ -20,7 +20,7 @@ public class BidDAO {
             String insertSql = "INSERT INTO bids (product_id, bidder_name, amount, bid_time, status) "
                     + "VALUES (?, ?, ?, NOW(), 'Hợp lệ')";
             // Trừ tiền người đặt giá mới (và hoàn tiền người giữ đỉnh cũ nếu có)
-            String deductSql = "UPDATE users SET balance = balance - ? WHERE username = ?";
+            String deductSql = "UPDATE users SET balance = balance - ? WHERE username = ? AND balance >= ?";
             String refundSql = "UPDATE users SET balance = balance + ? WHERE username = ?";
 
             Connection conn = null;
@@ -90,6 +90,7 @@ public class BidDAO {
                 try (PreparedStatement deductStmt = conn.prepareStatement(deductSql)) {
                     deductStmt.setDouble(1, bidAmount);
                     deductStmt.setString(2, username);
+                    deductStmt.setDouble(3, bidAmount);
                     int affected = deductStmt.executeUpdate();
                     if (affected == 0) {
                         System.err.println("[BidDAO] Không trừ được tiền của " + username);

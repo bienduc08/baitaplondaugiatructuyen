@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.*?>
-<?import javafx.scene.text.*?>
 <?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
 <ScrollPane fitToWidth="true" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.ProductDetailController">
     <content>
         <VBox prefWidth="997.0" spacing="25.0" style="-fx-padding: 30; -fx-background-color: #f8fafc;">
             <children>
-                <Button onAction="#onBackButtonClick" prefHeight="40.0" prefWidth="160.0" style="-fx-background-color: transparent; -fx-text-fill: #3498db; -fx-cursor: hand; -fx-font-weight: bold;" text="← Quay lại sàn đấu giá" />
+                <Button onAction="#onBackButtonClick" prefHeight="40.0" prefWidth="160.0" style="-fx-background-color: transparent; -fx-text-fill: #3498db; -fx-cursor: hand; -fx-font-weight: bold;" text="← Quay lại" />
 
                 <HBox spacing="30.0" VBox.vgrow="ALWAYS">
                     <children>
@@ -18,7 +17,7 @@
                             <children>
                                 <StackPane style="-fx-background-color: white; -fx-background-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5); -fx-padding: 15;">
                                     <children>
-                                        <ImageView fx:id="imgProduct" fitHeight="280.0" fitWidth="360.0" pickOnBounds="true" preserveRatio="true"/>
+                                        <ImageView fx:id="imgProduct" fitHeight="280.0" fitWidth="360.0" pickOnBounds="true" preserveRatio="true" />
                                     </children>
                                 </StackPane>
 

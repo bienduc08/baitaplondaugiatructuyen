@@ -109,6 +109,8 @@ public class ResponseListener implements Runnable {
                                 AdminPendingController.instance.refreshPendingProducts();
                             if (ProductDetailController.instance != null)
                                 ProductDetailController.instance.reloadProductDetails();
+                            if (SellerMyProductsController.instance != null)       // ← thêm
+                                SellerMyProductsController.instance.loadMyAuctions(); // ← thêm
                         });
                         // Tự động làm mới số dư của người dùng hiện tại từ server
                         String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();

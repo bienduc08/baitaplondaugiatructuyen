@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 
+
 import java.io.IOException;
 
 
@@ -19,6 +20,7 @@ public class SellerController {
     @FXML private BorderPane mainBorderPane;
     @FXML private Label welcomeLabel;
     @FXML private Label lblBalance;
+    public static Runnable onBackAction;
 
 
     @FXML
@@ -70,7 +72,7 @@ public class SellerController {
 
     @FXML public void onProfileButtonClick() {
         Node previousView = mainBorderPane.getCenter();
-        ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
+        ProfileSellerController.onBackAction = () -> mainBorderPane.setCenter(previousView);
         loadView("/com/uet/auction/view/ProfileSeller.fxml");
     }
 

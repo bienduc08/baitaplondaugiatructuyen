@@ -25,7 +25,7 @@ public class BidHistoryController {
 
     @FXML private TableView<BidDTO> bidHistoryTable;
     @FXML private TableColumn<BidDTO, String> timeCol;
-    @FXML private TableColumn<BidDTO, String> userCol;
+    @FXML private TableColumn<BidDTO, String> bidderCol;
     @FXML private TableColumn<BidDTO, Double> priceCol;
     @FXML private TableColumn<BidDTO, String> statusCol;
 
@@ -41,7 +41,7 @@ public class BidHistoryController {
         instance = this;
 
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
-        userCol.setCellValueFactory(new PropertyValueFactory<>("username"));
+        bidderCol.setCellValueFactory(new PropertyValueFactory<>("biddername"));
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
 

@@ -182,11 +182,11 @@ public class AdminController {
     @FXML
     public void onProfileButtonClick() {
         Node previousView = mainBorderPane.getCenter();
-        ProfileController.onBackAction = () -> mainBorderPane.setCenter(previousView);
-        loadView("/com/uet/auction/view/ProfileAdmin.fxml", AdminController.ActiveView.PROFILE);
+        ProfileAdminController.onBackAction = () -> mainBorderPane.setCenter(previousView);
+        loadView("/com/uet/auction/view/ProfileAdmin.fxml",ActiveView.PROFILE);
     }
 
-    private void loadView(String fxmlPath, AdminController.ActiveView view) {
+    private void loadView(String fxmlPath,ActiveView view) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Node node = loader.load();

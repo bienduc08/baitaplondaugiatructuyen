@@ -30,6 +30,7 @@ public class ProfileUserController {
     @FXML private Label lblHeaderEmail;
     @FXML private Label lblTotalBids;
     @FXML private Label lblTotalWins;
+    public static Runnable onBackAction;
 
     @FXML private Button btnDeposit;
 
