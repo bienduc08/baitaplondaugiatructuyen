@@ -54,9 +54,3 @@ CREATE TABLE IF NOT EXISTS bids (
     -- Chỉ mục (Indexes) để tối ưu hiệu năng truy vấn
     INDEX idx_bids_product_amount (product_id, amount DESC)
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- 5. Chèn tài khoản Admin mặc định (mật khẩu mặc định: admin123)
-INSERT IGNORE INTO users (username, password, role)
-VALUES ('admin',
-        '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
-        'ADMIN');
