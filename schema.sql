@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(256) NOT NULL,
     role     VARCHAR(20)  NOT NULL ,
-    balance  DECIMAL(15, 2) NOT NULL DEFAULT 0.00, -- Sử dụng DECIMAL thay cho DOUBLE để tránh sai số dấu thập phân
+    balance  DOUBLE NOT NULL DEFAULT 0.0,
     status   VARCHAR(20)  NOT   NULL DEFAULT 'ACTIVE'
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS products (
     id             INT AUTO_INCREMENT PRIMARY KEY,
     name           VARCHAR(255) NOT NULL,
     description    TEXT         DEFAULT NULL,
-    starting_price DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
-    current_price  DECIMAL(15, 2) NOT NULL DEFAULT 0.00, -- Mặc định bằng starting_price khi tạo sản phẩm
-    step_price     DECIMAL(15, 2) NOT NULL DEFAULT 0.00,
+    starting_price DOUBLE NOT NULL DEFAULT 0.0,
+    current_price  DOUBLE NOT NULL DEFAULT 0.0,
+    step_price     DOUBLE NOT NULL DEFAULT 0.0,
     seller_name    VARCHAR(100) DEFAULT NULL,
     owner_name     VARCHAR(100) DEFAULT NULL,
     start_time     DATETIME     DEFAULT NULL,
@@ -43,9 +43,9 @@ CREATE TABLE IF NOT EXISTS bids (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     product_id  INT          NOT NULL,
     bidder_name VARCHAR(100) NOT NULL,
-    amount      DECIMAL(15, 2) NOT NULL,
+    amount      DOUBLE NOT NULL,
     bid_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status      VARCHAR(20)  NOT NULL DEFAULT 'Hợp lệ', -- Trạng thái lượt đấu giá
+    status      VARCHAR(20)  NOT NULL DEFAULT 'Hợp lệ',
 
 -- Khóa ngoại đảm bảo tính toàn vẹn dữ liệu
     CONSTRAINT fk_bids_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
