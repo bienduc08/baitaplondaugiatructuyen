@@ -17,7 +17,7 @@
     </HBox>
     <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
         <content>
-            <FlowPane fx:id="productContainer" alignment="TOP_CENTER" hgap="20.0" vgap="20.0" />
+            <GridPane fx:id="productContainer" alignment="TOP_CENTER" />
         </content>
     </ScrollPane>
 </VBox>
