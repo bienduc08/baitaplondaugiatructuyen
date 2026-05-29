@@ -11,6 +11,8 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
@@ -28,6 +30,7 @@ public class ProfileUserController {
     @FXML private Label lblBalance;
     @FXML private Label lblHeaderName;
     @FXML private Label lblHeaderEmail;
+    @FXML private Label lblHeaderPhoneNumber;
     @FXML private Label lblTotalBids;
     @FXML private Label lblTotalWins;
     public static Runnable onBackAction;
@@ -49,9 +52,7 @@ public class ProfileUserController {
         UserDTO user = SessionManager.getCurrentUser();
         if (user != null) {
             // Tên hiển thị chính
-            String displayName = (user.getFullName() != null && !user.getFullName().isEmpty())
-                    ? user.getFullName() : user.getUsername();
-            if (lblUsername != null) lblUsername.setText(displayName);
+            if (lblUsername != null) lblUsername.setText(user.getUsername());
             if (lblRole != null)    lblRole.setText(roleDisplay(user.getRole()));
             if (lblBalance != null)
                 lblBalance.setText(String.format("%,.0f VNĐ", user.getBalance()));
@@ -66,6 +67,12 @@ public class ProfileUserController {
                 String gmail = (user.getGmail() != null && !user.getGmail().isEmpty())
                         ? user.getGmail() : user.getUsername() + "@gmail.com";
                 lblHeaderEmail.setText("✉ " + gmail);
+            }
+
+            if (lblHeaderPhoneNumber != null) {
+                String phone = (user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty())
+                        ? user.getPhoneNumber() : "Chưa có SĐT";
+                lblHeaderPhoneNumber.setText("📞 " + phone);
             }
 
             // Tải dữ liệu từ server
@@ -187,6 +194,27 @@ public class ProfileUserController {
             case "BIDDER": return "🔨 Người đấu giá";
             case "USER":   return "👤 Người dùng";
             default:       return "👤 Người dùng";
+        }
+    }
+    @FXML
+    public void onEditProfileClick() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProfileEdit.fxml"));
+            Node editNode = loader.load();
+
+            if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
+                javafx.scene.layout.BorderPane mainPane = UserController.instance.getMainBorderPane();
+                Node previousCenterView = mainPane.getCenter();
+
+                ProfileEditController.onBackAction = () -> {
+                    mainPane.setCenter(previousCenterView);
+                };
+
+                mainPane.setCenter(editNode);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            AlertHelper.showError("Không thể mở trang chỉnh sửa hồ sơ!");
         }
     }
 

@@ -14,11 +14,15 @@
         </StackPane>
         <VBox alignment="CENTER_LEFT" spacing="8.0" HBox.hgrow="ALWAYS">
             <Label fx:id="lblUsername" style="-fx-font-size: 26; -fx-font-weight: bold;" text="Người dùng" textFill="white" />
-            <Label fx:id="lblRole" style="-fx-background-color: rgba(109,40,217,0.6); -fx-text-fill: #c4b5fd;                           -fx-font-size: 12; -fx-font-weight: bold;                           -fx-padding: 4 16; -fx-background-radius: 20;" text="👤 Người dùng" />
+            <Label fx:id="lblRole" style="-fx-text-fill: #86efac; -fx-font-size: 12;" text="👤 Người dùng" />
         </VBox>
         <VBox alignment="CENTER_RIGHT" spacing="6.0">
             <Label fx:id="lblHeaderName" style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;" text="👤 Người dùng" />
             <Label fx:id="lblHeaderEmail" style="-fx-text-fill: #c4b5fd; -fx-font-size: 12;" text="✉ user@gmail.com" />
+            <Label fx:id="lblHeaderPhoneNumber" style="-fx-text-fill: #86efac; -fx-font-size: 12;" text="📞 SĐT" />
+            <Button onAction="#onEditProfileClick"
+                    style="-fx-background-color: rgba(167, 139, 250, 0.1); -fx-border-color: #a78bfa; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: #a78bfa; -fx-font-size: 11; -fx-font-weight: bold; -fx-padding: 4 15; -fx-cursor: hand;"
+                    text="✏ Chỉnh sửa hồ sơ" />
         </VBox>
     </HBox>
 

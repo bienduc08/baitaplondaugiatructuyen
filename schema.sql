@@ -6,8 +6,9 @@ USE auction_db;
 CREATE TABLE IF NOT EXISTS users (
     id       INT AUTO_INCREMENT PRIMARY KEY,
     fullname VARCHAR(255) NOT NULL ,
-    gmail VARCHAR(255) NOT NULL UNIQUE ,
     username VARCHAR(100) NOT NULL UNIQUE,
+    gmail VARCHAR(255) NOT NULL UNIQUE ,
+    phonenumber VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(256) NOT NULL,
     role     VARCHAR(20)  NOT NULL ,
     balance  DOUBLE NOT NULL DEFAULT 0.0,

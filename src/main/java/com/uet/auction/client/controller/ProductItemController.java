@@ -18,10 +18,6 @@ import javafx.stage.Stage;
 import java.time.LocalDateTime;
 
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-
 public class ProductItemController {
 
     @FXML private ImageView imgProduct;
@@ -33,13 +29,14 @@ public class ProductItemController {
     @FXML private TextField bidInput;
     @FXML private Label descriptionLabel;
 
-    // ĐÃ THÊM: Khai báo biến imgProduct để hiển thị ảnh
-
     private ProductDTO currentProduct;
     private Timeline countdown;
+    private String lastTimeText = "";
+    private static final java.util.Map<String, Image> imageCache = new java.util.HashMap<>();
 
     public void setProductData(ProductDTO product) {
         this.currentProduct = product;
+        this.lastTimeText = "";
 
         nameLabel.setText(product.getName());
         priceLabel.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
@@ -57,30 +54,40 @@ public class ProductItemController {
         if (ownerLabel != null) ownerLabel.setText("Đang giữ đỉnh: " + owner);
 
         if (product.getEndTime() != null) {
+            // THÊM DÒNG NÀY: Cập nhật ngay lập tức thay vì chờ Timeline trễ 1 giây
+            updateTimeDisplay(product, timeLabel);
             startCountdown();
         } else {
             timeLabel.setText("Hết hạn: —");
         }
 
         if (imgProduct != null) {
-            imgProduct.setImage(null);
-            String imageUrl = product.getImageUrl();
-
-            // Lọc bỏ rác đường dẫn (ví dụ: images\sp_...)
-            String cleanFileName = (imageUrl != null) ? new java.io.File(imageUrl.trim()).getName() : "";
-
-            if (imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.toLowerCase().contains("macdinh")) {
-                loadDefaultImage();
-            } else {
-                // Trỏ thẳng vào thư mục upload_images trong project
-                java.io.File file = new java.io.File("images/" + cleanFileName);
-
-                if (file.exists()) {
-                    // Nạp ảnh ở chế độ Background để không làm treo giao diện chính
-                    Image img = new Image(file.toURI().toString(), 300, 300, true, true, true);
-                    imgProduct.setImage(img);
-                } else {
+            String newImageUrl = product.getImageUrl();
+            if (newImageUrl == null || newImageUrl.trim().isEmpty() || newImageUrl.toLowerCase().contains("macdinh")) {
+                // Chỉ load default nếu ảnh hiện tại KHÔNG PHẢI là default
+                if (imgProduct.getUserData() == null || !imgProduct.getUserData().equals("default")) {
                     loadDefaultImage();
+                    imgProduct.setUserData("default");
+                }
+            } else {
+                String cleanFileName = new java.io.File(newImageUrl.trim()).getName();
+                String currentImageUrl = (String) imgProduct.getUserData();
+
+                if (!newImageUrl.equals(currentImageUrl)) {
+                    imgProduct.setUserData(newImageUrl);
+                    java.io.File file = new java.io.File("images/" + cleanFileName);
+
+                    if (file.exists()) {
+                        String fileUri = file.toURI().toString();
+                        // Kiểm tra xem ảnh đã có trong cache chưa
+                        if (imageCache.containsKey(fileUri)) {
+                            imgProduct.setImage(imageCache.get(fileUri));
+                        } else {
+                            Image img = new Image(fileUri, 300, 300, true, true, false);
+                            imageCache.put(fileUri, img);
+                            imgProduct.setImage(img);
+                        }
+                    }
                 }
             }
         }
@@ -173,29 +180,31 @@ public class ProductItemController {
         }
     }
     private void updateTimeDisplay(ProductDTO product, Label timeLabel) {
-        if (product == null || product.getStartTime() == null || product.getEndTime() == null) {
-            timeLabel.setText("Thời gian không xác định");
-            return;
-        }
+        if (product == null || product.getEndTime() == null) return;
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start = product.getStartTime();
         LocalDateTime end = product.getEndTime();
 
-        // Sử dụng tên đầy đủ java.time.Duration để không bị nhầm với javafx.util.Duration
+        String newText;
+        String newStyle;
+
         if (now.isBefore(start)) {
-            java.time.Duration duration = java.time.Duration.between(now, start);
-            timeLabel.setText("Bắt đầu sau: " + formatDuration(duration));
-            timeLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;"); // Màu cam
+            newText = "Bắt đầu sau: " + formatDuration(java.time.Duration.between(now, start));
+            newStyle = "-fx-text-fill: #e67e22; -fx-font-weight: bold;";
+        } else if (now.isBefore(end)) {
+            newText = "Kết thúc sau: " + formatDuration(java.time.Duration.between(now, end));
+            newStyle = "-fx-text-fill: #e74c3c; -fx-font-weight: bold;";
+        } else {
+            newText = "Đã kết thúc";
+            newStyle = "-fx-text-fill: #7f8c8d; -fx-font-weight: bold;";
         }
-        else if (now.isBefore(end)) {
-            java.time.Duration duration = java.time.Duration.between(now, end);
-            timeLabel.setText("Kết thúc sau: " + formatDuration(duration));
-            timeLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;"); // Màu đỏ khẩn cấp
-        }
-        else {
-            timeLabel.setText("Đã kết thúc");
-            timeLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold;"); // Màu xám
+
+        // Cập nhật TRỰC TIẾP, không dùng Platform.runLater nữa
+        if (!newText.equals(lastTimeText)) {
+            lastTimeText = newText;
+            timeLabel.setText(newText);
+            timeLabel.setStyle(newStyle);
         }
     }
 
@@ -206,10 +215,8 @@ public class ProductItemController {
         long minutes = duration.toMinutesPart();
         long seconds = duration.toSecondsPart();
 
-        if (days > 0) {
-            return String.format("%d ngày %02d:%02d:%02d", days, hours, minutes, seconds);
-        } else {
-            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-        }
+        // Luôn giữ định dạng đồng nhất, ví dụ: 00 ngày 00:00:00
+        // Điều này làm độ dài chuỗi luôn cố định
+        return String.format("%02d ngày %02d:%02d:%02d", days, hours, minutes, seconds);
     }
 }

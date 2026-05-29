@@ -50,6 +50,11 @@ public class UserDAO {
                     user.setGmail("");
                 }
                 try {
+                    user.setPhoneNumber(rs.getString("phonenumber"));
+                } catch (SQLException e) {
+                    user.setPhoneNumber("");
+                }
+                try {
                     user.setBalance(rs.getDouble("balance"));
                 } catch (SQLException e) {
                     user.setBalance(0.0);
@@ -130,10 +135,10 @@ public class UserDAO {
         return null;
     }
 
-    public boolean registerUser(String fullname,String gmail,String username, String password, String role) {
+    public boolean registerUser(String fullname,String username,String gmail,String phonenumber, String password, String role) {
         String checkSql  = "SELECT id FROM users WHERE username = ?";
         // Mặc định đăng ký xong thì status là ACTIVE
-        String insertSql = "INSERT INTO users ( fullname, gmail,username, password, role, status) VALUES (?, ? ,?, ?, ?, 'ACTIVE')";
+        String insertSql = "INSERT INTO users ( fullname,username, gmail,phonenumber, password, role, status) VALUES (?, ? ,?,?, ?, ?, 'ACTIVE')";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement checkStmt  = conn.prepareStatement(checkSql);
              PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
@@ -142,16 +147,17 @@ public class UserDAO {
             if (checkStmt.executeQuery().next()) return false;
 
             insertStmt.setString(1, fullname);
-            insertStmt.setString(2, gmail);
-            insertStmt.setString(3, username);
-            insertStmt.setString(4, hashPassword(password));
-            insertStmt.setString(5, role);
+            insertStmt.setString(2, username);
+            insertStmt.setString(3, gmail);
+            insertStmt.setString(4, phonenumber);
+            insertStmt.setString(5, hashPassword(password));
+            insertStmt.setString(6, role);
 
             return insertStmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
             System.err.println("Lỗi đăng ký tài khoản: " + e.getMessage());
-            return fallbackRegisterUser(fullname, gmail, username, password, role);
+            return fallbackRegisterUser(fullname,username, gmail,phonenumber, password, role);
         }
     }
 
@@ -169,15 +175,16 @@ public class UserDAO {
     }
 
     // Hàm dự phòng khi bảng chưa có cột status
-    private boolean fallbackRegisterUser(String fullname, String gmail,  String username, String password, String role) {
-        String insertSql = "INSERT INTO users (fullname,gmail,username, password, role) VALUES (? , ? , ?, ?, ?)";
+    private boolean fallbackRegisterUser(String fullname,String username, String gmail,  String phonenumber, String password, String role) {
+        String insertSql = "INSERT INTO users (fullname,username,gmail,phonenumber, password, role) VALUES (? , ? , ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
             insertStmt.setString(1, fullname);
-            insertStmt.setString(2, gmail);
-            insertStmt.setString(3, username);
-            insertStmt.setString(4, hashPassword(password));
-            insertStmt.setString(5, role);
+            insertStmt.setString(2, username);
+            insertStmt.setString(3, gmail);
+            insertStmt.setString(4, phonenumber);
+            insertStmt.setString(5, hashPassword(password));
+            insertStmt.setString(6, role);
             return insertStmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Lỗi đăng ký (fallback): " + e.getMessage());
@@ -191,7 +198,7 @@ public class UserDAO {
 
     public List<UserDTO> getAllUsers() {
         List<UserDTO> users = new ArrayList<>();
-        String sql = "SELECT id,fullname,gmail, username, role, balance, status FROM users";
+        String sql = "SELECT id,fullname,username,gmail,phonenumber, role, balance, status FROM users";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
@@ -206,6 +213,7 @@ public class UserDAO {
                 try { user.setStatus(rs.getString("status")); } catch (SQLException e) { user.setStatus("ACTIVE"); }
                 try { user.setFullName(rs.getString("fullname")); } catch (SQLException e) { user.setFullName(""); }
                 try { user.setGmail(rs.getString("gmail")); } catch (SQLException e) { user.setGmail(""); }
+                try { user.setPhoneNumber(rs.getString("phonenumber"));}catch(SQLException e) {user.setPhoneNumber("");}
 
                 users.add(user);
             }
@@ -218,7 +226,7 @@ public class UserDAO {
 
     public List<UserDTO> searchUser(String keyword) {
         List<UserDTO> users = new ArrayList<>();
-        String sql = "SELECT id,fullname,gmail, username, role, balance, status FROM users WHERE username LIKE ?";
+        String sql = "SELECT id,fullname, username,gmail, phonenumber, role, balance, status FROM users WHERE username LIKE ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -234,6 +242,7 @@ public class UserDAO {
                     try { user.setStatus(rs.getString("status")); } catch (SQLException e) { user.setStatus("ACTIVE"); }
                     try { user.setFullName(rs.getString("fullname")); } catch (SQLException e) { user.setFullName(""); }
                     try { user.setGmail(rs.getString("gmail")); } catch (SQLException e) { user.setGmail(""); }
+                    try { user.setPhoneNumber(rs.getString("phonenumber"));}catch(SQLException e) {user.setPhoneNumber("");}
 
                     users.add(user);
                 }
@@ -256,6 +265,34 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("Lỗi cập nhật trạng thái: " + e.getMessage());
+            return false;
+        }
+    }
+    // Hàm cập nhật thông tin cá nhân (Có hoặc không đổi mật khẩu)
+    public boolean updateProfile(String username, String fullName, String phoneNumber, String newPassword) {
+        // Nếu newPassword rỗng tức là người dùng chỉ đổi thông tin, không đổi mật khẩu
+        boolean isChangePassword = (newPassword != null && !newPassword.trim().isEmpty());
+
+        String sql = isChangePassword
+                ? "UPDATE users SET fullname = ?, phonenumber = ?, password = ? WHERE username = ?"
+                : "UPDATE users SET fullname = ?, phonenumber = ? WHERE username = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, fullName);
+            pstmt.setString(2, phoneNumber);
+
+            if (isChangePassword) {
+                pstmt.setString(3, hashPassword(newPassword));
+                pstmt.setString(4, username);
+            } else {
+                pstmt.setString(3, username);
+            }
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi cập nhật hồ sơ: " + e.getMessage());
             return false;
         }
     }

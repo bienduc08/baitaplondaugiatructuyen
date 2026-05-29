@@ -32,6 +32,20 @@ public class HomecontentController {
     @FXML
     public void initialize() {
         instance = this;
+        if (productContainer != null) {
+            // Căn giữa các item, đẩy phần dư ra 2 bên lề
+            productContainer.setAlignment(javafx.geometry.Pos.TOP_CENTER);
+
+            // Đặt khoảng cách ngang (Hgap) và dọc (Vgap) giữa các thẻ sản phẩm (bạn có thể thay đổi số 20 theo ý thích)
+            productContainer.setHgap(20);
+            productContainer.setVgap(25);
+        }
+        // -----------------------------------------------------------------
+
+        // Bắt sự kiện mỗi khi người dùng gõ phím vào ô tìm kiếm...
+        if (txtSearch != null) {
+            txtSearch.textProperty().addListener((observable, oldValue, newValue) -> filterAndDisplay());
+        }
 
         // Bắt sự kiện mỗi khi người dùng gõ phím vào ô tìm kiếm thì tự động lọc luôn
         if (txtSearch != null) {

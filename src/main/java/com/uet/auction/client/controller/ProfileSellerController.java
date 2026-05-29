@@ -11,6 +11,8 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
@@ -28,6 +30,7 @@ public class ProfileSellerController {
     @FXML private Label lblBalance;
     @FXML private Label lblHeaderName;
     @FXML private Label lblHeaderEmail;
+    @FXML private Label lblHeaderPhoneNumber;
     @FXML private Label lblTotalBids;
     public static Runnable onBackAction;
 
@@ -50,9 +53,7 @@ public class ProfileSellerController {
         UserDTO user = SessionManager.getCurrentUser();
         if (user != null) {
             // Tên hiển thị chính
-            String displayName = (user.getFullName() != null && !user.getFullName().isEmpty())
-                    ? user.getFullName() : user.getUsername();
-            if (lblUsername != null) lblUsername.setText(displayName);
+            if (lblUsername != null) lblUsername.setText(user.getUsername());
             if (lblRole != null) lblRole.setText("🏪 Người bán");
             if (lblBalance != null)
                 lblBalance.setText(String.format("%,.0f VNĐ", user.getBalance()));
@@ -67,6 +68,11 @@ public class ProfileSellerController {
                 String gmail = (user.getGmail() != null && !user.getGmail().isEmpty())
                         ? user.getGmail() : user.getUsername() + "@gmail.com";
                 lblHeaderEmail.setText("✉ " + gmail);
+            }
+            if (lblHeaderPhoneNumber != null) {
+                String phone = (user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty())
+                        ? user.getPhoneNumber() : "Chưa có SĐT";
+                lblHeaderPhoneNumber.setText("📞 " + phone);
             }
 
             // Tải dữ liệu từ server
@@ -181,5 +187,29 @@ public class ProfileSellerController {
     public void handleDepositFailure() {
         if (btnDeposit != null) btnDeposit.setDisable(false);
     }
+    @FXML
+    public void onEditProfileClick() {
+        try {
+            // Tải giao diện chỉnh sửa hồ sơ
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProfileEdit.fxml"));
+            javafx.scene.Node editNode = loader.load();
 
+            // Kiểm tra và trỏ trực tiếp vào đúng MainBorderPane của SellerController
+            if (SellerController.instance != null && SellerController.instance.getMainBorderPane() != null) {
+                javafx.scene.layout.BorderPane mainPane = SellerController.instance.getMainBorderPane();
+                javafx.scene.Node previousCenterView = mainPane.getCenter();
+
+                // Thiết lập nút Quay lại trả về đúng màn hình Profile cũ của Seller
+                ProfileEditController.onBackAction = () -> {
+                    mainPane.setCenter(previousCenterView);
+                };
+
+                // Đẩy giao diện chỉnh sửa vào giữa vùng hiển thị
+                mainPane.setCenter(editNode);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            AlertHelper.showError("Không thể mở trang chỉnh sửa hồ sơ!");
+        }
+    }
 }

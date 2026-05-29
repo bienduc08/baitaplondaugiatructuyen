@@ -33,8 +33,8 @@ public class AuthService {
         }
     }
 
-    public AuctionResponse register(String fullname,String gmail,String username, String password, String role) {
-        boolean success = userDAO.registerUser(fullname,gmail,username, password, role);
+    public AuctionResponse register(String fullname,String username,String gmail,String phonenumber, String password, String role) {
+        boolean success = userDAO.registerUser(fullname,username,gmail,phonenumber, password, role);
         if (success) {
             return new AuctionResponse(true, "REGISTER_RESULT", "Đăng ký thành công!", null);
         } else {
@@ -135,5 +135,29 @@ public class AuthService {
 
     public double getUserBalance(String username) {
         return userDAO.getBalance(username);
+    }
+    // Thêm hàm này vào AuthService.java
+    public AuctionResponse updateProfile(String username, String fullName, String phone, String oldPass, String newPass) {
+        // 1. Nếu người dùng có nhập mật khẩu mới, bắt buộc phải kiểm tra mật khẩu cũ
+        if (newPass != null && !newPass.trim().isEmpty()) {
+            if (oldPass == null || oldPass.trim().isEmpty()) {
+                return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Vui lòng nhập mật khẩu cũ để đổi mật khẩu!", null);
+            }
+            UserDTO checkUser = userDAO.checkLogin(username, oldPass);
+            if (checkUser == null) {
+                return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Mật khẩu cũ không chính xác!", null);
+            }
+        }
+
+        // 2. Gọi DAO để lưu xuống Database
+        boolean success = userDAO.updateProfile(username, fullName, phone, newPass);
+
+        if (success) {
+            // Lấy lại thông tin user mới nhất từ DB để gửi về Client cập nhật giao diện
+            UserDTO updatedUser = userDAO.searchUser(username).get(0);
+            return new AuctionResponse(true, "UPDATE_PROFILE_SUCCESS", "Cập nhật hồ sơ thành công!", updatedUser);
+        } else {
+            return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Cập nhật thất bại. Vui lòng thử lại!", null);
+        }
     }
 }

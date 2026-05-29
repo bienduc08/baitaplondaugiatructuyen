@@ -14,8 +14,9 @@ public class RegisterController {
     public static RegisterController instance;
 
     @FXML private TextField fullnameField;
-    @FXML private TextField gmailField;
     @FXML private TextField usernameField;
+    @FXML private TextField gmailField;
+    @FXML private TextField phonenumberField;
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmPasswordField;
     @FXML private Label statusLabel;
@@ -30,13 +31,14 @@ public class RegisterController {
     @FXML
     private void handleRegisterAction(ActionEvent event) {
         String fullname = fullnameField.getText().trim();
-        String gmail    = gmailField.getText().trim();
         String username = usernameField.getText().trim();
+        String gmail    = gmailField.getText().trim();
+        String phonenumber = phonenumberField.getText().trim();
         String password = passwordField.getText().trim();
         String confirm  = confirmPasswordField.getText().trim();
 
-        // 1. Kiểm tra không được để trống bất kỳ trường nào
-        if (fullname.isEmpty() || gmail.isEmpty() || username.isEmpty() || password.isEmpty()) {
+        // 1. Kiểm tra không được để trống bất kỳ trường nào (Bổ sung phonenumber)
+        if (fullname.isEmpty() || gmail.isEmpty() || phonenumber.isEmpty() || username.isEmpty() || password.isEmpty()) {
             statusLabel.setStyle("-fx-text-fill: red;");
             statusLabel.setText("Vui lòng nhập đầy đủ tất cả thông tin!");
             return;
@@ -49,12 +51,20 @@ public class RegisterController {
             return;
         }
 
-        // 3. Kiểm tra mật khẩu xác nhận
+        // 3. Kiểm tra định dạng số điện thoại (Bắt đầu bằng 0, tổng cộng 10 chữ số)
+        if (!phonenumber.matches("^0\\d{9}$")) {
+            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setText("Số điện thoại không hợp lệ (Phải gồm 10 số và bắt đầu bằng 0)!");
+            return;
+        }
+
+        // 4. Kiểm tra mật khẩu xác nhận
         if (!password.equals(confirm)) {
             statusLabel.setStyle("-fx-text-fill: red;");
             statusLabel.setText("Mật khẩu xác nhận không khớp!");
             return;
         }
+
         String selectedRole = roleComboBox.getSelectionModel().getSelectedItem();
         if (selectedRole == null) {
             selectedRole = "USER"; // Fallback an toàn
@@ -63,8 +73,8 @@ public class RegisterController {
         statusLabel.setStyle("-fx-text-fill: black;");
         statusLabel.setText("Đang xử lý...");
 
-        // 4. NÂNG CẤP MẢNG DỮ LIỆU: Bổ sung fullname và gmail vào gói tin
-        Object[] regData = new Object[]{fullname,gmail,username, password, selectedRole};
+        // 5. NÂNG CẤP MẢNG DỮ LIỆU: Bổ sung phonenumber vào gói tin
+        Object[] regData = new Object[]{fullname,username, gmail, phonenumber, password, selectedRole};
         SocketClient.sendRequest(new AuctionRequest("REGISTER", regData));
     }
 

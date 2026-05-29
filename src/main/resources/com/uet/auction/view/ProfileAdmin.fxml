@@ -30,7 +30,11 @@
             <Label fx:id="lblHeaderName" text="👤 Admin"
                    style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;"/>
             <Label fx:id="lblHeaderEmail" text="✉ admin@gmail.com"
-                   style="-fx-text-fill: #90caf9; -fx-font-size: 12;"/>
+                   style="-fx-text-fill: #86efac; -fx-font-size: 12;"/>
+            <Label fx:id="lblHeaderPhoneNumber" style="-fx-text-fill: #86efac; -fx-font-size: 12;"  text="📞 SĐT" />
+            <Button onAction="#onEditProfileClick"
+                    style="-fx-background-color: rgba(144, 202, 249, 0.1); -fx-border-color: #90caf9; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: #90caf9; -fx-font-size: 11; -fx-font-weight: bold; -fx-padding: 4 15; -fx-cursor: hand;"
+                    text="✏ Chỉnh sửa hồ sơ" />
         </VBox>
     </HBox>
 

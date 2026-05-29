@@ -37,8 +37,9 @@
                         <VBox spacing="12.0">
                             <children>
                                 <TextField fx:id="fullnameField" prefHeight="45.0" promptText="Họ và tên" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;" />
-                                <TextField fx:id="gmailField" prefHeight="45.0" promptText="Gmail" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;"  />
                                 <TextField fx:id="usernameField" prefHeight="45.0" promptText="Tên đăng nhập" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;" />
+                                <TextField fx:id="gmailField" prefHeight="45.0" promptText="Gmail" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;"  />
+                                <TextField fx:id="phonenumberField" prefHeight="45.0" promptText="Số điện thoại" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;" />
 
                                 <PasswordField fx:id="passwordField" prefHeight="45.0" promptText="Mật khẩu" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;" />
                                 <PasswordField fx:id="confirmPasswordField" prefHeight="45.0" promptText="Nhập lại mật khẩu" style="-fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-radius: 10; -fx-padding: 0 15;" />

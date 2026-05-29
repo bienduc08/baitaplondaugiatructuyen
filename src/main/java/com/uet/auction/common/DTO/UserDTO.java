@@ -7,8 +7,9 @@ public class UserDTO implements Serializable {
 
     private int id;
     private String fullName;
-    private String gmail;
     private String username;
+    private String gmail;
+    private String phoneNumber;
     private String role;
     private String message;
     private double balance;
@@ -16,10 +17,11 @@ public class UserDTO implements Serializable {
 
     public UserDTO() {}
 
-    public UserDTO(String fullName,String gmail,int id, String username, String role) {
+    public UserDTO(String fullName,String gmail,String phoneNumber,int id, String username, String role) {
         this.id = id;
         this.fullName = fullName;
         this.gmail = gmail;
+        this.phoneNumber = phoneNumber;
         this.username = username;
         this.role = role;
     }
@@ -32,6 +34,9 @@ public class UserDTO implements Serializable {
 
     public String getGmail() { return gmail; }
     public void setGmail(String gmail) { this.gmail = gmail; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) {this.phoneNumber = phoneNumber; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }

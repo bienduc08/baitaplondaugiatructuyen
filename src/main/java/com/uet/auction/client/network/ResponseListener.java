@@ -5,6 +5,7 @@ import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Response.AuctionResponse;
+import com.uet.auction.server.service.SessionManager;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -263,6 +264,28 @@ public class ResponseListener implements Runnable {
                         break;
 
                     case "GET_STATS_SUCCESS":
+                        break;
+                    case "UPDATE_PROFILE_SUCCESS":
+                        UserDTO updatedUser = (UserDTO) res.getData();
+
+                        // SỬA LỖI 2: Dùng SessionManager của phía Client
+                        com.uet.auction.client.util.SessionManager.setCurrentUser(updatedUser);
+
+                        Platform.runLater(() -> {
+                            AlertHelper.showInfo(res.getMessage());
+
+                            // Kích hoạt nút quay lại màn hình Profile
+                            if (ProfileEditController.onBackAction != null) {
+                                ProfileEditController.onBackAction.run();
+                            }
+                        });
+                        break;
+
+                    // Nếu Server báo thất bại (ví dụ: Sai mật khẩu cũ)
+                    case "UPDATE_PROFILE_FAILED":
+                        Platform.runLater(() -> {
+                            AlertHelper.showError(res.getMessage());
+                        });
                         break;
 
                     default:

@@ -6,6 +6,8 @@ import com.uet.auction.common.Request.AuctionRequest;
 import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.service.AuctionService;
 import com.uet.auction.server.service.AuthService;
+import com.uet.auction.server.service.SessionManager;
+import javafx.application.Platform;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -54,7 +56,8 @@ public class ClientHandler implements Runnable {
                                 (String) regData[1],
                                 (String) regData[2],
                                 (String) regData[3],
-                                (String) regData[4]
+                                (String) regData[4],
+                                (String) regData[5]
                         );
                         sendResponse(response);
                         break;
@@ -211,6 +214,28 @@ public class ClientHandler implements Runnable {
 
                     // THỐNG KÊ DASHBOARD CHO ADMIN
                     // Khi nhận được response cho "GET_DASHBOARD_STATS"
+                    // Phác thảo luồng xử lý bên Server (ClientHandler)
+                    case "UPDATE_PROFILE":
+                        Object[] updateData = (Object[]) request.getData();
+                        String updateUsername = (String) updateData[0];
+                        String fullName = (String) updateData[1];
+                        String phone = (String) updateData[2];
+                        String oldPass = (String) updateData[3];
+                        String newPass = (String) updateData[4];
+
+                        // Chuyển việc xử lý cho AuthService
+                        response = authService.updateProfile(updateUsername, fullName, phone, oldPass, newPass);
+
+                        // Nếu thành công, cập nhật luôn biến loggedInUser trên Server
+                        if (response.isSuccess() && response.getData() instanceof UserDTO) {
+                            loggedInUser = (UserDTO) response.getData();
+                        }
+
+                        // Gửi kết quả về cho giao diện Client
+                        sendResponse(response);
+                        break;
+                    // Nếu Server báo thành công
+
                 }
             }
         } catch (IOException e) {
