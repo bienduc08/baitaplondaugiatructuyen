@@ -296,6 +296,7 @@ public class ResponseListener implements Runnable {
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("Mất kết nối tới Server.");
+            SocketClient.startAutoReconnect();
         }
     }
 }

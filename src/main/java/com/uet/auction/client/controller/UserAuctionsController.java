@@ -110,16 +110,23 @@ public class UserAuctionsController {
         if (colAction != null) {
             colAction.setCellFactory(col -> new TableCell<>() {
                 private final Button btnDetail = new Button("Chi tiết");
+                private final Button btnChart  = new Button("📈 Biểu đồ");
+                private final javafx.scene.layout.HBox box = new javafx.scene.layout.HBox(5, btnDetail, btnChart);
                 {
                     btnDetail.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;");
+                    btnChart.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5; -fx-font-size: 11;");
                     btnDetail.setOnAction(e -> {
                         ProductDTO p = getTableView().getItems().get(getIndex());
                         openProductDetail(p);
                     });
+                    btnChart.setOnAction(e -> {
+                        ProductDTO p = getTableView().getItems().get(getIndex());
+                        openBidHistory(p);
+                    });
                 }
                 @Override protected void updateItem(Void item, boolean empty) {
                     super.updateItem(item, empty);
-                    setGraphic(empty ? null : btnDetail);
+                    setGraphic(empty ? null : box);
                 }
             });
         }
@@ -128,6 +135,28 @@ public class UserAuctionsController {
     // Hàm này được ResponseListener gọi khi Server trả dữ liệu về
     public void displayJoinedAuctions(List<ProductDTO> products) {
         Platform.runLater(() -> joinedList.setAll(products));
+    }
+
+    // Mở cửa sổ Lịch sử + Biểu đồ giá đấu giá
+    private void openBidHistory(ProductDTO product) {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/com/uet/auction/view/BidHistoryView.fxml"));
+            javafx.scene.Parent root = loader.load();
+
+            BidHistoryController ctrl = loader.getController();
+            ctrl.setProductContext(product.getId(), product.getName());
+
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Biểu đồ & Lịch sử đấu giá — " + product.getName());
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.setResizable(true);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            AlertHelper.showError("Không thể mở biểu đồ lịch sử đấu giá!");
+        }
     }
 
     // Chuyển sang màn hình chi tiết sản phẩm (Giữ nguyên logic Callback BackAction)

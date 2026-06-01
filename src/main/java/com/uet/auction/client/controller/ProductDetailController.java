@@ -9,6 +9,10 @@ import com.uet.auction.common.Request.AuctionRequest;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -21,7 +25,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +40,11 @@ public class ProductDetailController {
 
     @FXML
     private Label lblProductName, lblCurrentPrice, lblDescription, lblTimeRemaining, lblStepPrice;
+
+    @FXML private LineChart<String, Number> bidPriceChart;
+    @FXML private CategoryAxis chartXAxis;
+    @FXML private NumberAxis chartYAxis;
+
     @FXML
     private Label lblSellerName, lblTopBidder;
     @FXML
@@ -45,6 +55,10 @@ public class ProductDetailController {
     private TableColumn<BidDTO, Double> colBidPrice;
     @FXML
     private TextField txtBidAmount;
+    @FXML
+    private TextField txtAutoMaxBid;
+    @FXML
+    private TextField txtAutoIncrement;
     @FXML
     private ImageView imgProduct;
 
@@ -162,42 +176,102 @@ public class ProductDetailController {
 
     public void displayBidHistory(List<BidDTO> bids) {
         if (bids != null) {
+            // Sắp xếp mới nhất lên đầu (thời gian giảm dần)
             recentBidsList.setAll(bids.stream()
-                    .sorted((b1, b2) -> (b1.getTime() == null ? 1 : b2.getTime().compareTo(b1.getTime())))
+                    .sorted((b1, b2) -> {
+                        if (b2.getTime() == null) return -1;
+                        if (b1.getTime() == null) return 1;
+                        return b2.getTime().compareTo(b1.getTime());
+                    })
                     .collect(Collectors.toList()));
 
-            if (!recentBidsList.isEmpty()) {
-                BidDTO top = recentBidsList.get(0);
-                if (currentProduct != null) {
-                    currentProduct.setCurrentPrice(top.getPrice());
-                    currentProduct.setOwnerName(top.getBiddername());
-                }
-                if (lblCurrentPrice != null) lblCurrentPrice.setText(String.format("%,.0f VNĐ", top.getPrice()));
-                if (lblTopBidder != null) lblTopBidder.setText(top.getBiddername());
+            // Lấy giá cao nhất (không phải bid mới nhất — có thể khác nhau)
+            recentBidsList.stream()
+                    .filter(b -> b.getPrice() != null)
+                    .max(Comparator.comparingDouble(BidDTO::getPrice))
+                    .ifPresent(top -> {
+                        if (currentProduct != null) {
+                            currentProduct.setCurrentPrice(top.getPrice());
+                            currentProduct.setOwnerName(top.getBiddername());
+                        }
+                        if (lblCurrentPrice != null) lblCurrentPrice.setText(String.format("%,.0f VNĐ", top.getPrice()));
+                        if (lblTopBidder  != null) lblTopBidder.setText(top.getBiddername());
+                    });
+
+            // Cập nhật biểu đồ
+            updatePriceChart(recentBidsList);
+        }
+    }
+
+    /**
+     * TÍNH NĂNG 14: Đăng ký đấu thầu tự động
+     * Gửi request REGISTER_AUTO_BID với [productId, bidderId, username, maxBid, increment]
+     */
+    @FXML
+    public void onRegisterAutoBidClick() {
+        try {
+            UserDTO sessionUser = SessionManager.getCurrentUser();
+            if (sessionUser == null) return;
+            if ("SELLER".equals(sessionUser.getRole()) || "ADMIN".equals(sessionUser.getRole())) {
+                showAlert(Alert.AlertType.ERROR, "Từ chối", "Quản trị viên/Người bán không được đấu giá tự động!");
+                return;
             }
+
+            String maxBidText  = txtAutoMaxBid != null ? txtAutoMaxBid.getText().replace(",", "").trim() : "";
+            String incrText    = txtAutoIncrement != null ? txtAutoIncrement.getText().replace(",", "").trim() : "";
+
+            if (maxBidText.isEmpty() || incrText.isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập đầy đủ giá tối đa và bước tăng!");
+                return;
+            }
+
+            double maxBid   = Double.parseDouble(maxBidText);
+            double increment = Double.parseDouble(incrText);
+
+            if (maxBid <= currentProduct.getCurrentPrice()) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", "Giá tối đa phải lớn hơn giá hiện tại!");
+                return;
+            }
+            if (increment <= 0) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", "Bước tăng phải lớn hơn 0!");
+                return;
+            }
+
+            Object[] autoData = new Object[]{
+                    currentProduct.getId(),
+                    sessionUser.getId(),
+                    sessionUser.getUsername(),
+                    maxBid,
+                    increment
+            };
+            SocketClient.sendRequest(new AuctionRequest("REGISTER_AUTO_BID", autoData));
+            if (txtAutoMaxBid != null) txtAutoMaxBid.clear();
+            if (txtAutoIncrement != null) txtAutoIncrement.clear();
+
+        } catch (NumberFormatException e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập số hợp lệ!");
         }
     }
 
     @FXML
-    public void onPlaceBidClick() {
-        try {
-            double bidAmount = Double.parseDouble(txtBidAmount.getText().replace(",", "").trim());
-            UserDTO sessionUser = SessionManager.getCurrentUser();
+    public void onPlaceBidClick() {        try {
+        double bidAmount = Double.parseDouble(txtBidAmount.getText().replace(",", "").trim());
+        UserDTO sessionUser = SessionManager.getCurrentUser();
 
-            if (sessionUser == null) return;
-            if ("SELLER".equals(sessionUser.getRole()) || "ADMIN".equals(sessionUser.getRole())) {
-                showAlert(Alert.AlertType.ERROR, "Từ chối", "Quản trị viên/Người bán không được đấu giá!");
-                return;
-            }
-            if (bidAmount < (currentProduct.getCurrentPrice() + currentProduct.getStepPrice())) {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Giá đặt phải lớn hơn giá hiện tại + bước giá!");
-                return;
-            }
-            SocketClient.sendRequest(new AuctionRequest("PLACE_BID", new Object[]{currentProduct.getId(), sessionUser.getUsername(), bidAmount}));
-            txtBidAmount.clear();
-        } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập số hợp lệ!");
+        if (sessionUser == null) return;
+        if ("SELLER".equals(sessionUser.getRole()) || "ADMIN".equals(sessionUser.getRole())) {
+            showAlert(Alert.AlertType.ERROR, "Từ chối", "Quản trị viên/Người bán không được đấu giá!");
+            return;
         }
+        if (bidAmount < (currentProduct.getCurrentPrice() + currentProduct.getStepPrice())) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Giá đặt phải lớn hơn giá hiện tại + bước giá!");
+            return;
+        }
+        SocketClient.sendRequest(new AuctionRequest("PLACE_BID", new Object[]{currentProduct.getId(), sessionUser.getUsername(), bidAmount}));
+        txtBidAmount.clear();
+    } catch (NumberFormatException e) {
+        showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập số hợp lệ!");
+    }
     }
 
     // Hàm hỗ trợ hiển thị hộp thoại thông báo
@@ -261,5 +335,69 @@ public class ProductDetailController {
         } else {
             return String.format("%02d:%02d:%02d", hours, minutes, seconds);
         }
+    }
+
+    /**
+     * Vẽ LineChart diễn biến giá đấu giá (tăng dần theo thời gian).
+     */
+    private void updatePriceChart(ObservableList<BidDTO> bids) {
+        if (bidPriceChart == null || bids == null || bids.isEmpty()) return;
+
+        // Sắp xếp tăng dần theo thời gian để biểu đồ đọc từ trái → phải
+        List<BidDTO> sorted = new ArrayList<>(bids);
+        sorted.sort((a, b) -> {
+            if (a.getTime() == null) return -1;
+            if (b.getTime() == null) return  1;
+            return a.getTime().compareTo(b.getTime());
+        });
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Giá đấu");
+
+        for (int i = 0; i < sorted.size(); i++) {
+            BidDTO bid = sorted.get(i);
+            if (bid.getPrice() == null) continue;
+            String label = "Lượt " + (i + 1);
+            XYChart.Data<String, Number> point = new XYChart.Data<>(label, bid.getPrice());
+
+            // Tooltip hiển thị khi hover
+            final BidDTO b = bid;
+            point.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                if (newNode != null) {
+                    Tooltip tip = new Tooltip(String.format(
+                            "Người: %s%nGiá: %,.0f VNĐ%nLúc: %s",
+                            b.getBiddername() != null ? b.getBiddername() : "—",
+                            b.getPrice(),
+                            b.getTime() != null ? b.getTime() : "—"));
+                    tip.setShowDelay(Duration.millis(80));
+                    Tooltip.install(newNode, tip);
+                    newNode.setStyle("-fx-background-color: #2980b9, white;");
+                }
+            });
+            series.getData().add(point);
+        }
+
+        bidPriceChart.setAnimated(false);
+        bidPriceChart.setCreateSymbols(true);
+        bidPriceChart.setLegendVisible(false);
+        bidPriceChart.getData().setAll(series);
+
+        // Style đường kẻ
+        javafx.application.Platform.runLater(() -> {
+            if (series.getNode() != null) {
+                series.getNode().setStyle("-fx-stroke: #2980b9; -fx-stroke-width: 2.5px;");
+            }
+            if (chartYAxis != null) {
+                chartYAxis.setAutoRanging(true);
+                chartYAxis.setTickLabelFormatter(new NumberAxis.DefaultFormatter(chartYAxis) {
+                    @Override public String toString(Number v) {
+                        double val = v.doubleValue();
+                        if (val >= 1_000_000) return String.format("%.1fM", val / 1_000_000);
+                        if (val >= 1_000)     return String.format("%.0fK", val / 1_000);
+                        return String.format("%.0f", val);
+                    }
+                });
+            }
+        });
     }
 }

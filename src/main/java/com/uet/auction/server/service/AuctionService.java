@@ -6,9 +6,15 @@ import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.DAO.BidDAO;
 import com.uet.auction.server.DAO.ProductDAO;
 import com.uet.auction.server.DAO.UserDAO;
+import com.uet.auction.server.model.AutoBidConfig;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AuctionService {
 
@@ -177,6 +183,89 @@ public class AuctionService {
             return new AuctionResponse(true, "GET_JOINED_PRODUCTS_RESULT", list);
         } catch (Exception e) {
             return new AuctionResponse(false, "GET_JOINED_PRODUCTS_RESULT", "Lỗi: " + e.getMessage(), null);
+        }
+    }
+    // =====================================================================
+    // TÍNH NĂNG 14: Đấu thầu tự động (Auto-Bid)
+    // Lưu trữ cấu hình auto-bid theo productId → danh sách người đăng ký
+    // =====================================================================
+    private final Map<Integer, List<AutoBidConfig>> autoBidRegistry = new ConcurrentHashMap<>();
+
+    /**
+     * Đăng ký cấu hình đấu tự động cho một người dùng trong một phiên đấu giá.
+     * Nếu người dùng đã đăng ký trước đó, cấu hình cũ sẽ bị cập nhật.
+     */
+    public synchronized AuctionResponse registerAutoBid(AutoBidConfig config) {
+        int productId = config.getAuctionId();
+        autoBidRegistry.putIfAbsent(productId, new ArrayList<>());
+        List<AutoBidConfig> configs = autoBidRegistry.get(productId);
+
+        // Cập nhật nếu user đã đăng ký trước
+        configs.removeIf(c -> c.getBidderId() == config.getBidderId());
+        configs.add(config);
+
+        System.out.println("[AutoBid] Đăng ký thành công: user=" + config.getBidderUsername()
+                + " | phiên=" + productId
+                + " | giới hạn=" + config.getMaxBid()
+                + " | bước=" + config.getIncrement());
+
+        return new AuctionResponse(true, "REGISTER_AUTO_BID_RESULT",
+                "Đăng ký đấu tự động thành công!", null);
+    }
+
+    /**
+     * Kích hoạt đấu tự động cho một phiên sau khi có bid mới.
+     * Tìm người có maxBid cao nhất (chưa giữ đỉnh) và đặt giá tự động.
+     *
+     * @param productId  ID phiên đấu giá
+     * @param lastBidder Người vừa đặt giá (để bỏ qua trong vòng này)
+     */
+    public synchronized void triggerAutoBid(int productId, String lastBidder) {
+        List<AutoBidConfig> configs = autoBidRegistry.get(productId);
+        if (configs == null || configs.isEmpty()) return;
+
+        // Lấy giá hiện tại của sản phẩm
+        List<ProductDTO> products = productDAO.getProductsByStatus("OPEN");
+        if (products == null) return;
+
+        ProductDTO product = products.stream()
+                .filter(p -> p.getId() == productId)
+                .findFirst().orElse(null);
+        if (product == null) return;
+
+        double currentPrice = product.getCurrentPrice();
+        String currentOwner = product.getOwnerName();
+
+        // Sắp xếp theo maxBid giảm dần (ưu tiên người trả cao)
+        PriorityQueue<AutoBidConfig> queue = new PriorityQueue<>(configs);
+
+        for (AutoBidConfig cfg : queue) {
+            String username = cfg.getBidderUsername();
+
+            // Bỏ qua nếu đang giữ đỉnh hoặc vừa bid thủ công
+            if (username.equals(currentOwner)) continue;
+            if (!cfg.isActive()) continue;
+
+            BigDecimal nextBid = cfg.calculateNextBid(BigDecimal.valueOf(currentPrice));
+            if (nextBid == null) {
+                // Vượt giới hạn — vô hiệu hóa
+                cfg.setActive(false);
+                System.out.println("[AutoBid] " + username + " đã đạt giới hạn, vô hiệu hóa auto-bid.");
+                continue;
+            }
+
+            // Thử đặt giá tự động
+            boolean ok = bidDAO.placeBid(productId, username, nextBid.doubleValue());
+            if (ok) {
+                System.out.println("[AutoBid] Đặt giá tự động thành công: " + username
+                        + " → " + nextBid + " VNĐ | phiên=" + productId);
+                // Cập nhật giá hiện tại để vòng tiếp theo tính đúng
+                currentPrice = nextBid.doubleValue();
+                currentOwner = username;
+                // Kích hoạt tiếp để những người khác có thể phản ứng
+                triggerAutoBid(productId, username);
+                break;
+            }
         }
     }
 

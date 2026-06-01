@@ -28,7 +28,7 @@
                         <TableColumn fx:id="colOwner" prefWidth="150.0" text="Người giữ đỉnh" />
                         <TableColumn fx:id="colEndTime" prefWidth="160.0" text="Hạn kết thúc" />
                         <TableColumn fx:id="colStatus" prefWidth="120.0" text="Trạng thái" />
-                        <TableColumn fx:id="colAction" prefWidth="100.0" text="Thao tác" />
+                        <TableColumn fx:id="colAction" prefWidth="170.0" text="Thao tác" />
                     </columns>
                     <columnResizePolicy>
                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

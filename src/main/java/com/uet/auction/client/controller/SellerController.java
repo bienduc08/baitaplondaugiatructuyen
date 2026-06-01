@@ -86,4 +86,5 @@ public class SellerController {
     public BorderPane getMainBorderPane() {
         return mainBorderPane;
     }
+    //thiếu chức năng là sửa sản phẩm nê sửa thì tự động về trạng thái pending
 }
