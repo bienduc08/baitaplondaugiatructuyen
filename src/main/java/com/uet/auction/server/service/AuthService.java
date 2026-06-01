@@ -42,33 +42,6 @@ public class AuthService {
         }
     }
 
-    public AuctionResponse upgradeToSeller(String username) {
-        try {
-            String currentRole = userDAO.getRole(username);
-            if (currentRole == null) {
-                return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Không tìm thấy tài khoản!", null);
-            }
-            if ("SELLER".equals(currentRole)) {
-                return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Bạn đã là Người bán!", null);
-            }
-            if ("ADMIN".equals(currentRole)) {
-                return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Tài khoản quản trị không thể đổi vai trò tại đây!", null);
-            }
-            if (!"USER".equals(currentRole) && !"BIDDER".equals(currentRole)) {
-                return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Không thể nâng cấp vai trò này!", null);
-            }
-
-            boolean ok = userDAO.updateRole(username, "SELLER");
-            if (ok) {
-                return new AuctionResponse(true, "UPGRADE_TO_SELLER_RESULT",
-                        "Đã đăng ký Người bán! Đăng nhập lại hoặc vào giao diện Người bán.", null);
-            }
-            return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Cập nhật vai trò thất bại!", null);
-        } catch (Exception e) {
-            return new AuctionResponse(false, "UPGRADE_TO_SELLER_RESULT", "Lỗi: " + e.getMessage(), null);
-        }
-    }
-
     // =========================================================
     // BỔ SUNG 3 HÀM QUẢN LÝ NGƯỜI DÙNG CHO ADMIN
     // =========================================================

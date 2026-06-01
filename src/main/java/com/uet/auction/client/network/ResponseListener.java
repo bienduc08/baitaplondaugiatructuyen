@@ -5,7 +5,6 @@ import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Response.AuctionResponse;
-import com.uet.auction.server.service.SessionManager;
 import javafx.application.Platform;
 
 import java.io.IOException;

@@ -60,12 +60,6 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
-                    case "UPGRADE_TO_SELLER":
-                        String upgradeUsername = (String) request.getData();
-                        response = authService.upgradeToSeller(upgradeUsername);
-                        sendResponse(response);
-                        break;
-
                     case "DEPOSIT":
                         Object[] depData = (Object[]) request.getData();
                         response = authService.deposit((String) depData[0], ((Number) depData[1]).doubleValue());
