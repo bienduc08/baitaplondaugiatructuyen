@@ -126,8 +126,11 @@ public class AuthService {
         boolean success = userDAO.updateProfile(username, fullName, phone, newPass);
 
         if (success) {
-            // Lấy lại thông tin user mới nhất từ DB để gửi về Client cập nhật giao diện
-            UserDTO updatedUser = userDAO.searchUser(username).get(0);
+            List<UserDTO> result = userDAO.searchUser(username);
+            if (result == null || result.isEmpty()) {
+                return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Không tìm thấy tài khoản sau khi cập nhật!", null);
+            }
+            UserDTO updatedUser = result.get(0);
             return new AuctionResponse(true, "UPDATE_PROFILE_SUCCESS", "Cập nhật hồ sơ thành công!", updatedUser);
         } else {
             return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Cập nhật thất bại. Vui lòng thử lại!", null);

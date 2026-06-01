@@ -10,6 +10,19 @@ import java.util.List;
 
 public class ProductDAO {
 
+    public ProductDTO getProductById(int productId) {
+        String sql = "SELECT * FROM products WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, productId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return mapRowToDTO(rs);
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO.getProductById] " + e.getMessage());
+        }
+        return null;
+    }
+
     public List<ProductDTO> getAllProducts() {
         return getProductsByStatus("ALL");
     }

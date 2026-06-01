@@ -19,7 +19,7 @@ public class ClientHandler implements Runnable {
     private ObjectOutputStream out;
 
     private final AuthService    authService    = new AuthService();
-    private final AuctionService auctionService = new AuctionService();
+    private final AuctionService auctionService = AuctionService.getInstance();
 
     // Lưu thông tin user đã đăng nhập của kết nối này để kiểm tra quyền
     private UserDTO loggedInUser = null;
@@ -147,13 +147,19 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "PLACE_BID":
+                        // SECURITY: dùng username từ session server, không tin client gửi lên
+                        if (loggedInUser == null) {
+                            sendResponse(new AuctionResponse(false, "BID_RESULT", "Bạn chưa đăng nhập!", null));
+                            break;
+                        }
                         Object[] bidData = (Object[]) request.getData();
                         int productId2 = ((Number) bidData[0]).intValue();
-                        String bidder  = (String) bidData[1];
+                        String bidder  = loggedInUser.getUsername(); // ← lấy từ session
                         double amount  = ((Number) bidData[2]).doubleValue();
                         response = auctionService.placeBid(productId2, bidder, amount);
                         sendResponse(response);
                         if (response.isSuccess()) {
+                            auctionService.triggerAutoBid(productId2, bidder); // kích hoạt auto-bid
                             SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
                         }
                         break;

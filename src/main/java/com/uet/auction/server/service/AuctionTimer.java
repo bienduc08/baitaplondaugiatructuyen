@@ -33,7 +33,7 @@ public class AuctionTimer {
             } catch (Exception e) {
                 System.err.println("Lỗi AuctionTimer: " + e.getMessage());
             }
-        }, 0, 5, TimeUnit.SECONDS); // SỬA: 30 giây thay vì 1 giây (giảm tải DB)
+        }, 0, 5, TimeUnit.SECONDS); // SỬA: 5 giây thay vì 1 giây (giảm tải DB)
     }
 
     public void stopChecking() {

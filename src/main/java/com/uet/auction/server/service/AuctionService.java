@@ -18,6 +18,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class AuctionService {
 
+    // =====================================================================
+    // SINGLETON — đảm bảo autoBidRegistry dùng chung toàn server
+    // =====================================================================
+    private static final AuctionService INSTANCE = new AuctionService();
+    public static AuctionService getInstance() { return INSTANCE; }
+    private AuctionService() {}
+
     private final ProductDAO productDAO = new ProductDAO();
     private final BidDAO     bidDAO     = new BidDAO();
     private final UserDAO    userDAO    = new UserDAO();
@@ -151,7 +158,9 @@ public class AuctionService {
                         String.format("Số dư không đủ! Số dư: %,.0f VNĐ", balance), null);
             }
 
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            System.err.println("[AuctionService.placeBid] Lỗi kiểm tra số dư: " + e.getMessage());
+        }
 
         boolean ok = bidDAO.placeBid(productId, bidderName, bidAmount);
         return ok
@@ -224,48 +233,47 @@ public class AuctionService {
         List<AutoBidConfig> configs = autoBidRegistry.get(productId);
         if (configs == null || configs.isEmpty()) return;
 
-        // Lấy giá hiện tại của sản phẩm
-        List<ProductDTO> products = productDAO.getProductsByStatus("OPEN");
-        if (products == null) return;
+        // Giới hạn số vòng để tránh loop vô tận (tối đa bằng số người đăng ký)
+        int maxRounds = configs.size() * 2;
+        int round = 0;
 
-        ProductDTO product = products.stream()
-                .filter(p -> p.getId() == productId)
-                .findFirst().orElse(null);
-        if (product == null) return;
+        String currentOwner = lastBidder;
 
-        double currentPrice = product.getCurrentPrice();
-        String currentOwner = product.getOwnerName();
+        while (round++ < maxRounds) {
+            // Lấy giá hiện tại trực tiếp theo productId (không fetch toàn bộ)
+            ProductDTO product = productDAO.getProductById(productId);
+            if (product == null || !"OPEN".equals(product.getStatus())) break;
 
-        // Sắp xếp theo maxBid giảm dần (ưu tiên người trả cao)
-        PriorityQueue<AutoBidConfig> queue = new PriorityQueue<>(configs);
+            double currentPrice = product.getCurrentPrice();
+            currentOwner = product.getOwnerName();
 
-        for (AutoBidConfig cfg : queue) {
-            String username = cfg.getBidderUsername();
+            // Sắp xếp theo maxBid giảm dần
+            PriorityQueue<AutoBidConfig> queue = new PriorityQueue<>(configs);
 
-            // Bỏ qua nếu đang giữ đỉnh hoặc vừa bid thủ công
-            if (username.equals(currentOwner)) continue;
-            if (!cfg.isActive()) continue;
+            boolean anyBid = false;
+            for (AutoBidConfig cfg : queue) {
+                String username = cfg.getBidderUsername();
 
-            BigDecimal nextBid = cfg.calculateNextBid(BigDecimal.valueOf(currentPrice));
-            if (nextBid == null) {
-                // Vượt giới hạn — vô hiệu hóa
-                cfg.setActive(false);
-                System.out.println("[AutoBid] " + username + " đã đạt giới hạn, vô hiệu hóa auto-bid.");
-                continue;
+                if (!cfg.isActive()) continue;
+                if (username.equals(currentOwner)) continue; // đang giữ đỉnh
+
+                BigDecimal nextBid = cfg.calculateNextBid(BigDecimal.valueOf(currentPrice));
+                if (nextBid == null) {
+                    cfg.setActive(false);
+                    System.out.println("[AutoBid] " + username + " đạt giới hạn, vô hiệu hóa.");
+                    continue;
+                }
+
+                boolean ok = bidDAO.placeBid(productId, username, nextBid.doubleValue());
+                if (ok) {
+                    System.out.println("[AutoBid] " + username + " → " + nextBid + " VNĐ | phiên=" + productId);
+                    anyBid = true;
+                    break; // Fetch lại giá mới nhất ở vòng while tiếp
+                }
             }
 
-            // Thử đặt giá tự động
-            boolean ok = bidDAO.placeBid(productId, username, nextBid.doubleValue());
-            if (ok) {
-                System.out.println("[AutoBid] Đặt giá tự động thành công: " + username
-                        + " → " + nextBid + " VNĐ | phiên=" + productId);
-                // Cập nhật giá hiện tại để vòng tiếp theo tính đúng
-                currentPrice = nextBid.doubleValue();
-                currentOwner = username;
-                // Kích hoạt tiếp để những người khác có thể phản ứng
-                triggerAutoBid(productId, username);
-                break;
-            }
+            // Không ai bid thêm được → dừng
+            if (!anyBid) break;
         }
     }
 
