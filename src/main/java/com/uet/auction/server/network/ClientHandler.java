@@ -236,6 +236,31 @@ public class ClientHandler implements Runnable {
                         // Gửi kết quả về cho giao diện Client
                         sendResponse(response);
                         break;
+                    case "REGISTER_AUTO_BID":
+                        if (loggedInUser == null) {
+                            sendResponse(new AuctionResponse(false, "REGISTER_AUTO_BID_RESULT", "Bạn chưa đăng nhập!", null));
+                            break;
+                        }
+
+                        Object[] autoBidData = (Object[]) request.getData();
+
+                        // Lấy chính xác 5 phần tử theo đúng thứ tự mà Client gửi lên
+                        int pId = ((Number) autoBidData[0]).intValue();
+                        int bidderId = ((Number) autoBidData[1]).intValue();
+                        String autoBidderUsername = (String) autoBidData[2];
+                        double maxPrice = ((Number) autoBidData[3]).doubleValue();
+                        double increment = ((Number) autoBidData[4]).doubleValue();
+
+                        // Khởi tạo Object cấu hình truyền đúng tham số
+                        com.uet.auction.server.model.AutoBidConfig config =
+                                new com.uet.auction.server.model.AutoBidConfig(pId, bidderId, autoBidderUsername, maxPrice, increment);
+
+                        // Truyền đối tượng vào service
+                        response = auctionService.registerAutoBid(config);
+
+                        response.setType("REGISTER_AUTO_BID_RESULT");
+                        sendResponse(response);
+                        break;
 
                 }
             }

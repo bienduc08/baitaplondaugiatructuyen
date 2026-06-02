@@ -115,6 +115,9 @@ public class ResponseListener implements Runnable {
                                 ProductDetailController.instance.reloadProductDetails();
                             if (SellerMyProductsController.instance != null)       // ← thêm
                                 SellerMyProductsController.instance.loadMyAuctions(); // ← thêm
+                            if (BidHistoryController.instance != null) {
+                                BidHistoryController.instance.loadBidHistory();
+                            }
                             String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
                             if (currentUsr != null) {
                                 SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", currentUsr));
@@ -284,6 +287,22 @@ public class ResponseListener implements Runnable {
                     case "UPDATE_PROFILE_FAILED":
                         Platform.runLater(() -> {
                             AlertHelper.showError(res.getMessage());
+                        });
+                        break;
+                    case "REGISTER_AUTO_BID_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage() != null ?
+                                        res.getMessage() : "Đăng ký đấu giá tự động thành công!");
+
+                                // Cập nhật lại màn hình chi tiết để hiển thị trạng thái Auto-bid
+                                if (ProductDetailController.instance != null) {
+                                    ProductDetailController.instance.reloadProductDetails();
+                                }
+                            } else {
+                                AlertHelper.showError(res.getMessage() != null ?
+                                        res.getMessage() : "Đăng ký đấu giá tự động thất bại!");
+                            }
                         });
                         break;
 

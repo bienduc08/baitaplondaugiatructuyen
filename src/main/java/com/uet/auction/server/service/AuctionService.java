@@ -257,7 +257,7 @@ public class AuctionService {
                 if (!cfg.isActive()) continue;
                 if (username.equals(currentOwner)) continue; // đang giữ đỉnh
 
-                BigDecimal nextBid = cfg.calculateNextBid(BigDecimal.valueOf(currentPrice));
+                Double nextBid = cfg.calculateNextBid(currentPrice);
                 if (nextBid == null) {
                     cfg.setActive(false);
                     System.out.println("[AutoBid] " + username + " đạt giới hạn, vô hiệu hóa.");

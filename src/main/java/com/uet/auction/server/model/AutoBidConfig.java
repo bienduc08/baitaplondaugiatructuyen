@@ -8,8 +8,8 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
     private int auctionId;
     private int bidderId;
     private String bidderUsername;
-    private BigDecimal maxBid;
-    private BigDecimal increment;
+    private Double maxBid;
+    private Double increment;
     private LocalDateTime registeredAt;
     private boolean active;
 
@@ -18,8 +18,8 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
         this.active = true;
     }
 
-    public AutoBidConfig(int bidderId, String bidderUsername, int auctionId,
-                         BigDecimal maxBid, BigDecimal increment) {
+    public AutoBidConfig(int auctionId,int bidderId, String bidderUsername,
+                         Double maxBid, Double increment) {
         this.bidderId = bidderId;
         this.bidderUsername = bidderUsername;
         this.auctionId = auctionId;
@@ -35,8 +35,8 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
         return cmp != 0 ? cmp : this.registeredAt.compareTo(other.registeredAt);
     }
 
-    public BigDecimal calculateNextBid(BigDecimal currentPrice) {
-        BigDecimal nextBid = currentPrice.add(this.increment);
+    public Double calculateNextBid( Double currentPrice) {
+        Double nextBid = currentPrice;
         if (nextBid.compareTo(this.maxBid) > 0) {
             return this.maxBid.compareTo(currentPrice) > 0 ? this.maxBid : null;
         }
@@ -52,11 +52,11 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
     public String getBidderUsername() { return bidderUsername; }
     public void setBidderUsername(String bidderUsername) { this.bidderUsername = bidderUsername; }
 
-    public BigDecimal getMaxBid() { return maxBid; }
-    public void setMaxBid(BigDecimal maxBid) { this.maxBid = maxBid; }
+    public Double getMaxBid() { return maxBid; }
+    public void setMaxBid( Double maxBid) { this.maxBid = maxBid; }
 
-    public BigDecimal getIncrement() { return increment; }
-    public void setIncrement(BigDecimal increment) { this.increment = increment; }
+    public Double getIncrement() { return increment; }
+    public void setIncrement(Double increment) { this.increment = increment; }
 
     public LocalDateTime getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }
