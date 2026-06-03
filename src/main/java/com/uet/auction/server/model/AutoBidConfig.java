@@ -35,10 +35,10 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
         return cmp != 0 ? cmp : this.registeredAt.compareTo(other.registeredAt);
     }
 
-    public Double calculateNextBid( Double currentPrice) {
-        Double nextBid = currentPrice;
-        if (nextBid.compareTo(this.maxBid) > 0) {
-            return this.maxBid.compareTo(currentPrice) > 0 ? this.maxBid : null;
+    public Double calculateNextBid(Double currentPrice) {
+        double nextBid = currentPrice + this.increment;
+        if (nextBid > this.maxBid) {
+            return null;
         }
         return nextBid;
     }
