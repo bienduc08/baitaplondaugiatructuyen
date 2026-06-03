@@ -18,7 +18,7 @@ public class BidDAO {
             String checkSql  = "SELECT current_price, step_price, owner_name, seller_name FROM products WHERE id = ? AND status = 'OPEN'";
             String updateSql = "UPDATE products SET current_price = ?, owner_name = ? WHERE id = ?";
             String insertSql = "INSERT INTO bids (product_id, bidder_name, amount, bid_time, status) "
-                    + "VALUES (?, ?, ?, NOW(), 'Hợp lệ')";
+                    + "VALUES (?, ?, ?, NOW(3), 'Hợp lệ')";
             // Trừ tiền người đặt giá mới (và hoàn tiền người giữ đỉnh cũ nếu có)
             String deductSql = "UPDATE users SET balance = balance - ? WHERE username = ? AND balance >= ?";
             String refundSql = "UPDATE users SET balance = balance + ? WHERE username = ?";

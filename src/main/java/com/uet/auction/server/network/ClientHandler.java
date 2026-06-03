@@ -22,7 +22,7 @@ public class ClientHandler implements Runnable {
     private ObjectOutputStream out;
 
     private final AuthService    authService    = new AuthService();
-    private final AuctionService auctionService = new AuctionService();
+    private final AuctionService auctionService = AuctionService.getInstance();
 
     // Lưu thông tin user đã đăng nhập của kết nối này để kiểm tra quyền
     private UserDTO loggedInUser = null;

@@ -18,6 +18,9 @@ import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AuctionService {
+    private static final AuctionService INSTANCE = new AuctionService();
+    public static AuctionService getInstance() { return INSTANCE; }
+    private AuctionService() {}
 
     private final ProductDAO productDAO = new ProductDAO();
     private final BidDAO     bidDAO     = new BidDAO();
