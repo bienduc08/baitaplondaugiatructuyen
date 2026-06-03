@@ -14,6 +14,8 @@ on:
 jobs:
   qodana:
     runs-on: ubuntu-latest
+    # Chỉ chạy khi QODANA_TOKEN đã được cấu hình trong repository secrets
+    if: ${{ secrets.QODANA_TOKEN != '' }}
     permissions:
       contents: write
       pull-requests: write
