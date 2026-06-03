@@ -82,6 +82,7 @@ mvn javafx:run
 - [x] Nạp tiền vào tài khoản
 - [x] Quản lý hồ sơ cá nhân (User / Seller / Admin)
 - [x] Thống kê hệ thống (Admin)
+- [x] AutoBid tự động đấu giá
 - [x] Xử lý lỗi concurrent bidding
 
 ## Báo cáo và Demo
