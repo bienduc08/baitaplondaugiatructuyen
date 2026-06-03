@@ -26,6 +26,8 @@ public class AuctionTimer {
                 // 2. Đóng các phiên OPEN đã hết giờ end_time → CLOSED
                 productDAO.closeExpiredAuctions();
 
+                AuctionService.getInstance().triggerAllAutoBids();
+
                 // SỬA: luôn broadcast sau mỗi chu kỳ để client tự refresh
                 // (an toàn hơn vì openScheduledAuctions/closeExpiredAuctions trả về void)
                 SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));

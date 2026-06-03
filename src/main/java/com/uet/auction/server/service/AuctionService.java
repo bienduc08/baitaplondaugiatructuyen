@@ -265,5 +265,11 @@ public class AuctionService {
         }
     }
 
+    public synchronized void triggerAllAutoBids() {
+        for (Integer productId : autoBidRegistry.keySet()) {
+            triggerAutoBid(productId, null);
+        }
+    }
+
 
 }

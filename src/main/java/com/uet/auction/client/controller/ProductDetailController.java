@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -345,11 +346,7 @@ public class ProductDetailController {
 
         // Sắp xếp tăng dần theo thời gian để biểu đồ đọc từ trái → phải
         List<BidDTO> sorted = new ArrayList<>(bids);
-        sorted.sort((a, b) -> {
-            if (a.getTime() == null) return -1;
-            if (b.getTime() == null) return  1;
-            return a.getTime().compareTo(b.getTime());
-        });
+        Collections.reverse(sorted);
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Giá đấu");
