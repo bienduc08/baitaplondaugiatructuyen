@@ -101,9 +101,9 @@ public class BidHistoryController {
         loadBidHistory(false);
     }
 
-    public void loadBidHistory() { loadBidHistory(false); }
+    private void loadBidHistory() { loadBidHistory(false); }
 
-    public void loadBidHistory(boolean isAutoRefresh) {
+    private void loadBidHistory(boolean isAutoRefresh) {
         if (currentProductId == null) return;
         if (!isAutoRefresh) {
             bidListData.clear();

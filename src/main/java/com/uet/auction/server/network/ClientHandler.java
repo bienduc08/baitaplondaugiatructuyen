@@ -4,8 +4,11 @@ import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
 import com.uet.auction.common.Response.AuctionResponse;
+import com.uet.auction.server.model.AutoBidConfig;
 import com.uet.auction.server.service.AuctionService;
 import com.uet.auction.server.service.AuthService;
+import com.uet.auction.server.service.SessionManager;
+import javafx.application.Platform;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -19,7 +22,7 @@ public class ClientHandler implements Runnable {
     private ObjectOutputStream out;
 
     private final AuthService    authService    = new AuthService();
-    private final AuctionService auctionService = AuctionService.getInstance();
+    private final AuctionService auctionService = new AuctionService();
 
     // Lưu thông tin user đã đăng nhập của kết nối này để kiểm tra quyền
     private UserDTO loggedInUser = null;
@@ -147,19 +150,34 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "PLACE_BID":
-                        // SECURITY: dùng username từ session server, không tin client gửi lên
-                        if (loggedInUser == null) {
-                            sendResponse(new AuctionResponse(false, "BID_RESULT", "Bạn chưa đăng nhập!", null));
-                            break;
-                        }
                         Object[] bidData = (Object[]) request.getData();
                         int productId2 = ((Number) bidData[0]).intValue();
-                        String bidder  = loggedInUser.getUsername(); // ← lấy từ session
+                        String bidder  = (String) bidData[1];
                         double amount  = ((Number) bidData[2]).doubleValue();
                         response = auctionService.placeBid(productId2, bidder, amount);
                         sendResponse(response);
                         if (response.isSuccess()) {
-                            auctionService.triggerAutoBid(productId2, bidder); // kích hoạt auto-bid
+                            // Sau khi có bid thủ công, kích hoạt đấu tự động cho phiên này
+                            auctionService.triggerAutoBid(productId2, bidder);
+                            SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
+                        }
+                        break;
+
+                    case "REGISTER_AUTO_BID":
+                        // data = [productId, bidderId, bidderUsername, maxBid, increment]
+                        Object[] autoData = (Object[]) request.getData();
+                        int abProductId   = ((Number) autoData[0]).intValue();
+                        int abBidderId    = ((Number) autoData[1]).intValue();
+                        String abUsername = (String) autoData[2];
+                        Double abMax = ((Number) autoData[3]).doubleValue();
+                        Double abIncrement = ((Number) autoData[4]).doubleValue();
+
+                        AutoBidConfig autoBidConfig = new AutoBidConfig(abBidderId, abUsername, abProductId, abMax, abIncrement);
+                        response = auctionService.registerAutoBid(autoBidConfig);
+                        sendResponse(response);
+                        if (response.isSuccess()) {
+                            // Ngay sau khi đăng ký, thử kích hoạt auto-bid
+                            auctionService.triggerAutoBid(abProductId, null);
                             SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
                         }
                         break;
@@ -213,10 +231,6 @@ public class ClientHandler implements Runnable {
                     // THỐNG KÊ DASHBOARD CHO ADMIN
                     // Khi nhận được response cho "GET_DASHBOARD_STATS"
                     // Phác thảo luồng xử lý bên Server (ClientHandler)
-                    // Nếu Server báo thành công
-                    // THỐNG KÊ DASHBOARD CHO ADMIN
-                    // Khi nhận được response cho "GET_DASHBOARD_STATS"
-                    // Phác thảo luồng xử lý bên Server (ClientHandler)
                     case "UPDATE_PROFILE":
                         Object[] updateData = (Object[]) request.getData();
                         String updateUsername = (String) updateData[0];
@@ -236,31 +250,7 @@ public class ClientHandler implements Runnable {
                         // Gửi kết quả về cho giao diện Client
                         sendResponse(response);
                         break;
-                    case "REGISTER_AUTO_BID":
-                        if (loggedInUser == null) {
-                            sendResponse(new AuctionResponse(false, "REGISTER_AUTO_BID_RESULT", "Bạn chưa đăng nhập!", null));
-                            break;
-                        }
-
-                        Object[] autoBidData = (Object[]) request.getData();
-
-                        // Lấy chính xác 5 phần tử theo đúng thứ tự mà Client gửi lên
-                        int pId = ((Number) autoBidData[0]).intValue();
-                        int bidderId = ((Number) autoBidData[1]).intValue();
-                        String autoBidderUsername = (String) autoBidData[2];
-                        double maxPrice = ((Number) autoBidData[3]).doubleValue();
-                        double increment = ((Number) autoBidData[4]).doubleValue();
-
-                        // Khởi tạo Object cấu hình truyền đúng tham số
-                        com.uet.auction.server.model.AutoBidConfig config =
-                                new com.uet.auction.server.model.AutoBidConfig(pId, bidderId, autoBidderUsername, maxPrice, increment);
-
-                        // Truyền đối tượng vào service
-                        response = auctionService.registerAutoBid(config);
-
-                        response.setType("REGISTER_AUTO_BID_RESULT");
-                        sendResponse(response);
-                        break;
+                    // Nếu Server báo thành công
 
                 }
             }

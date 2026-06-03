@@ -5,6 +5,7 @@ import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Response.AuctionResponse;
+import com.uet.auction.server.service.SessionManager;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -115,9 +116,6 @@ public class ResponseListener implements Runnable {
                                 ProductDetailController.instance.reloadProductDetails();
                             if (SellerMyProductsController.instance != null)       // ← thêm
                                 SellerMyProductsController.instance.loadMyAuctions(); // ← thêm
-                            if (BidHistoryController.instance != null) {
-                                BidHistoryController.instance.loadBidHistory();
-                            }
                             String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
                             if (currentUsr != null) {
                                 SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", currentUsr));
@@ -165,6 +163,16 @@ public class ResponseListener implements Runnable {
                                 AlertHelper.showInfo(res.getMessage() != null ? res.getMessage() : "Đặt giá thành công!");
                             } else {
                                 AlertHelper.showError(res.getMessage() != null ? res.getMessage() : "Đặt giá thất bại!");
+                            }
+                        });
+                        break;
+
+                    case "REGISTER_AUTO_BID_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage() != null ? res.getMessage() : "Đăng ký đấu tự động thành công!");
+                            } else {
+                                AlertHelper.showError(res.getMessage() != null ? res.getMessage() : "Đăng ký đấu tự động thất bại!");
                             }
                         });
                         break;
@@ -289,22 +297,6 @@ public class ResponseListener implements Runnable {
                             AlertHelper.showError(res.getMessage());
                         });
                         break;
-                    case "REGISTER_AUTO_BID_RESULT":
-                        Platform.runLater(() -> {
-                            if (res.isSuccess()) {
-                                AlertHelper.showInfo(res.getMessage() != null ?
-                                        res.getMessage() : "Đăng ký đấu giá tự động thành công!");
-
-                                // Cập nhật lại màn hình chi tiết để hiển thị trạng thái Auto-bid
-                                if (ProductDetailController.instance != null) {
-                                    ProductDetailController.instance.reloadProductDetails();
-                                }
-                            } else {
-                                AlertHelper.showError(res.getMessage() != null ?
-                                        res.getMessage() : "Đăng ký đấu giá tự động thất bại!");
-                            }
-                        });
-                        break;
 
                     default:
                         System.out.println("Phản hồi không xác định: " + type);
@@ -314,7 +306,6 @@ public class ResponseListener implements Runnable {
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("Mất kết nối tới Server.");
-            SocketClient.startAutoReconnect();
         }
     }
 }

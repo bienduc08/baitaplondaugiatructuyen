@@ -18,7 +18,7 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
         this.active = true;
     }
 
-    public AutoBidConfig(int auctionId,int bidderId, String bidderUsername,
+    public AutoBidConfig(int bidderId, String bidderUsername,int auctionId,
                          Double maxBid, Double increment) {
         this.bidderId = bidderId;
         this.bidderUsername = bidderUsername;
