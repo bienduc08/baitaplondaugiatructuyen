@@ -137,22 +137,30 @@ public class UserAuctionsController {
         Platform.runLater(() -> joinedList.setAll(products));
     }
 
-    // Mở cửa sổ Lịch sử + Biểu đồ giá đấu giá
+    // Mở cửa sổ Lịch sử + Biểu đồ giá đấu giá trực tiếp trong giao diện User
     private void openBidHistory(ProductDTO product) {
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
-                    getClass().getResource("/com/uet/auction/view/BidHistoryView.fxml"));
-            javafx.scene.Parent root = loader.load();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/BidHistoryView.fxml"));
+            Node bidHistoryNode = loader.load();
 
             BidHistoryController ctrl = loader.getController();
             ctrl.setProductContext(product.getId(), product.getName());
 
-            javafx.stage.Stage stage = new javafx.stage.Stage();
-            stage.setTitle("Biểu đồ & Lịch sử đấu giá — " + product.getName());
-            stage.setScene(new javafx.scene.Scene(root));
-            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            stage.setResizable(true);
-            stage.show();
+            // Nhúng vào BorderPane chính
+            if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
+                BorderPane mainPane = UserController.instance.getMainBorderPane();
+
+                // 1. LƯU LẠI GIAO DIỆN HIỆN TẠI (Danh sách phiên đấu giá)
+                Node previousCenterView = mainPane.getCenter();
+
+                // 2. ĐỊNH NGHĨA HÀM QUAY LẠI: setCenter về lại giao diện cũ
+                BidHistoryController.onBackAction = () -> {
+                    mainPane.setCenter(previousCenterView);
+                };
+
+                // 3. HIỂN THỊ giao diện BidHistory lên
+                mainPane.setCenter(bidHistoryNode);
+            }
         } catch (IOException e) {
             e.printStackTrace();
             AlertHelper.showError("Không thể mở biểu đồ lịch sử đấu giá!");

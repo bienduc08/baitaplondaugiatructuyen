@@ -22,8 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.uet.auction.client.controller.UserController.onBackAction;
+
 public class BidHistoryController {
 
+    public static Runnable onBackAction;
     @FXML private Label productNameLabel;
     @FXML private Label totalBidsLabel;
 
@@ -149,12 +152,12 @@ public class BidHistoryController {
     private void updateChart(List<BidDTO> list) {
         if (bidLineChart == null || list == null || list.isEmpty()) return;
 
-        // Sắp xếp tăng dần theo thời gian để biểu đồ đúng chiều
+        // Sắp xếp tăng dần theo Giá tiền (đảm bảo biểu đồ luôn đi lên)
         List<BidDTO> sorted = new ArrayList<>(list);
         sorted.sort((a, b) -> {
-            if (a.getTime() == null) return -1;
-            if (b.getTime() == null) return 1;
-            return a.getTime().compareTo(b.getTime());
+            if (a.getPrice() == null) return -1;
+            if (b.getPrice() == null) return 1;
+            return a.getPrice().compareTo(b.getPrice());
         });
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
@@ -200,12 +203,21 @@ public class BidHistoryController {
     }
 
     @FXML
-    private void onRefreshClick() { loadBidHistory(); }
+    private void onRefreshClick() {
+        loadBidHistory(); }
 
     @FXML
     private void onCloseClick() {
         instance = null;
-        Stage currentStage = (Stage) bidHistoryTable.getScene().getWindow();
-        currentStage.close();
+
+        // Dừng vòng lặp tự động làm mới để tránh lỗi tràn bộ nhớ (memory leak)
+        if (autoRefreshTimeline != null) {
+            autoRefreshTimeline.stop();
+        }
+
+        // Kích hoạt hàm quay lại giao diện trước
+        if (onBackAction != null) {
+            onBackAction.run();
+        }
     }
 }

@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.*?>
 
-<AnchorPane prefHeight="580.0" prefWidth="750.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.uet.auction.client.controller.BidHistoryController">
+<AnchorPane prefHeight="580.0" prefWidth="750.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.uet.auction.client.controller.BidHistoryController">
     <children>
         <VBox spacing="12.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <padding>
@@ -16,8 +15,12 @@
             <children>
 
                 <!-- Tiêu đề -->
-                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
                     <children>
+                        <Button mnemonicParsing="false" onAction="#onCloseClick"
+                                style="-fx-background-color: #7f8c8d; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5; -fx-font-weight: bold;"
+                                text="⬅ Quay lại" />
+
                         <Label text="LỊCH SỬ ĐẤU GIÁ" textFill="#2980b9">
                             <font><Font name="System Bold" size="20.0" /></font>
                         </Label>
@@ -37,9 +40,9 @@
                             <content>
                                 <TableView fx:id="bidHistoryTable" style="-fx-padding: 5;">
                                     <columns>
-                                        <TableColumn fx:id="timeCol"   prefWidth="185.0" text="Thời gian" />
+                                        <TableColumn fx:id="timeCol" prefWidth="185.0" text="Thời gian" />
                                         <TableColumn fx:id="bidderCol" prefWidth="200.0" text="Người trả giá" />
-                                        <TableColumn fx:id="priceCol"  prefWidth="155.0" text="Số tiền (VNĐ)" />
+                                        <TableColumn fx:id="priceCol" prefWidth="155.0" text="Số tiền (VNĐ)" />
                                         <TableColumn fx:id="statusCol" prefWidth="130.0" text="Trạng thái" />
                                     </columns>
                                     <columnResizePolicy>
@@ -54,12 +57,11 @@
                             <content>
                                 <VBox spacing="8.0" style="-fx-padding: 10; -fx-background-color: #f8fafc;">
                                     <children>
-                                        <Label text="Diễn biến giá đấu theo thời gian" textFill="#2980b9" style="-fx-font-weight: bold; -fx-font-size: 13;">
+                                        <Label style="-fx-font-weight: bold; -fx-font-size: 13;" text="Diễn biến giá đấu theo thời gian" textFill="#2980b9">
                                         </Label>
-                                        <LineChart fx:id="bidLineChart" VBox.vgrow="ALWAYS"
-                                                   style="-fx-background-color: white; -fx-background-radius: 10;">
+                                        <LineChart fx:id="bidLineChart" style="-fx-background-color: white; -fx-background-radius: 10;" VBox.vgrow="ALWAYS">
                                             <xAxis>
-                                                <CategoryAxis fx:id="xAxis" label="Lượt đặt giá" />
+                                                <CategoryAxis label="Lượt đặt giá" fx:id="xAxis" />
                                             </xAxis>
                                             <yAxis>
                                                 <NumberAxis fx:id="yAxis" label="Giá (VNĐ)" />
@@ -78,10 +80,7 @@
                     <children>
                         <Label fx:id="totalBidsLabel" text="Tổng cộng: 0 lượt trả giá" />
                         <Region HBox.hgrow="ALWAYS" />
-                        <Button mnemonicParsing="false" onAction="#onRefreshClick" prefHeight="30.0" prefWidth="100.0"
-                                style="-fx-background-color: #3498db; -fx-text-fill: white;" text="Làm mới" />
-                        <Button mnemonicParsing="false" onAction="#onCloseClick" prefHeight="30.0" prefWidth="100.0"
-                                style="-fx-background-color: #95a5a6; -fx-text-fill: white;" text="Đóng" />
+                        <Button mnemonicParsing="false" onAction="#onRefreshClick" prefHeight="30.0" prefWidth="100.0" style="-fx-background-color: #3498db; -fx-text-fill: white;" text="Làm mới" />
                     </children>
                 </HBox>
 
