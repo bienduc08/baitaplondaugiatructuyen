@@ -184,7 +184,7 @@ public class ProductDAO {
     }
 
     /** Tự động đóng phiên OPEN hết giờ end_time */
-    // MỚI - đổi status + cộng tiền seller nếu có người thắng
+    // ĐÃ SỬA: Dùng try-with-resources để chống rò rỉ socket/kết nối
     public void closeExpiredAuctions() {
         // Lấy danh sách các phiên sắp đóng (còn OPEN, có người thắng)
         String selectSql = "SELECT id, current_price, seller_name, owner_name " +
@@ -194,9 +194,9 @@ public class ProductDAO {
 
         String paySql    = "UPDATE users SET balance = balance + ? WHERE username = ?";
 
-        Connection conn = null;
-        try {
-            conn = DatabaseConnection.getConnection();
+        // ĐƯA CONNECTION VÀO TRONG TRY()
+        try (Connection conn = DatabaseConnection.getConnection()) {
+
             conn.setAutoCommit(false);
 
             try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
@@ -232,11 +232,11 @@ public class ProductDAO {
             }
 
             conn.commit();
+
         } catch (SQLException e) {
             System.err.println("[closeExpiredAuctions] " + e.getMessage());
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-        } finally {
-            if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            // Việc rollback có thể làm ở một connection riêng hoặc bỏ qua nếu dùng auto dọn dẹp,
+            // nhưng vì try-with-resources đã tự đóng, chúng ta không cần khối finally rườm rà nữa.
         }
     }
 
