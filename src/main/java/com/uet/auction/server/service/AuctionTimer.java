@@ -18,25 +18,20 @@ public class AuctionTimer {
     public void startChecking() {
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                // 1. Mở các phiên APPROVED đã đến giờ start_time → OPEN
+                // 1. Mở các phiên đến giờ
                 productDAO.openScheduledAuctions();
 
-                // 2. Anti-sniping: gia hạn nếu có bid trong 30 giây cuối
+                // 2. Anti-sniping: gia hạn
                 productDAO.extendAuctionIfLastBid();
 
-                // ĐÃ SỬA LỖI 4: Kích hoạt Auto-bid TRƯỚC khi chốt sổ đóng phiên.
-                // Tránh việc phiên vừa bị update thành CLOSED ở bước dưới,
-                // Auto-bid lại mò vào đặt giá tiếp sinh ra lỗi logic.
+                // 3. KÍCH HOẠT AUTO-BID TRƯỚC KHI CHỐT SỔ ĐÓNG PHIÊN
                 AuctionService.getInstance().triggerAllAutoBids();
 
-                // 3. Đóng các phiên OPEN đã hết giờ → CLOSED
+                // 4. Đóng các phiên hết giờ
                 List<Map<String, Object>> closedAuctions = productDAO.closeExpiredAuctions();
-
-                // ĐÃ SỬA LỖI 5: Gộp logic gửi Broadcast để tránh Client bị reload 2 lần
                 boolean hasClosedAuctions = closedAuctions != null && !closedAuctions.isEmpty();
 
                 if (hasClosedAuctions) {
-                    // 4a. Nếu có phiên kết thúc, chỉ gửi AUCTION_ENDED
                     for (Map<String, Object> info : closedAuctions) {
                         String winner      = (String) info.get("winner");
                         String productName = (String) info.get("productName");
@@ -56,10 +51,8 @@ public class AuctionTimer {
                         }
                         SocketServer.broadcast(new AuctionResponse(true, "AUCTION_ENDED", message, info));
                     }
-                    // KHÔNG gọi gửi UPDATE_PRICE ở đây nữa vì AUCTION_ENDED đã làm client tự reload lại List rồi.
                 } else {
-                    // 4b. Chỉ khi không có phiên nào đóng, ta mới gửi UPDATE_PRICE định kỳ 5s
-                    // để các client đồng bộ đếm ngược thời gian.
+                    // Nếu không có phiên đóng mới gửi UPDATE_PRICE để tránh client load 2 lần
                     SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
                 }
 

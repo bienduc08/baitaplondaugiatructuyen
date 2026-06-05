@@ -73,7 +73,6 @@ public class AdminController {
 
     public void updatePendingList(List<ProductDTO> products) {
         Platform.runLater(() -> {
-            pendingListData.setAll(products);
             long pending = products.stream().filter(p -> "PENDING".equals(p.getStatus())).count();
             long open = products.stream().filter(p -> "OPEN".equals(p.getStatus())).count();
             long closed = products.stream().filter(p -> "CLOSED".equals(p.getStatus())).count();

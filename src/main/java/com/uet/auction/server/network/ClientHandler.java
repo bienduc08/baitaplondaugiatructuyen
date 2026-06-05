@@ -249,7 +249,10 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
                     // Nếu Server báo thành công
-
+                    default:
+                        System.out.println("[ClientHandler] Cảnh báo: Nhận được loại request không xác định -> " + request.getType());
+                        sendResponse(new AuctionResponse(false, "ERROR", "Yêu cầu không hợp lệ hoặc máy chủ chưa hỗ trợ!", null));
+                        break;
                 }
             }
         } catch (IOException e) {
