@@ -7,13 +7,11 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
@@ -39,7 +37,6 @@ public class BidHistoryController {
 
     // Biểu đồ LineChart
     @FXML private LineChart<String, Number> bidLineChart;
-    @FXML private CategoryAxis xAxis;
     @FXML private NumberAxis yAxis;
 
     private final ObservableList<BidDTO> bidListData = FXCollections.observableArrayList();

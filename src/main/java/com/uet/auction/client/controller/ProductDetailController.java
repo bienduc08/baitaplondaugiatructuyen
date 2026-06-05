@@ -1,6 +1,7 @@
 package com.uet.auction.client.controller;
 
 import com.uet.auction.client.network.SocketClient;
+import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.BidDTO;
 import com.uet.auction.common.DTO.ProductDTO;
@@ -9,12 +10,10 @@ import com.uet.auction.common.Request.AuctionRequest;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.animation.KeyFrame;
@@ -24,7 +23,6 @@ import javafx.util.Duration;
 import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -43,7 +41,6 @@ public class ProductDetailController {
     private Label lblProductName, lblCurrentPrice, lblDescription, lblTimeRemaining, lblStepPrice;
 
     @FXML private LineChart<String, Number> bidPriceChart;
-    @FXML private CategoryAxis chartXAxis;
     @FXML private NumberAxis chartYAxis;
 
     @FXML
@@ -219,13 +216,13 @@ public class ProductDetailController {
 
             // Chặn khách
             if (sessionUser == null) {
-                showAlert(Alert.AlertType.WARNING, "Yêu cầu đăng nhập", "Bạn cần đăng nhập với tài khoản Người mua để đăng ký đấu giá tự động!");
+                AlertHelper.showWarning("Bạn cần đăng nhập với tài khoản Người mua để đăng ký đấu giá tự động!");
                 return;
             }
 
             // Chặn Seller/Admin
             if (!"USER".equals(sessionUser.getRole())) {
-                showAlert(Alert.AlertType.ERROR, "Từ chối", "Chỉ tài khoản Người mua (User) mới được dùng tính năng đấu giá tự động!");
+                AlertHelper.showError("Chỉ tài khoản Người mua (User) mới được dùng tính năng đấu giá tự động!");
                 return;
             }
 
@@ -233,7 +230,7 @@ public class ProductDetailController {
             String incrText    = txtAutoIncrement != null ? txtAutoIncrement.getText().replace(",", "").trim() : "";
 
             if (maxBidText.isEmpty() || incrText.isEmpty()) {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập đầy đủ giá tối đa và bước tăng!");
+                AlertHelper.showError("Vui lòng nhập đầy đủ giá tối đa và bước tăng!");
                 return;
             }
 
@@ -241,11 +238,11 @@ public class ProductDetailController {
             double increment = Double.parseDouble(incrText);
 
             if (maxBid <= currentProduct.getCurrentPrice()) {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Giá tối đa phải lớn hơn giá hiện tại!");
+                AlertHelper.showError("Giá tối đa phải lớn hơn giá hiện tại!");
                 return;
             }
             if (increment <= 0) {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Bước tăng phải lớn hơn 0!");
+                AlertHelper.showError("Bước tăng phải lớn hơn 0!");
                 return;
             }
 
@@ -261,7 +258,7 @@ public class ProductDetailController {
             if (txtAutoIncrement != null) txtAutoIncrement.clear();
 
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập số hợp lệ!");
+            AlertHelper.showError("Vui lòng nhập số hợp lệ!");
         }
     }
 
@@ -272,35 +269,27 @@ public class ProductDetailController {
 
             // Nếu là khách (chưa đăng nhập)
             if (sessionUser == null) {
-                showAlert(Alert.AlertType.WARNING, "Yêu cầu đăng nhập", "Bạn cần đăng nhập với tài khoản Người mua để đặt giá!");
+                AlertHelper.showWarning("Bạn cần đăng nhập với tài khoản Người mua để đặt giá!");
                 return;
             }
 
             // Nếu là Admin hoặc Seller
             if (!"USER".equals(sessionUser.getRole())) {
-                showAlert(Alert.AlertType.ERROR, "Từ chối", "Chỉ tài khoản Người mua (User) mới được tham gia đấu giá!");
+                AlertHelper.showError("Chỉ tài khoản Người mua (User) mới được tham gia đấu giá!");
                 return;
             }
 
             double bidAmount = Double.parseDouble(txtBidAmount.getText().replace(",", "").trim());
             if (bidAmount < (currentProduct.getCurrentPrice() + currentProduct.getStepPrice())) {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Giá đặt phải lớn hơn giá hiện tại + bước giá!");
+                AlertHelper.showError("Giá đặt phải lớn hơn giá hiện tại + bước giá!");
                 return;
             }
 
             SocketClient.sendRequest(new AuctionRequest("PLACE_BID", new Object[]{currentProduct.getId(), sessionUser.getUsername(), bidAmount}));
             txtBidAmount.clear();
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập số hợp lệ!");
+            AlertHelper.showError("Vui lòng nhập số hợp lệ!");
         }
-    }
-
-    // Hàm hỗ trợ hiển thị hộp thoại thông báo
-    private void showAlert(Alert.AlertType type, String title, String msg) {
-        Alert a = new Alert(type);
-        a.setTitle(title);
-        a.setContentText(msg);
-        a.showAndWait();
     }
 
     // Hàm hỗ trợ load ảnh mặc định an toàn

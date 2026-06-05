@@ -7,19 +7,14 @@ import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.Request.AuctionRequest;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class AdminController {
@@ -27,8 +22,6 @@ public class AdminController {
     public static AdminController instance;
     @FXML
     private BorderPane mainBorderPane;
-    @FXML
-    private VBox adminContent; // Màn hình quản lý duyệt sản phẩm
     @FXML
     private Label welcomeLabel; // Đã sửa tên biến khớp với FXML
     @FXML
@@ -42,23 +35,8 @@ public class AdminController {
 
     @FXML
     private TableView<ProductDTO> pendingTable;
-    @FXML
-    private TableColumn<ProductDTO, Integer> idCol;
-    @FXML
-    private TableColumn<ProductDTO, String> nameCol;
-    @FXML
-    private TableColumn<ProductDTO, Double> priceCol;
-    @FXML
-    private TableColumn<ProductDTO, String> sellerCol;
-    @FXML
-    private TableColumn<ProductDTO, String> statusCol;
 
     // Đã đổi String thành LocalDateTime để chuẩn hóa hiển thị thời gian
-    @FXML
-    private TableColumn<ProductDTO, LocalDateTime> endTimeCol;
-
-    private final ObservableList<ProductDTO> pendingListData = FXCollections.observableArrayList();
-    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private enum ActiveView { HOME, PENDING,MANAGEMENT, PROFILE }
     private AdminController.ActiveView activeView = AdminController.ActiveView.HOME;
@@ -66,7 +44,6 @@ public class AdminController {
     @FXML
     public void initialize() {
         instance = this;
-        pendingTable.setItems(pendingListData);
         if (welcomeLabel != null && SessionManager.getCurrentUsername() != null) {
             welcomeLabel.setText("Xin chào, Admin: " + SessionManager.getCurrentUsername());
         }
@@ -108,33 +85,14 @@ public class AdminController {
 
     @FXML
     public void onApproveButtonClick() {
-        ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            AlertHelper.showError("Vui lòng chọn sản phẩm!");
-            return;
-        }
-        if ("OPEN".equals(selected.getStatus())) {
-            AlertHelper.showError("Sản phẩm này đã đang đấu giá!");
-            return;
-        }
-        if ("CLOSED".equals(selected.getStatus())) {
-            AlertHelper.showError("Sản phẩm này đã đóng!");
-            return;
-        }
-
-        Object[] data = {selected.getId(), "OPEN"};
-        SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
+        // Điều hướng sang tab AdminPending để duyệt sản phẩm
+        onPendingClick();
     }
 
     @FXML
     public void onRejectButtonClick() {
-        ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            AlertHelper.showError("Vui lòng chọn sản phẩm!");
-            return;
-        }
-        Object[] data = {selected.getId(), "REJECTED"};
-        SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
+        // Điều hướng sang tab AdminPending để từ chối sản phẩm
+        onPendingClick();
     }
 
     @FXML
@@ -186,7 +144,7 @@ public class AdminController {
         loadView("/com/uet/auction/view/ProfileAdmin.fxml",ActiveView.PROFILE);
     }
 
-    private void loadView(String fxmlPath,ActiveView view) {
+    private void loadView(String fxmlPath, ActiveView view) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Node node = loader.load();
@@ -194,6 +152,7 @@ public class AdminController {
             activeView = view;
         } catch (IOException e) {
             e.printStackTrace();
+            AlertHelper.showError("Không thể tải giao diện! Vui lòng thử lại.");
         }
     }
 }

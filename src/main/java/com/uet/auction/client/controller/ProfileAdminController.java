@@ -2,7 +2,6 @@ package com.uet.auction.client.controller;
 
 import com.uet.auction.client.network.SocketClient;
 import com.uet.auction.client.util.AlertHelper;
-import com.uet.auction.client.util.SceneManager;
 import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
@@ -13,7 +12,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 

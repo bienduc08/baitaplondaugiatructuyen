@@ -28,7 +28,6 @@ public class AdminUserManagementController {
     @FXML private TableColumn<UserDTO, String> colRole;
     @FXML private TableColumn<UserDTO, Double> colBalance;
     @FXML private TableColumn<UserDTO, String> colStatus;
-    @FXML private Label lblUserCount;
     @FXML public static AdminUserManagementController instance;
     private final ObservableList<UserDTO> userList = FXCollections.observableArrayList();
     private Timeline autoRefreshTimeline;
@@ -161,8 +160,6 @@ public class AdminUserManagementController {
      */
     @FXML
     public void onLockUserClick() {
-        // [SỬA] File gốc gọi thẳng changeUserStatusAction() dùng chung
-        // Tách ra để thêm kiểm tra: không khóa Admin, không khóa tài khoản đã khóa, hỏi xác nhận
         UserDTO selected = getSelectedUser();
         if (selected == null) return;
 
@@ -191,7 +188,6 @@ public class AdminUserManagementController {
      */
     @FXML
     public void onUnlockUserClick() {
-        // [SỬA] Tương tự onLockUserClick - tách ra, thêm kiểm tra và xác nhận
         UserDTO selected = getSelectedUser();
         if (selected == null) return;
 
@@ -218,31 +214,6 @@ public class AdminUserManagementController {
         return selected;
     }
 
-
-    /**
-     * Hàm dùng chung để xử lý yêu cầu thay đổi trạng thái hoạt động của tài khoản
-     */
-    private void changeUserStatusAction(String requestAction, String successMessage) {
-        UserDTO selectedUser = tbvUsers.getSelectionModel().getSelectedItem();
-
-        if (selectedUser == null) {
-            AlertHelper.showError("Vui lòng chọn một người dùng từ danh sách trước!");
-            return;
-        }
-
-        try {
-            // Gửi thông tin user cần thay đổi trạng thái lên server
-            SocketClient.sendRequest(new AuctionRequest(requestAction, selectedUser));
-            AlertHelper.showInfo(successMessage);
-
-            // Đợi server phản hồi hoặc bạn có thể tự thay đổi trạng thái tạm thời dưới client:
-            // selectedUser.setStatus(requestAction.equals("LOCK_USER") ? "LOCKED" : "ACTIVE");
-            // tbvUsers.refresh();
-        } catch (Exception e) {
-            e.printStackTrace();
-            AlertHelper.showError("Thực hiện thao tác thất bại!");
-        }
-    }
 
     /**
      * Được gọi bởi luồng nhận dữ liệu từ Server để cập nhật dữ liệu vào bảng

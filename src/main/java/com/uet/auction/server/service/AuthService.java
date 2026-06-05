@@ -10,7 +10,7 @@ import java.util.List;
 
 public class AuthService {
 
-    private UserDAO userDAO = new UserDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     // =========================================================
     // XỬ LÝ LỆNH ĐĂNG NHẬP / ĐĂNG KÝ

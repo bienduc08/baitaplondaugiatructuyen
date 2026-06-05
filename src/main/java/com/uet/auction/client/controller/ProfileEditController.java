@@ -64,11 +64,8 @@ public class ProfileEditController {
         String username = SessionManager.getCurrentUsername();
         Object[] updateData = new Object[]{username, fullName, phone, oldPass, newPass};
 
-        // Gửi yêu cầu qua Socket
+        // Gửi yêu cầu qua Socket — kết quả sẽ trả về qua UPDATE_PROFILE_SUCCESS / UPDATE_PROFILE_FAILED
         SocketClient.sendRequest(new AuctionRequest("UPDATE_PROFILE", updateData));
-
-        // Bạn có thể show thông báo tạm thời ở đây
-        AlertHelper.showInfo("Đã gửi yêu cầu cập nhật thông tin!");
     }
 
     @FXML

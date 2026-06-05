@@ -87,6 +87,8 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
+                                if (SellerAddProductController.instance != null)
+                                    SellerAddProductController.instance.clearFormAfterSuccess();
                             } else {
                                 AlertHelper.showError(res.getMessage());
                             }

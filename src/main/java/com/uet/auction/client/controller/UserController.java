@@ -29,7 +29,7 @@ public class UserController {
         if (SessionManager.getCurrentUser() != null) {
             welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
-            
+
             // Tải số dư mới nhất từ server
             String username = SessionManager.getCurrentUsername();
             if (username != null) {
@@ -47,6 +47,9 @@ public class UserController {
             activeView = view;
         } catch (IOException e) {
             e.printStackTrace();
+            javafx.application.Platform.runLater(() ->
+                    com.uet.auction.client.util.AlertHelper.showError("Không thể tải giao diện! Vui lòng thử lại.")
+            );
         }
     }
 

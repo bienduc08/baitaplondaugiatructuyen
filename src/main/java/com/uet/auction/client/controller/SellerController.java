@@ -29,7 +29,7 @@ public class SellerController {
         if (SessionManager.getCurrentUser() != null) {
             welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
-            
+
             // Tải số dư mới nhất từ server
             String username = SessionManager.getCurrentUsername();
             if (username != null) {
@@ -47,13 +47,14 @@ public class SellerController {
 
     private void loadView(String fxmlPath) {
         try {
-            // ĐÃ SỬA: Thay vì load chết file Seller.fxml gây tràn bộ nhớ,
-            // giờ đây loader sẽ gọi đúng file fxml được truyền vào tham số fxmlPath.
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent root = loader.load();
             mainBorderPane.setCenter(root);
         } catch (IOException e) {
             e.printStackTrace();
+            javafx.application.Platform.runLater(() ->
+                    com.uet.auction.client.util.AlertHelper.showError("Không thể tải giao diện! Vui lòng thử lại.")
+            );
         }
     }
 

@@ -1,7 +1,6 @@
 package com.uet.auction.server.model;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {

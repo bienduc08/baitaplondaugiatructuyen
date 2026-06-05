@@ -7,8 +7,6 @@ import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.model.AutoBidConfig;
 import com.uet.auction.server.service.AuctionService;
 import com.uet.auction.server.service.AuthService;
-import com.uet.auction.server.service.SessionManager;
-import javafx.application.Platform;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

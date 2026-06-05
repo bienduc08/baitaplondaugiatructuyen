@@ -27,6 +27,8 @@ import java.time.LocalTime;
  */
 public class SellerAddProductController {
 
+    public static SellerAddProductController instance;
+
     @FXML private TextField txtProductName;
     @FXML private TextArea  txtDescription;
     @FXML private TextField txtStartingPrice;
@@ -50,6 +52,7 @@ public class SellerAddProductController {
 
     @FXML
     public void initialize() {
+        instance = this;
         // Giá trị mặc định đã được đặt trong FXML
         if (btnRemoveImage != null) {
             btnRemoveImage.setVisible(false);
@@ -98,6 +101,10 @@ public class SellerAddProductController {
             int endH = parseTimeField(txtEndH, 23);
             int endM = parseTimeField(txtEndM, 59);
             int endS = parseTimeField(txtEndS, 0);
+            if (endH < 0 || endH > 23 || endM < 0 || endM > 59 || endS < 0 || endS > 59) {
+                AlertHelper.showError("Giờ/phút/giây kết thúc không hợp lệ (Giờ: 0-23, Phút/Giây: 0-59)!");
+                return;
+            }
             LocalDateTime endTime = LocalDateTime.of(dpEndDate.getValue(), LocalTime.of(endH, endM, endS));
 
             if (endTime.isBefore(LocalDateTime.now())) {
@@ -111,6 +118,10 @@ public class SellerAddProductController {
                 int startH = parseTimeField(txtStartH, 0);
                 int startM = parseTimeField(txtStartM, 0);
                 int startS = parseTimeField(txtStartS, 0);
+                if (startH < 0 || startH > 23 || startM < 0 || startM > 59 || startS < 0 || startS > 59) {
+                    AlertHelper.showError("Giờ/phút/giây bắt đầu không hợp lệ (Giờ: 0-23, Phút/Giây: 0-59)!");
+                    return;
+                }
                 startTime = LocalDateTime.of(dpStartDate.getValue(), LocalTime.of(startH, startM, startS));
             } else {
                 startTime = LocalDateTime.now();
@@ -141,7 +152,7 @@ public class SellerAddProductController {
             }
 
             SocketClient.sendRequest(new AuctionRequest("ADD_PRODUCT", product));
-            clearForm();
+            // clearForm() sẽ được gọi sau khi server phản hồi thành công (ADD_PRODUCT_RESULT)
 
         } catch (NumberFormatException e) {
             AlertHelper.showError("Giá khởi điểm/Bước giá phải là số hợp lệ (VD: 5000000)!");
@@ -155,6 +166,11 @@ public class SellerAddProductController {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    /** Được gọi từ ResponseListener sau khi server xác nhận ADD_PRODUCT thành công */
+    public void clearFormAfterSuccess() {
+        javafx.application.Platform.runLater(this::clearForm);
     }
 
     private void clearForm() {

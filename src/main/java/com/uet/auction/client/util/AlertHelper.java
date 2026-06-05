@@ -26,6 +26,10 @@ public class AlertHelper {
         showAlert(Alert.AlertType.INFORMATION, "Thông báo", message);
     }
 
+    public static void showWarning(String message) {
+        showAlert(Alert.AlertType.WARNING, "Cảnh báo", message);
+    }
+
     // [THÊM MỚI] Hàm showConfirm - file gốc không có
     // Dùng trong AdminUserManagementController để hỏi xác nhận trước khi khóa/mở khóa
     public static Optional<ButtonType> showConfirm(String title, String content) {

@@ -67,7 +67,9 @@ public class RegisterController {
 
         String selectedRole = roleComboBox.getSelectionModel().getSelectedItem();
         if (selectedRole == null) {
-            selectedRole = "USER"; // Fallback an toàn
+            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setText("Vui lòng chọn loại tài khoản (User hoặc Seller)!");
+            return;
         }
 
         statusLabel.setStyle("-fx-text-fill: black;");
@@ -96,6 +98,8 @@ public class RegisterController {
             SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
         } catch (IOException e) {
             e.printStackTrace();
+            statusLabel.setStyle("-fx-text-fill: red;");
+            statusLabel.setText("Không thể quay lại màn hình đăng nhập!");
         }
     }
 }
