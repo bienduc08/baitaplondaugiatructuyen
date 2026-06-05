@@ -6,7 +6,9 @@ import com.uet.auction.server.config.DatabaseConnection;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ProductDAO {
 
@@ -183,15 +185,17 @@ public class ProductDAO {
         }
     }
 
-    /** Tự động đóng phiên OPEN hết giờ end_time */
-    // MỚI - đổi status + cộng tiền seller nếu có người thắng
-    public void closeExpiredAuctions() {
-        // Lấy danh sách các phiên sắp đóng (còn OPEN, có người thắng)
-        String selectSql = "SELECT id, current_price, seller_name, owner_name " +
+    /**
+     * Tự động đóng các phiên OPEN đã hết giờ end_time.
+     * Trả về danh sách phiên vừa đóng để AuctionTimer broadcast thông báo người thắng.
+     * Mỗi phần tử trong list là một Map gồm: productId, productName, winner, finalPrice, sellerName.
+     */
+    public List<Map<String, Object>> closeExpiredAuctions() {
+        List<Map<String, Object>> closedList = new ArrayList<>();
+
+        String selectSql = "SELECT id, name, current_price, seller_name, owner_name " +
                 "FROM products WHERE status = 'OPEN' AND end_time <= NOW()";
-
         String closeSql  = "UPDATE products SET status = 'CLOSED' WHERE id = ?";
-
         String paySql    = "UPDATE users SET balance = balance + ? WHERE username = ?";
 
         Connection conn = null;
@@ -202,10 +206,11 @@ public class ProductDAO {
             try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
                 ResultSet rs = selectStmt.executeQuery();
                 while (rs.next()) {
-                    int    productId    = rs.getInt("id");
-                    double finalPrice   = rs.getDouble("current_price");
-                    String sellerName   = rs.getString("seller_name");
-                    String winnerName   = rs.getString("owner_name"); // null nếu không ai đặt
+                    int    productId   = rs.getInt("id");
+                    String productName = rs.getString("name");
+                    double finalPrice  = rs.getDouble("current_price");
+                    String sellerName  = rs.getString("seller_name");
+                    String winnerName  = rs.getString("owner_name"); // null nếu không ai đặt
 
                     // Đóng phiên
                     try (PreparedStatement closeStmt = conn.prepareStatement(closeSql)) {
@@ -219,15 +224,24 @@ public class ProductDAO {
                             payStmt.setDouble(1, finalPrice);
                             payStmt.setString(2, sellerName);
                             payStmt.executeUpdate();
-                            System.out.println("[closeExpiredAuctions] Cộng " + finalPrice
-                                    + " cho seller " + sellerName
+                            System.out.println("[closeExpiredAuctions] Đã đóng phiên id=" + productId
                                     + " | Người thắng: " + winnerName
-                                    + " | SP id=" + productId);
+                                    + " | Giá: " + finalPrice
+                                    + " | Đã cộng tiền cho seller: " + sellerName);
                         }
                     } else {
-                        System.out.println("[closeExpiredAuctions] SP id=" + productId
-                                + " không có người đặt giá, seller không nhận tiền.");
+                        System.out.println("[closeExpiredAuctions] Đã đóng phiên id=" + productId
+                                + " | Không có người đặt giá.");
                     }
+
+                    // Lưu thông tin để trả về cho AuctionTimer broadcast
+                    Map<String, Object> info = new HashMap<>();
+                    info.put("productId",   productId);
+                    info.put("productName", productName);
+                    info.put("winner",      winnerName);   // null = không ai thắng
+                    info.put("finalPrice",  finalPrice);
+                    info.put("sellerName",  sellerName);
+                    closedList.add(info);
                 }
             }
 
@@ -238,6 +252,8 @@ public class ProductDAO {
         } finally {
             if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
+
+        return closedList;
     }
 
     /**

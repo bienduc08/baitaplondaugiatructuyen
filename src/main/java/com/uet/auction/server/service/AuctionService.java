@@ -67,20 +67,18 @@ public class AuctionService {
         while (keepGoing) {
             keepGoing = false;
 
-            List<ProductDTO> products = productDAO.getProductsByStatus("OPEN");
-            if (products == null) break;
-            ProductDTO product = products.stream()
-                    .filter(p -> p.getId() == productId)
-                    .findFirst().orElse(null);
-            if (product == null) break;
-
+            ProductDTO product = productDAO.getProductById(productId);
+            if (product == null || !"OPEN".equals(product.getStatus())) break;
             double currentPrice = product.getCurrentPrice();
             String currentOwner = product.getOwnerName();
 
             PriorityQueue<AutoBidConfig> queue = new PriorityQueue<>(configs);
             for (AutoBidConfig cfg : queue) {
                 String username = cfg.getBidderUsername();
+
+                // ĐÃ SỬA LỖI 3: Chặn cả chủ phòng hiện tại (currentOwner) VÀ người vừa đặt giá thủ công (lastBidder)
                 if (username.equals(currentOwner)) continue;
+                if (username.equals(lastBidder)) continue;
                 if (!cfg.isActive()) continue;
 
                 Double nextBid = cfg.calculateNextBid(currentPrice);
@@ -98,7 +96,6 @@ public class AuctionService {
             }
         }
     }
-
     public AuctionResponse getProductsByStatus(String status) {
         List<ProductDTO> list = productDAO.getProductsByStatus(status);
 
@@ -228,7 +225,11 @@ public class AuctionService {
                         String.format("Số dư không đủ! Số dư: %,.0f VNĐ", balance), null);
             }
 
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            //Không để catch rỗng, ném trả lỗi cho Client nếu DB sập
+            System.err.println("[AuctionService.placeBid] Lỗi lấy số dư: " + e.getMessage());
+            return new AuctionResponse(false, "BID_RESULT", "Lỗi máy chủ khi kiểm tra số dư. Vui lòng thử lại sau!", null);
+        }
 
         boolean ok = bidDAO.placeBid(productId, bidderName, bidAmount);
         return ok

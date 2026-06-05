@@ -116,15 +116,40 @@ public class ResponseListener implements Runnable {
                                 AdminPendingController.instance.refreshPendingProducts();
                             if (ProductDetailController.instance != null)
                                 ProductDetailController.instance.reloadProductDetails();
-                            if (SellerMyProductsController.instance != null)       // ← thêm
-                                SellerMyProductsController.instance.loadMyAuctions(); // ← thêm
+                            if (SellerMyProductsController.instance != null)
+                                SellerMyProductsController.instance.loadMyAuctions();
                             String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
                             if (currentUsr != null) {
                                 SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", currentUsr));
                             }
                         });
+                        break;
 
+                    case "AUCTION_ENDED":
+                        // Server gửi khi một phiên đấu giá vừa kết thúc
+                        // message chứa thông báo đầy đủ, data chứa Map thông tin phiên
+                        String endedMsg = res.getMessage();
+                        @SuppressWarnings("unchecked")
+                        java.util.Map<String, Object> endedInfo =
+                                (java.util.Map<String, Object>) res.getData();
 
+                        Platform.runLater(() -> {
+                            // Hiện popup thông báo người thắng cho tất cả client đang online
+                            if (endedMsg != null) {
+                                AlertHelper.showInfo(endedMsg);
+                            }
+
+                            // Reload giao diện để phản ánh trạng thái CLOSED
+                            if (HomecontentController.instance != null)
+                                HomecontentController.instance.loadProducts();
+                            if (ProductDetailController.instance != null)
+                                ProductDetailController.instance.reloadProductDetails();
+                            if (UserAuctionsController.instance != null) {
+                                String username = com.uet.auction.client.util.SessionManager.getCurrentUsername();
+                                if (username != null)
+                                    SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_JOINED_PRODUCTS", username));
+                            }
+                        });
                         break;
 
                     // =========================================================
