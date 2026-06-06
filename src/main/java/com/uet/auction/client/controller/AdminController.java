@@ -165,19 +165,23 @@ public class AdminController {
     }
     @FXML
     private void onShowNotificationsClick() {
-        // Lưu lại giao diện hiện tại ở Center trước khi chuyển sang xem thông báo
+        // 1. Lưu lại giao diện đang hiển thị hiện tại ở giữa màn hình (Center)
         javafx.scene.Node previousView = mainBorderPane.getCenter();
-        com.uet.auction.client.controller.NotificationListController.onBackAction = () -> mainBorderPane.setCenter(previousView);
 
+        // 2. Truyền hành động "Quay lại" cho NotificationListController
+        // Khi bấm nút Back, nó sẽ lấy giao diện cũ nhét lại vào Center
+        com.uet.auction.client.controller.NotificationListController.onBackAction = () -> {
+            mainBorderPane.setCenter(previousView);
+        };
+
+        // 3. Tải và hiển thị màn hình Thông báo đè lên
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/NotificationList.fxml"));
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/uet/auction/view/NotificationList.fxml"));
             javafx.scene.Node node = loader.load();
             mainBorderPane.setCenter(node);
-        } catch (IOException e) {
+        } catch (java.io.IOException e) {
             e.printStackTrace();
-            javafx.application.Platform.runLater(() ->
-                    com.uet.auction.client.util.AlertHelper.showError("Không thể tải giao diện thông báo!")
-            );
+            com.uet.auction.client.util.AlertHelper.showError("Không thể tải giao diện thông báo!");
         }
     }
 

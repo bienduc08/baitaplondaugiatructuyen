@@ -46,6 +46,18 @@ public class SocketServer {
         }
     }
 
+    /** Gửi thông báo tới đúng 1 user theo username */
+    public static void sendToUser(String username, AuctionResponse response) {
+        if (username == null) return;
+        synchronized (clients) {
+            for (ClientHandler client : clients) {
+                if (username.equals(client.getLoggedInUsername())) {
+                    client.sendResponse(response);
+                }
+            }
+        }
+    }
+
     /** Xóa client khi họ ngắt kết nối */
     public static void removeClient(ClientHandler client) {
         clients.remove(client);

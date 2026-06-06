@@ -197,9 +197,17 @@ public class ProductDAO {
     }
 
     public void extendAuctionIfLastBid() {
-        String sql = "UPDATE products SET end_time = DATE_ADD(end_time, INTERVAL 5 MINUTE) "
-                + "WHERE status = 'OPEN' AND TIMESTAMPDIFF(SECOND, NOW(), end_time) BETWEEN 0 AND 30 "
-                + "AND id IN (SELECT DISTINCT product_id FROM bids WHERE bid_time >= DATE_SUB(NOW(), INTERVAL 2 MINUTE))";
+        // Anti-sniping: chi gia han khi co bid trong dung 30 giay cuoi,
+        // gioi han toi da 3 lan gia han qua cot extension_count.
+        String sql = "UPDATE products "
+                + "SET end_time = DATE_ADD(end_time, INTERVAL 5 MINUTE), "
+                + "    extension_count = COALESCE(extension_count, 0) + 1 "
+                + "WHERE status = 'OPEN' "
+                + "AND TIMESTAMPDIFF(SECOND, NOW(), end_time) BETWEEN 0 AND 30 "
+                + "AND COALESCE(extension_count, 0) < 3 "
+                + "AND id IN ("
+                + "  SELECT DISTINCT product_id FROM bids "
+                + "  WHERE bid_time >= DATE_SUB(NOW(), INTERVAL 30 SECOND))";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.executeUpdate();
         } catch (SQLException ignored) {}

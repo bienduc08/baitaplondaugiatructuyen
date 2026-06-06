@@ -98,10 +98,14 @@ public class ResponseListener implements Runnable {
                     case "CHANGE_STATUS_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                // ĐÃ SỬA: Chỉ gọi 1 hàm loadPendingProducts() để làm mới dữ liệu và cập nhật bộ đếm
+                                AlertHelper.showInfo(res.getMessage());
                                 if (AdminPendingController.instance != null) {
                                     AdminPendingController.instance.loadPendingProducts();
                                 }
+                                // Seller đang online sẽ nhận thông báo duyệt/từ chối ngay lập tức
+                                String usr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
+                                if (usr != null) SocketClient.sendRequest(
+                                        new com.uet.auction.common.Request.AuctionRequest("GET_NOTIFICATIONS", usr));
                             } else {
                                 AlertHelper.showError(res.getMessage());
                             }
@@ -109,13 +113,29 @@ public class ResponseListener implements Runnable {
                         break;
 
                     case "UPDATE_PRICE":
+                        // Nếu broadcast kèm sản phẩm mới (từ PLACE_BID) thì cập nhật trực tiếp, không reload
+                        java.util.Map<String,Object> pricePayload =
+                                (res.getData() instanceof java.util.Map) ?
+                                        (java.util.Map<String,Object>) res.getData() : null;
+                        ProductDTO inlineProduct = (pricePayload != null && pricePayload.get("product") instanceof ProductDTO)
+                                ? (ProductDTO) pricePayload.get("product") : null;
                         Platform.runLater(() -> {
-                            if (HomecontentController.instance != null)
-                                HomecontentController.instance.loadProducts();
+                            if (inlineProduct != null) {
+                                // FIX: Có inlineProduct → cập nhật trực tiếp từng card và ProductDetail
+                                // mà KHÔNG gọi loadProducts() (tránh reload toàn bộ + nhấp nháy)
+                                if (HomecontentController.instance != null)
+                                    HomecontentController.instance.updateProductEndTime(inlineProduct);
+                                if (ProductDetailController.instance != null)
+                                    ProductDetailController.instance.updateProductInfo(inlineProduct);
+                            } else {
+                                // Không có inlineProduct (timer tick thông thường) → reload bình thường
+                                if (HomecontentController.instance != null)
+                                    HomecontentController.instance.loadProducts();
+                                if (ProductDetailController.instance != null)
+                                    ProductDetailController.instance.reloadProductDetails();
+                            }
                             if (AdminPendingController.instance != null)
                                 AdminPendingController.instance.refreshPendingProducts();
-                            if (ProductDetailController.instance != null)
-                                ProductDetailController.instance.reloadProductDetails();
                             if (SellerMyProductsController.instance != null)
                                 SellerMyProductsController.instance.loadMyAuctions();
                             String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
@@ -150,17 +170,30 @@ public class ResponseListener implements Runnable {
                         java.util.Map<String, Object> endedInfo =
                                 (java.util.Map<String, Object>) res.getData();
 
+                        // Lấy winner và finalPrice từ endedInfo để hiển thị ngay trên ProductDetail
+                        String endedWinner = (endedInfo != null) ? (String) endedInfo.get("winner") : null;
+                        double endedFinalPrice = (endedInfo != null && endedInfo.get("finalPrice") instanceof Double)
+                                ? (Double) endedInfo.get("finalPrice") : 0.0;
+                        int endedProductId = (endedInfo != null && endedInfo.get("productId") instanceof Integer)
+                                ? (Integer) endedInfo.get("productId") : -1;
+
                         Platform.runLater(() -> {
                             // Hiện popup thông báo người thắng cho tất cả client đang online
                             if (endedMsg != null) {
                                 AlertHelper.showInfo(endedMsg);
                             }
 
-                            // Reload giao diện để phản ánh trạng thái CLOSED
+                            // Nếu ProductDetail đang mở đúng sản phẩm vừa kết thúc → hiện kết quả ngay
+                            if (ProductDetailController.instance != null) {
+                                ProductDetailController ctrl = ProductDetailController.instance;
+                                if (endedProductId == -1 || ctrl.getCurrentProductId() == endedProductId) {
+                                    ctrl.showAuctionResult(endedWinner, endedFinalPrice);
+                                }
+                            }
+
+                            // Reload danh sách để phản ánh trạng thái CLOSED
                             if (HomecontentController.instance != null)
                                 HomecontentController.instance.loadProducts();
-                            if (ProductDetailController.instance != null)
-                                ProductDetailController.instance.reloadProductDetails();
                             if (UserAuctionsController.instance != null) {
                                 String username = com.uet.auction.client.util.SessionManager.getCurrentUsername();
                                 if (username != null)
@@ -205,6 +238,10 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage() != null ? res.getMessage() : "Đặt giá thành công!");
+                                // Cập nhật số dư ngay lập tức sau khi đặt giá thành công
+                                String usr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
+                                if (usr != null) SocketClient.sendRequest(
+                                        new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", usr));
                             } else {
                                 AlertHelper.showError(res.getMessage() != null ? res.getMessage() : "Đặt giá thất bại!");
                             }
@@ -360,6 +397,29 @@ public class ResponseListener implements Runnable {
                             if (com.uet.auction.client.controller.NotificationListController.instance != null) {
                                 com.uet.auction.client.controller.NotificationListController.instance.displayNotifications(notifs);
                             }
+                        });
+                        break;
+
+                    case "GET_PRODUCT_BY_ID_RESULT":
+                        if (res.isSuccess() && res.getData() instanceof ProductDTO) {
+                            ProductDTO updatedProd = (ProductDTO) res.getData();
+                            Platform.runLater(() -> {
+                                if (ProductDetailController.instance != null)
+                                    ProductDetailController.instance.updateProductInfo(updatedProd);
+                            });
+                        }
+                        break;
+
+                    case "NOTIFY_REFRESH":
+                        // Server push: thông báo mới dành riêng cho user này
+                        String notifyMsg = res.getMessage();
+                        Platform.runLater(() -> {
+                            // Hiện popup ngay lập tức
+                            if (notifyMsg != null) AlertHelper.showInfo(notifyMsg);
+                            // Tải lại danh sách thông báo để cập nhật badge số
+                            String usr2 = com.uet.auction.client.util.SessionManager.getCurrentUsername();
+                            if (usr2 != null) SocketClient.sendRequest(
+                                    new com.uet.auction.common.Request.AuctionRequest("GET_NOTIFICATIONS", usr2));
                         });
                         break;
 

@@ -5,30 +5,28 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseConnection {
-    // 1. Biến static lưu trữ instance duy nhất
-    private static Connection connection = null;
 
-    private static final String URL = "jdbc:mysql://localhost:3306/auction_db";
+    // Không dùng biến static Connection ở đây nữa
+
+    private static final String URL = "jdbc:mysql://localhost:3306/auction_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "";
 
-    // 2. Constructor Private để chặn việc dùng từ khóa 'new' từ bên ngoài
-    private DatabaseConnection() {
+    // Nạp Driver 1 lần duy nhất vào bộ nhớ khi class khởi tạo
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Không tìm thấy MySQL Driver: " + e.getMessage());
+        }
     }
 
-    // 3. Hàm lấy kết nối Singleton
-    public static Connection getConnection() throws SQLException {
-        try {
-            // Chỉ tạo kết nối mới nếu nó chưa từng được khởi tạo, hoặc kết nối cũ đã bị đóng
-            if (connection == null || connection.isClosed()) {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            }
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("Không tìm thấy MySQL Driver!", e);
-        }
+    private DatabaseConnection() {
+        // Private constructor
+    }
 
-        // Trả về instance duy nhất
-        return connection;
+    // Trả về một kết nối MỚI HOÀN TOÀN mỗi khi được gọi
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
     }
 }

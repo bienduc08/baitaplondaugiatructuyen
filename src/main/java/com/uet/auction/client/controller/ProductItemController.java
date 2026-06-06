@@ -13,7 +13,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView; // Đã thêm import ImageView
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import java.time.LocalDateTime;
 
@@ -54,7 +54,6 @@ public class ProductItemController {
         if (ownerLabel != null) ownerLabel.setText("Đang giữ đỉnh: " + owner);
 
         if (product.getEndTime() != null) {
-            // THÊM DÒNG NÀY: Cập nhật ngay lập tức thay vì chờ Timeline trễ 1 giây
             updateTimeDisplay(product, timeLabel);
             startCountdown();
         } else {
@@ -64,7 +63,6 @@ public class ProductItemController {
         if (imgProduct != null) {
             String newImageUrl = product.getImageUrl();
             if (newImageUrl == null || newImageUrl.trim().isEmpty() || newImageUrl.toLowerCase().contains("macdinh")) {
-                // Chỉ load default nếu ảnh hiện tại KHÔNG PHẢI là default
                 if (imgProduct.getUserData() == null || !imgProduct.getUserData().equals("default")) {
                     loadDefaultImage();
                     imgProduct.setUserData("default");
@@ -79,7 +77,6 @@ public class ProductItemController {
 
                     if (file.exists()) {
                         String fileUri = file.toURI().toString();
-                        // Kiểm tra xem ảnh đã có trong cache chưa
                         if (imageCache.containsKey(fileUri)) {
                             imgProduct.setImage(imageCache.get(fileUri));
                         } else {
@@ -93,6 +90,40 @@ public class ProductItemController {
         }
 
         updateBidInputState();
+    }
+
+    /**
+     * FIX: Cập nhật end_time (và giá/owner) của card này nếu đúng product.
+     * Được gọi từ HomecontentController.updateProductEndTime() khi anti-sniping xảy ra.
+     * Restart countdown ngay lập tức với thời gian mới — không cần render lại toàn bộ danh sách.
+     */
+    public void updateEndTime(ProductDTO updated) {
+        if (updated == null || currentProduct == null) return;
+        if (updated.getId() != currentProduct.getId()) return;
+
+        boolean endTimeChanged = updated.getEndTime() != null
+                && !updated.getEndTime().equals(currentProduct.getEndTime());
+
+        currentProduct.setEndTime(updated.getEndTime());
+        currentProduct.setCurrentPrice(updated.getCurrentPrice());
+        currentProduct.setOwnerName(updated.getOwnerName());
+        currentProduct.setStatus(updated.getStatus());
+
+        // Cập nhật label giá và người dẫn đầu ngay
+        if (priceLabel != null)
+            priceLabel.setText(String.format("%,.0f VNĐ", updated.getCurrentPrice()));
+        if (ownerLabel != null) {
+            String owner = (updated.getOwnerName() != null && !updated.getOwnerName().isBlank())
+                    ? updated.getOwnerName() : "Chưa có ai";
+            ownerLabel.setText("Đang giữ đỉnh: " + owner);
+        }
+
+        if (endTimeChanged) {
+            // Reset lastTimeText để buộc hiển thị lại ngay
+            lastTimeText = "";
+            updateTimeDisplay(currentProduct, timeLabel);
+            startCountdown(); // restart với end_time mới
+        }
     }
 
     public void stopCountdown() {
@@ -166,12 +197,8 @@ public class ProductItemController {
         }
     }
 
-
-
     private void loadDefaultImage() {
-        // Nếu ảnh mặc định nằm ngay dưới thư mục resources/images/
         String defaultImagePath = "/com/uet/auction/images/macdinh.jpg";
-
         java.io.InputStream is = getClass().getResourceAsStream(defaultImagePath);
         if (is != null) {
             imgProduct.setImage(new javafx.scene.image.Image(is));
@@ -179,6 +206,7 @@ public class ProductItemController {
             System.err.println("Cảnh báo: Không tìm thấy ảnh mặc định tại " + defaultImagePath);
         }
     }
+
     private void updateTimeDisplay(ProductDTO product, Label timeLabel) {
         if (product == null || product.getEndTime() == null) return;
 
@@ -200,7 +228,6 @@ public class ProductItemController {
             newStyle = "-fx-text-fill: #7f8c8d; -fx-font-weight: bold;";
         }
 
-        // Cập nhật TRỰC TIẾP, không dùng Platform.runLater nữa
         if (!newText.equals(lastTimeText)) {
             lastTimeText = newText;
             timeLabel.setText(newText);
@@ -208,15 +235,11 @@ public class ProductItemController {
         }
     }
 
-    // Hàm phụ trợ cũng phải nhận tham số là java.time.Duration
     private String formatDuration(java.time.Duration duration) {
         long days = duration.toDays();
         long hours = duration.toHoursPart();
         long minutes = duration.toMinutesPart();
         long seconds = duration.toSecondsPart();
-
-        // Luôn giữ định dạng đồng nhất, ví dụ: 00 ngày 00:00:00
-        // Điều này làm độ dài chuỗi luôn cố định
         return String.format("%02d ngày %02d:%02d:%02d", days, hours, minutes, seconds);
     }
 }

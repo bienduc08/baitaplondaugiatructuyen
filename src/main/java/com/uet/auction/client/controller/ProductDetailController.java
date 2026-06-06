@@ -170,10 +170,81 @@ public class ProductDetailController {
         if (onBackAction != null) onBackAction.run();
     }
 
+    /** Trả về ID sản phẩm đang được hiển thị, dùng để kiểm tra trong AUCTION_ENDED */
+    public int getCurrentProductId() {
+        return currentProduct != null ? currentProduct.getId() : -1;
+    }
+
     public void reloadProductDetails() {
         if (currentProduct != null) {
+            // Fetch lại endTime mới (phòng anti-sniping gia hạn) + lịch sử bid
+            SocketClient.sendRequest(new AuctionRequest("GET_PRODUCT_BY_ID", currentProduct.getId()));
             SocketClient.sendRequest(new AuctionRequest("GET_BID_HISTORY", currentProduct.getId()));
         }
+    }
+
+    /** Nhận ProductDTO mới nhất từ server, cập nhật endTime và restart countdown */
+    public void updateProductInfo(ProductDTO updated) {
+        if (updated == null || currentProduct == null) return;
+        boolean endTimeChanged = updated.getEndTime() != null
+                && !updated.getEndTime().equals(currentProduct.getEndTime());
+
+        // Cập nhật các trường có thể thay đổi
+        currentProduct.setEndTime(updated.getEndTime());
+        currentProduct.setStartTime(updated.getStartTime());
+        currentProduct.setCurrentPrice(updated.getCurrentPrice());
+        currentProduct.setOwnerName(updated.getOwnerName());
+        currentProduct.setStatus(updated.getStatus());
+
+        // Cập nhật label giá và người dẫn đầu ngay lập tức
+        if (lblCurrentPrice != null)
+            lblCurrentPrice.setText(String.format("%,.0f VNĐ", updated.getCurrentPrice()));
+        if (lblTopBidder != null)
+            lblTopBidder.setText(updated.getOwnerName() != null && !updated.getOwnerName().isBlank()
+                    ? updated.getOwnerName() : "Chưa có");
+
+        if (endTimeChanged) {
+            // endTime thay đổi (anti-sniping) → restart countdown với giờ mới
+            if (countdown != null) { countdown.stop(); countdown = null; }
+            // Hiển thị ngay lập tức, không chờ 1 giây
+            updateTimeDisplay(currentProduct, lblTimeRemaining);
+            startCountdown();
+        }
+    }
+
+    /**
+     * Được gọi khi phiên đấu giá kết thúc (AUCTION_ENDED).
+     * Hiển thị người chiến thắng và giá trúng ngay trên ProductDetail.
+     */
+    public void showAuctionResult(String winner, double finalPrice) {
+        if (countdown != null) { countdown.stop(); countdown = null; }
+
+        if (lblTimeRemaining != null) {
+            if (winner != null && !winner.isBlank()) {
+                lblTimeRemaining.setText("🏆 Phiên đã kết thúc");
+            } else {
+                lblTimeRemaining.setText("⏰ Phiên đã kết thúc — Không có người tham gia");
+            }
+            lblTimeRemaining.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+        }
+
+        if (winner != null && !winner.isBlank()) {
+            if (lblTopBidder != null)
+                lblTopBidder.setText("🏆 Người thắng: " + winner);
+            if (lblCurrentPrice != null)
+                lblCurrentPrice.setText(String.format("%,.0f VNĐ", finalPrice));
+        } else {
+            if (lblTopBidder != null)
+                lblTopBidder.setText("Không có người thắng");
+        }
+
+        // Khóa toàn bộ form đặt giá
+        if (txtBidAmount != null) txtBidAmount.setDisable(true);
+        if (txtAutoMaxBid != null) txtAutoMaxBid.setDisable(true);
+        if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
+
+        // Cập nhật status trong object để countdown không restart sai
+        if (currentProduct != null) currentProduct.setStatus("CLOSED");
     }
 
     public void displayBidHistory(List<BidDTO> bids) {

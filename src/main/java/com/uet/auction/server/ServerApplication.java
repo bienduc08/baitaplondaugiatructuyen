@@ -20,5 +20,6 @@ public class ServerApplication {
         Logger.info("Server đang đợi kết nối tại cổng " + port);
 
         server.start(port); // Truyền port vào hàm start
+        System.out.println("Giờ hiện tại của máy chủ: " + java.time.LocalDateTime.now());
     }
 }

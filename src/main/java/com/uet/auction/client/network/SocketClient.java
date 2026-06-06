@@ -27,9 +27,6 @@ public class SocketClient {
             System.out.println("Đã kết nối với Server!");
         } catch (Exception e) {
             System.err.println("Không thể kết nối Server!");
-            Platform.runLater(() ->
-                    com.uet.auction.client.util.AlertHelper.showError(
-                            "Không thể kết nối tới server. Hãy đảm bảo Server đang chạy!"));
             startAutoReconnect();
         }
     }
@@ -40,10 +37,8 @@ public class SocketClient {
      */
     public static void sendRequest(AuctionRequest request) {
         if (!isConnected()) {
-            System.err.println("Chưa kết nối server hoặc mất mạng!");
-            Platform.runLater(() ->
-                    com.uet.auction.client.util.AlertHelper.showError(
-                            "Không thể kết nối tới server. Vui lòng thử lại!"));
+            System.err.println("Chưa kết nối server hoặc mất mạng! Đang thử kết nối lại...");
+            startAutoReconnect(); // Tự động gọi kết nối lại ngầm, KHÔNG HIỆN POPUP Ở ĐÂY NỮA
             return;
         }
         synchronized (SEND_LOCK) {
@@ -53,6 +48,7 @@ public class SocketClient {
                 out.flush();
             } catch (Exception e) {
                 System.err.println("Lỗi gửi request: " + e.getMessage());
+                startAutoReconnect();
             }
         }
     }
@@ -60,20 +56,19 @@ public class SocketClient {
     public static boolean isConnected() {
         return socket != null && socket.isConnected() && !socket.isClosed();
     }
-    public static void startAutoReconnect() {
+
+    // ĐÃ THÊM 'synchronized' VÀ XÓA POPUP THỪA
+    public static synchronized void startAutoReconnect() {
         // Nếu đang trong quá trình kết nối lại rồi thì không tạo thêm Thread mới
         if (isReconnecting) return;
         isReconnecting = true;
+
         // Chỉ hiện popup báo mất kết nối 1 lần duy nhất khi bắt đầu
         Platform.runLater(() ->
-                com.uet.auction.client.util.AlertHelper.showError("Mất kết nối tới Server. Đang thử kết nối lại...")
+                com.uet.auction.client.util.AlertHelper.showError("Mất kết nối tới Server. Đang tự động kết nối lại...")
         );
 
         new Thread(() -> {
-            Platform.runLater(() ->
-                    com.uet.auction.client.util.AlertHelper.showError("Mất kết nối tới Server. Hệ thống đang tự động thử lại...")
-            );
-
             while (isReconnecting) {
                 try {
                     Thread.sleep(3000); // Đợi 3 giây trước mỗi lần thử để tránh treo máy
