@@ -197,7 +197,7 @@ public class ProductDAO {
     }
 
     public void extendAuctionIfLastBid() {
-        // Anti-sniping: gia han 60 giay neu co bid trong 30 giay cuoi.
+        // Anti-sniping: gia han 5 phut neu co bid trong 30 giay cuoi.
         // Dung last_extended_at de dam bao moi lan bid chi trigger 1 lan gia han,
         // tranh timer chay moi giay gay gia han lien tuc.
         String sql = "UPDATE products p "
@@ -206,7 +206,7 @@ public class ProductDAO {
                 + "  FROM bids "
                 + "  GROUP BY product_id"
                 + ") b ON b.product_id = p.id "
-                + "SET p.end_time = DATE_ADD(p.end_time, INTERVAL 1 MINUTE), "
+                + "SET p.end_time = DATE_ADD(p.end_time, INTERVAL 5 MINUTE), "
                 + "    p.extension_count = COALESCE(p.extension_count, 0) + 1, "
                 + "    p.last_extended_at = NOW(3) "
                 + "WHERE p.status = 'OPEN' "
