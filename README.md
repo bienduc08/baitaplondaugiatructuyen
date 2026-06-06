@@ -209,7 +209,7 @@ Xem chi tiết tại [`schema.sql`](schema.sql).
 
 ## 10. Báo cáo và Demo
 
-- 📄 Báo cáo PDF: *(cập nhật link)*
+- 📄 Báo cáo PDF: https://docs.google.com/document/d/1wZ_LSpcFZGR3Xeszm4fEgzW_rkjZoU1Z/edit?usp=sharing&ouid=111826535776200247084&rtpof=true&sd=true
 - 🎬 Video demo: *(cập nhật link)*
 
 **Kịch bản demo đề xuất:**
