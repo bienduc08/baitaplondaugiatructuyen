@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox spacing="20.0" style="-fx-padding: 30; -fx-background-color: #f8fafc;"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.uet.auction.client.controller.SellerEditProductController">
+    <children>
+        <VBox spacing="5.0">
+            <children>
+                <Label text="Chỉnh sửa sản phẩm" textFill="#1e293b">
+                    <font><Font name="System Bold" size="28.0" /></font>
+                </Label>
+                <Label text="Cập nhật thông số và thời gian cho phiên đấu giá. (Tên sản phẩm không được thay đổi)" textFill="#64748b" />
+            </children>
+        </VBox>
+
+        <HBox spacing="30.0" VBox.vgrow="ALWAYS">
+            <children>
+                <VBox spacing="20.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <VBox prefHeight="510.0" prefWidth="528.0" spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);">
+                            <children>
+                                <Label style="-fx-font-weight: bold; -fx-font-size: 12;" text="THÔNG TIN CHI TIẾT" textFill="#3498db" />
+                                <VBox spacing="8.0">
+                                    <Label style="-fx-font-weight: bold;" text="Tên sản phẩm (Giữ nguyên)" textFill="#475569" />
+                                    <TextField fx:id="txtName" editable="false" prefHeight="45.0" style="-fx-background-radius: 8; -fx-background-color: #e2e8f0; -fx-text-fill: #64748b;" />
+                                </VBox>
+                                <VBox prefHeight="122.0" prefWidth="478.0" spacing="8.0">
+                                    <Label style="-fx-font-weight: bold;" text="Mô tả sản phẩm" textFill="#475569" />
+                                    <TextArea fx:id="txtDescription" prefHeight="200.0" promptText="Mô tả chi tiết..." style="-fx-background-radius: 8;" wrapText="true" />
+                                </VBox>
+                                <VBox prefHeight="247.0" prefWidth="478.0" spacing="8.0">
+                                    <Label style="-fx-font-weight: bold;" text="Hình ảnh" textFill="#475569" />
+                                    <VBox alignment="CENTER" spacing="6.0" style="-fx-border-color: #cbd5e1; -fx-border-style: dashed; -fx-border-radius: 10; -fx-background-color: #f1f5f9; -fx-padding: 10;">
+                                        <ImageView fx:id="imgPreview" fitHeight="100.0" fitWidth="200.0" preserveRatio="true" />
+                                        <HBox alignment="CENTER" spacing="10.0">
+                                            <children>
+                                                <Button onAction="#onChooseImageClick" style="-fx-background-color: white; -fx-border-color: #3498db; -fx-text-fill: #3498db; -fx-cursor: hand; -fx-background-radius: 5;" text="+ Đổi ảnh" />
+                                                <Button fx:id="btnRemoveImage" managed="false" onAction="#onRemoveImageClick" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 5;" text="Xóa ảnh" visible="false" />
+                                            </children>
+                                        </HBox>
+                                        <Label fx:id="lblImageName" style="-fx-font-size: 11;" text="" textFill="#64748b" />
+                                    </VBox>
+                                </VBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+
+                <VBox prefWidth="380.0" spacing="20.0">
+                    <children>
+                        <VBox spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 22; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);">
+                            <children>
+                                <Label style="-fx-font-weight: bold; -fx-font-size: 11;" text="THÔNG SỐ PHIÊN" textFill="#3498db" />
+                                <VBox spacing="10.0">
+                                    <children>
+                                        <VBox spacing="4.0">
+                                            <Label style="-fx-font-weight: bold; -fx-font-size: 11;" text="Giá khởi điểm (VNĐ)" textFill="#475569" />
+                                            <TextField fx:id="txtStartingPrice" prefHeight="40.0" style="-fx-background-radius: 8; -fx-font-weight: bold; -fx-text-fill: #e67e22;" text="0" />
+                                        </VBox>
+                                        <VBox spacing="4.0">
+                                            <Label style="-fx-font-weight: bold; -fx-font-size: 11;" text="Bước giá tối thiểu (VNĐ)" textFill="#475569" />
+                                            <TextField fx:id="txtStepPrice" prefHeight="40.0" style="-fx-background-radius: 8;" text="10,000" />
+                                        </VBox>
+                                    </children>
+                                </VBox>
+                                <Separator />
+                                <VBox spacing="8.0">
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 11;" text="THỜI GIAN BẮT ĐẦU" textFill="#475569" />
+                                    <DatePicker fx:id="dpStartDate" maxWidth="Infinity" style="-fx-background-radius: 5;" />
+                                    <HBox alignment="CENTER" spacing="10.0" style="-fx-background-color: #f1f5f9; -fx-padding: 8; -fx-background-radius: 10;">
+                                        <children>
+                                            <HBox alignment="CENTER" spacing="3.0">
+                                                <TextField fx:id="txtStartH" alignment="CENTER" prefWidth="38.0" style="-fx-background-radius: 5; -fx-font-weight: bold; -fx-padding: 2;" text="08" />
+                                                <Label style="-fx-font-size: 9;" text="Giờ" textFill="#94a3b8" />
+                                            </HBox>
+                                            <Label text=":" />
+                                            <HBox alignment="CENTER" spacing="3.0">
+                                                <TextField fx:id="txtStartM" alignment="CENTER" prefWidth="38.0" style="-fx-background-radius: 5; -fx-font-weight: bold; -fx-padding: 2;" text="00" />
+                                                <Label style="-fx-font-size: 9;" text="Phút" textFill="#94a3b8" />
+                                            </HBox>
+                                            <Label text=":" />
+                                            <HBox alignment="CENTER" spacing="3.0">
+                                                <TextField fx:id="txtStartS" alignment="CENTER" prefWidth="38.0" style="-fx-background-radius: 5; -fx-font-weight: bold; -fx-padding: 2;" text="00" />
+                                                <Label style="-fx-font-size: 9;" text="Giây" textFill="#94a3b8" />
+                                            </HBox>
+                                        </children>
+                                    </HBox>
+                                </VBox>
+                                <VBox spacing="8.0">
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 11;" text="THỜI GIAN KẾT THÚC" textFill="#475569" />
+                                    <DatePicker fx:id="dpEndDate" maxWidth="Infinity" style="-fx-background-radius: 5;" />
+                                    <HBox alignment="CENTER" spacing="10.0" style="-fx-background-color: #fff5f5; -fx-padding: 8; -fx-background-radius: 10;">
+                                        <children>
+                                            <HBox alignment="CENTER" spacing="3.0">
+                                                <TextField fx:id="txtEndH" alignment="CENTER" prefWidth="38.0" style="-fx-background-radius: 5; -fx-font-weight: bold; -fx-padding: 2;" text="23" />
+                                                <Label style="-fx-font-size: 9;" text="Giờ" textFill="#e74c3c" />
+                                            </HBox>
+                                            <Label text=":" textFill="#e74c3c" />
+                                            <HBox alignment="CENTER" spacing="3.0">
+                                                <TextField fx:id="txtEndM" alignment="CENTER" prefWidth="38.0" style="-fx-background-radius: 5; -fx-font-weight: bold; -fx-padding: 2;" text="59" />
+                                                <Label style="-fx-font-size: 9;" text="Phút" textFill="#e74c3c" />
+                                            </HBox>
+                                            <Label text=":" textFill="#e74c3c" />
+                                            <HBox alignment="CENTER" spacing="3.0">
+                                                <TextField fx:id="txtEndS" alignment="CENTER" prefWidth="38.0" style="-fx-background-radius: 5; -fx-font-weight: bold; -fx-padding: 2;" text="00" />
+                                                <Label style="-fx-font-size: 9;" text="Giây" textFill="#e74c3c" />
+                                            </HBox>
+                                        </children>
+                                    </HBox>
+                                </VBox>
+                            </children>
+                        </VBox>
+
+                        <HBox spacing="10.0">
+                            <children>
+                                <Button maxWidth="Infinity" onAction="#onCancelClick" prefHeight="55.0" style="-fx-background-color: #94a3b8; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 14; -fx-background-radius: 12; -fx-cursor: hand;" text="HỦY BỎ" HBox.hgrow="ALWAYS" />
+                                <Button maxWidth="Infinity" onAction="#onSaveClick" prefHeight="55.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 14; -fx-background-radius: 12; -fx-cursor: hand;" text="LƯU THAY ĐỔI" HBox.hgrow="ALWAYS" />
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+    </children>
+</VBox>

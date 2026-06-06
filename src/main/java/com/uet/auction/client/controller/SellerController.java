@@ -12,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 
 
+import javafx.scene.control.Button;
 import java.io.IOException;
 
 
@@ -21,6 +22,8 @@ public class SellerController {
     @FXML private Label welcomeLabel;
     @FXML private Label lblBalance;
     public static Runnable onBackAction;
+    @FXML
+    private Button btnNotifications;
 
 
     @FXML
@@ -37,6 +40,14 @@ public class SellerController {
             }
         }
         onShowHomeClick();
+        // Tải số dư mới nhất từ server
+        String username = SessionManager.getCurrentUsername();
+        if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+
+            // ---> THÊM DÒNG NÀY: Tải danh sách thông báo <---
+            SocketClient.sendRequest(new AuctionRequest("GET_NOTIFICATIONS", username));
+        }
     }
 
     public void updateBalance() {
@@ -86,6 +97,33 @@ public class SellerController {
 
     public BorderPane getMainBorderPane() {
         return mainBorderPane;
+    }
+    @FXML
+    private void onShowNotificationsClick() {
+        // Lưu lại giao diện hiện tại ở Center trước khi chuyển sang xem thông báo
+        javafx.scene.Node previousView = mainBorderPane.getCenter();
+        com.uet.auction.client.controller.NotificationListController.onBackAction = () -> mainBorderPane.setCenter(previousView);
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/NotificationList.fxml"));
+            javafx.scene.Node node = loader.load();
+            mainBorderPane.setCenter(node);
+        } catch (IOException e) {
+            e.printStackTrace();
+            javafx.application.Platform.runLater(() ->
+                    com.uet.auction.client.util.AlertHelper.showError("Không thể tải giao diện thông báo!")
+            );
+        }
+    }
+
+    // Hàm tiện ích để cập nhật số lượng thông báo
+    public void updateNotificationCount(int unreadCount) {
+        if (unreadCount > 0) {
+            btnNotifications.setText("🔔 (" + unreadCount + ")");
+            // Có thể thêm đổi màu chữ đậm hơn ở đây
+        } else {
+            btnNotifications.setText("🔔"); // Ẩn số 0 đi cho đẹp
+        }
     }
     //thiếu chức năng là sửa sản phẩm nê sửa thì tự động về trạng thái pending
 }

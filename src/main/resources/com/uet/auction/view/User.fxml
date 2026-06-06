@@ -9,7 +9,10 @@
         <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-header">
             <Label styleClass="header-logo" text="ĐẤU GIÁ TRỰC TUYẾN UET" />
             <Region HBox.hgrow="ALWAYS" />
+
+            <Button fx:id="btnNotifications" onAction="#onShowNotificationsClick" styleClass="btn-notification" text="🔔 (0)" style="-fx-background-color: transparent; -fx-text-fill: red; -fx-font-weight: bold; -fx-cursor: hand;" />
             <Label fx:id="welcomeLabel" styleClass="greeting-text" text="Xin chào!" />
+
             <Button onAction="#onRefreshButtonClick" styleClass="btn-refresh" text="🔄 Làm mới" />
             <Button onAction="#onLogoutButtonClick" styleClass="btn-logout" text="Đăng xuất" />
         </HBox>

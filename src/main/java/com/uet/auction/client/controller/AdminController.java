@@ -14,7 +14,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class AdminController {
@@ -35,6 +34,8 @@ public class AdminController {
 
     @FXML
     private TableView<ProductDTO> pendingTable;
+    @FXML
+    private Button btnNotifications;
 
     // Đã đổi String thành LocalDateTime để chuẩn hóa hiển thị thời gian
 
@@ -58,6 +59,14 @@ public class AdminController {
         }
         loadPendingProducts();
         onShowHomeClick();
+        // Tải số dư mới nhất từ server
+        String username = SessionManager.getCurrentUsername();
+        if (username != null) {
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+
+            // ---> THÊM DÒNG NÀY: Tải danh sách thông báo <---
+            SocketClient.sendRequest(new AuctionRequest("GET_NOTIFICATIONS", username));
+        }
     }
 
     public void updateBalance() {
@@ -122,7 +131,7 @@ public class AdminController {
 
     @FXML
     public void onShowHomeClick() {
-        loadView("/com/uet/auction/view/HomeContent.fxml",ActiveView.HOME);
+        loadView("/com/uet/auction/view/HomeContent.fxml", ActiveView.HOME);
     }
 
     @FXML
@@ -152,6 +161,33 @@ public class AdminController {
         } catch (IOException e) {
             e.printStackTrace();
             AlertHelper.showError("Không thể tải giao diện! Vui lòng thử lại.");
+        }
+    }
+    @FXML
+    private void onShowNotificationsClick() {
+        // Lưu lại giao diện hiện tại ở Center trước khi chuyển sang xem thông báo
+        javafx.scene.Node previousView = mainBorderPane.getCenter();
+        com.uet.auction.client.controller.NotificationListController.onBackAction = () -> mainBorderPane.setCenter(previousView);
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/NotificationList.fxml"));
+            javafx.scene.Node node = loader.load();
+            mainBorderPane.setCenter(node);
+        } catch (IOException e) {
+            e.printStackTrace();
+            javafx.application.Platform.runLater(() ->
+                    com.uet.auction.client.util.AlertHelper.showError("Không thể tải giao diện thông báo!")
+            );
+        }
+    }
+
+    // Hàm tiện ích để cập nhật số lượng thông báo
+    public void updateNotificationCount(int unreadCount) {
+        if (unreadCount > 0) {
+            btnNotifications.setText("🔔 (" + unreadCount + ")");
+            // Có thể thêm đổi màu chữ đậm hơn ở đây
+        } else {
+            btnNotifications.setText("🔔"); // Ẩn số 0 đi cho đẹp
         }
     }
 }

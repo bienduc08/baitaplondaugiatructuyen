@@ -113,18 +113,39 @@ public class SellerMyProductsController {
 
         if (colActions != null) {
             colActions.setCellFactory(col -> new TableCell<>() {
-                private final Button btn = new Button("Lịch sử bid");
+                // Khai báo 2 nút
+                private final Button btnHistory = new Button("Lịch sử");
+                private final Button btnEdit = new Button("Sửa");
+                // Gộp 2 nút vào một HBox nằm ngang, cách nhau 8px
+                private final javafx.scene.layout.HBox actionBox = new javafx.scene.layout.HBox(8, btnEdit, btnHistory);
+
                 {
-                    btn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white;" +
+                    actionBox.setAlignment(javafx.geometry.Pos.CENTER);
+
+                    // Cấu hình nút Lịch sử (Màu xanh dương)
+                    btnHistory.setStyle("-fx-background-color: #3498db; -fx-text-fill: white;" +
                             "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 11;");
-                    btn.setOnAction(e -> {
+                    btnHistory.setOnAction(e -> {
                         ProductDTO p = getTableView().getItems().get(getIndex());
                         openBidHistory(p);
+                    });
+
+                    // Cấu hình nút Sửa (Màu cam)
+                    btnEdit.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white;" +
+                            "-fx-background-radius: 4; -fx-cursor: hand; -fx-font-size: 11;");
+                    btnEdit.setOnAction(e -> {
+                        ProductDTO p = getTableView().getItems().get(getIndex());
+                        // Chặn không cho sửa nếu sản phẩm đang đấu giá (OPEN)
+                        if ("OPEN".equals(p.getStatus())) {
+                            AlertHelper.showError("Không thể sửa sản phẩm đang trong phiên đấu giá!");
+                        } else {
+                            openEditProduct(p);
+                        }
                     });
                 }
                 @Override protected void updateItem(Void item, boolean empty) {
                     super.updateItem(item, empty);
-                    setGraphic(empty ? null : btn);
+                    setGraphic(empty ? null : actionBox);
                 }
             });
         }
@@ -191,5 +212,29 @@ public class SellerMyProductsController {
     @FXML
     public void onRefreshClick() {
         loadMyAuctions();
+    }
+    /**
+     * Mở giao diện chỉnh sửa sản phẩm
+     */
+    private void openEditProduct(ProductDTO product) {
+        if (SellerController.instance != null) {
+            // Lưu lại giao diện danh sách hiện tại để bấm Hủy thì quay lại
+            javafx.scene.Node previousView = SellerController.instance.getMainBorderPane().getCenter();
+            SellerEditProductController.onCancelAction = () -> SellerController.instance.getMainBorderPane().setCenter(previousView);
+
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/SellerEditProduct.fxml"));
+                javafx.scene.Parent root = loader.load();
+
+                // Đổ dữ liệu sản phẩm đang chọn sang form sửa
+                SellerEditProductController ctrl = loader.getController();
+                ctrl.setProductData(product);
+
+                SellerController.instance.getMainBorderPane().setCenter(root);
+            } catch (IOException e) {
+                e.printStackTrace();
+                AlertHelper.showError("Không thể mở form chỉnh sửa!");
+            }
+        }
     }
 }

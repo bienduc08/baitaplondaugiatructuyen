@@ -31,8 +31,21 @@ public class AuctionService {
 
     public AuctionResponse getProductsByStatus(String status) {
         List<ProductDTO> list = productDAO.getProductsByStatus(status);
-        String resultType = "ALL".equals(status) ? "GET_ALL_PRODUCTS_RESULT" :
-                "PENDING".equals(status) ? "GET_PENDING_PRODUCTS_RESULT" : "GET_PRODUCTS_RESULT";
+        String resultType;
+        switch (status) {
+            case "ALL":
+                resultType = "GET_ALL_PRODUCTS_RESULT";
+                break;
+            case "PENDING":
+                resultType = "GET_PENDING_PRODUCTS_RESULT";
+                break;
+            case "CLOSED":
+                resultType = "GET_CLOSED_PRODUCTS_RESULT"; // Thêm dòng này để tách riêng kết quả
+                break;
+            default:
+                resultType = "GET_PRODUCTS_RESULT"; // Mặc định cho OPEN
+                break;
+        }
         return new AuctionResponse(true, resultType, list);
     }
 
@@ -87,6 +100,37 @@ public class AuctionService {
                     : new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Lỗi Database!", null);
         } catch (Exception e) {
             return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Lỗi server!", null);
+        }
+    }
+    public AuctionResponse updateProduct(ProductDTO product) {
+        try {
+            if (product.getName() == null || product.getName().trim().isEmpty())
+                return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Tên sản phẩm không được để trống!", null);
+            if (product.getStartingPrice() <= 0)
+                return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Giá khởi điểm phải lớn hơn 0!", null);
+            if (product.getEndTime() == null)
+                return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Chưa nhập thời gian kết thúc!", null);
+
+            // Xử lý nếu người dùng có chọn ảnh mới
+            if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
+                String uploadDir = "images";
+                new java.io.File(uploadDir).mkdirs();
+                String fileName = "sp_update_" + System.currentTimeMillis() + ".jpg";
+                java.io.File imageFile = new java.io.File(uploadDir + "/" + fileName);
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(imageFile)) {
+                    fos.write(product.getImageBytes());
+                }
+                product.setImageUrl(uploadDir + "/" + fileName); // Ghi đè đường dẫn ảnh mới
+                product.setImageBytes(null); // Giải phóng bộ nhớ
+            }
+
+            // Gọi DAO để cập nhật DB
+            boolean ok = productDAO.updateProduct(product);
+
+            return ok ? new AuctionResponse(true, "UPDATE_PRODUCT_RESULT", "Cập nhật thành công! Sản phẩm đang chờ duyệt lại.", null)
+                    : new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Lỗi cập nhật Database!", null);
+        } catch (Exception e) {
+            return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Lỗi server: " + e.getMessage(), null);
         }
     }
 
@@ -179,5 +223,38 @@ public class AuctionService {
 
     public synchronized void triggerAllAutoBids() {
         for (Integer productId : autoBidRegistry.keySet()) triggerAutoBid(productId, null);
+    }
+    public AuctionResponse getDashboardStats() {
+        try {
+            // 1. Đếm tổng sản phẩm và tính tổng doanh thu (chỉ tính các phiên đã CLOSED và có người mua)
+            List<ProductDTO> allProducts = productDAO.getProductsByStatus("ALL");
+            int totalAuctions = allProducts.size();
+            double totalRevenue = 0;
+
+            for (ProductDTO p : allProducts) {
+                if ("CLOSED".equals(p.getStatus()) && p.getOwnerName() != null && !p.getOwnerName().isBlank()) {
+                    totalRevenue += p.getCurrentPrice();
+                }
+            }
+
+            // 2. Đếm tổng số user (Dùng SQL đếm thẳng từ Database cho nhanh)
+            int totalUsers = 0;
+            String sql = "SELECT COUNT(*) FROM users WHERE role IN ('USER', 'SELLER')";
+            try (java.sql.Connection conn = com.uet.auction.server.config.DatabaseConnection.getConnection();
+                 java.sql.PreparedStatement pstmt = conn.prepareStatement(sql);
+                 java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) totalUsers = rs.getInt(1);
+            }
+
+            // 3. Đóng gói kết quả gửi về Client
+            java.util.Map<String, Object> stats = new java.util.HashMap<>();
+            stats.put("totalUsers", totalUsers);
+            stats.put("totalAuctions", totalAuctions);
+            stats.put("totalRevenue", totalRevenue);
+
+            return new AuctionResponse(true, "GET_STATS_SUCCESS", stats);
+        } catch (Exception e) {
+            return new AuctionResponse(false, "GET_STATS_SUCCESS", "Lỗi: " + e.getMessage(), null);
+        }
     }
 }

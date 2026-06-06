@@ -84,6 +84,17 @@ public class BidDAO {
                         refundStmt.executeUpdate();
                         System.out.println("[BidDAO] Hoàn " + currentPrice + " VNĐ cho " + currentOwner);
                     }
+
+                    // ---> THÊM MỚI TỪ ĐÂY: Lưu thông báo bị vượt giá vào Database <---
+                    try {
+                        NotificationDAO notifDAO = new NotificationDAO();
+                        String outbidMsg = "Bạn đã bị vượt giá ở sản phẩm ID: " + productId + ". Giá mới hiện tại là: " + String.format("%.0f", bidAmount) + " VNĐ.";
+                        notifDAO.insertNotification(currentOwner, outbidMsg, "OUTBID");
+                    } catch (Exception e) {
+                        System.err.println("[BidDAO] Lỗi khi tạo thông báo vượt giá: " + e.getMessage());
+                        // Bắt exception ở đây để không làm gián đoạn luồng đặt giá chính nếu thông báo bị lỗi
+                    }
+                    // ---> KẾT THÚC THÊM MỚI <---
                 }
 
                 // Trừ tiền người đặt giá mới

@@ -124,6 +124,23 @@ public class ResponseListener implements Runnable {
                             }
                         });
                         break;
+                    case "UPDATE_PRODUCT_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage());
+                                // Đóng form sửa, kích hoạt quay về màn hình danh sách sản phẩm cũ
+                                if (SellerEditProductController.onCancelAction != null) {
+                                    SellerEditProductController.onCancelAction.run();
+                                }
+                                // Tải lại danh sách sản phẩm của tôi để thấy trạng thái đổi thành PENDING
+                                if (SellerMyProductsController.instance != null) {
+                                    SellerMyProductsController.instance.loadMyAuctions();
+                                }
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                            }
+                        });
+                        break;
 
                     case "AUCTION_ENDED":
                         // Server gửi khi một phiên đấu giá vừa kết thúc
@@ -300,8 +317,6 @@ public class ResponseListener implements Runnable {
                         }
                         break;
 
-                    case "GET_STATS_SUCCESS":
-                        break;
                     case "UPDATE_PROFILE_SUCCESS":
                         UserDTO updatedUser = (UserDTO) res.getData();
 
@@ -324,6 +339,29 @@ public class ResponseListener implements Runnable {
                             AlertHelper.showError(res.getMessage());
                         });
                         break;
+                    case "GET_NOTIFICATIONS_SUCCESS":
+                        java.util.List<com.uet.auction.common.DTO.NotificationDTO> notifs =
+                                (java.util.List<com.uet.auction.common.DTO.NotificationDTO>) res.getData();
+
+                        int unreadCount = notifs.size();
+
+                        javafx.application.Platform.runLater(() -> {
+                            if (com.uet.auction.client.controller.UserController.instance != null) {
+                                com.uet.auction.client.controller.UserController.instance.updateNotificationCount(unreadCount);
+                            }
+                            if (com.uet.auction.client.controller.SellerController.instance != null) {
+                                com.uet.auction.client.controller.SellerController.instance.updateNotificationCount(unreadCount);
+                            }
+                            if (com.uet.auction.client.controller.AdminController.instance != null) {
+                                com.uet.auction.client.controller.AdminController.instance.updateNotificationCount(unreadCount);
+                            }
+
+                            // ---> THÊM DÒNG NÀY: Nếu đang mở màn hình danh sách thông báo thì render ra danh sách luôn
+                            if (com.uet.auction.client.controller.NotificationListController.instance != null) {
+                                com.uet.auction.client.controller.NotificationListController.instance.displayNotifications(notifs);
+                            }
+                        });
+                        break;
 
                     default:
                         System.out.println("Phản hồi không xác định: " + type);
@@ -333,6 +371,8 @@ public class ResponseListener implements Runnable {
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("Mất kết nối tới Server.");
+            // Kích hoạt kết nối lại từ phía listener
+            com.uet.auction.client.network.SocketClient.startAutoReconnect();
         }
     }
 }
