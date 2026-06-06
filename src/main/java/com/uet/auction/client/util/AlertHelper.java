@@ -39,5 +39,16 @@ public class AlertHelper {
         alert.setContentText(content);
         return alert.showAndWait();
     }
+    // Trong lớp ResponseListener.java hoặc một lớp tĩnh quản lý trạng thái
+    private static long lastErrorTime = 0;
+
+    public static void showThrottleError(String message) {
+        long now = System.currentTimeMillis();
+        // Chỉ hiện thông báo nếu khoảng cách giữa 2 lỗi > 2 giây
+        if (now - lastErrorTime > 2000) {
+            AlertHelper.showError(message);
+            lastErrorTime = now;
+        }
+    }
     // [KẾT THÚC THÊM MỚI]
 }

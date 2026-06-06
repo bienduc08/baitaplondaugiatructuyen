@@ -64,6 +64,10 @@ public class SocketClient {
         // Nếu đang trong quá trình kết nối lại rồi thì không tạo thêm Thread mới
         if (isReconnecting) return;
         isReconnecting = true;
+        // Chỉ hiện popup báo mất kết nối 1 lần duy nhất khi bắt đầu
+        Platform.runLater(() ->
+                com.uet.auction.client.util.AlertHelper.showError("Mất kết nối tới Server. Đang thử kết nối lại...")
+        );
 
         new Thread(() -> {
             Platform.runLater(() ->
