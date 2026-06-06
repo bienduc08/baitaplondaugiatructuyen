@@ -86,7 +86,7 @@ public class ResponseListener implements Runnable {
                     case "ADD_PRODUCT_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                AlertHelper.showInfo(res.getMessage());
+                                AlertHelper.showInfoNonBlocking(res.getMessage());
                                 if (SellerAddProductController.instance != null)
                                     SellerAddProductController.instance.clearFormAfterSuccess();
                             } else {
@@ -98,11 +98,11 @@ public class ResponseListener implements Runnable {
                     case "CHANGE_STATUS_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
+                                // ✅ Dùng showInfo (showAndWait) thay showInfoNonBlocking để không bị trắng
                                 AlertHelper.showInfo(res.getMessage());
                                 if (AdminPendingController.instance != null) {
                                     AdminPendingController.instance.loadPendingProducts();
                                 }
-                                // Seller đang online sẽ nhận thông báo duyệt/từ chối ngay lập tức
                                 String usr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
                                 if (usr != null) SocketClient.sendRequest(
                                         new com.uet.auction.common.Request.AuctionRequest("GET_NOTIFICATIONS", usr));
@@ -147,7 +147,7 @@ public class ResponseListener implements Runnable {
                     case "UPDATE_PRODUCT_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                AlertHelper.showInfo(res.getMessage());
+                                AlertHelper.showInfoNonBlocking(res.getMessage());
                                 // Đóng form sửa, kích hoạt quay về màn hình danh sách sản phẩm cũ
                                 if (SellerEditProductController.onCancelAction != null) {
                                     SellerEditProductController.onCancelAction.run();
@@ -180,7 +180,7 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             // Hiện popup thông báo người thắng cho tất cả client đang online
                             if (endedMsg != null) {
-                                AlertHelper.showInfo(endedMsg);
+                                AlertHelper.showInfoNonBlocking(endedMsg);
                             }
 
                             // Nếu ProductDetail đang mở đúng sản phẩm vừa kết thúc → hiện kết quả ngay
@@ -223,7 +223,7 @@ public class ResponseListener implements Runnable {
                     case "UNLOCK_USER_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                AlertHelper.showInfo(res.getMessage());
+                                AlertHelper.showInfoNonBlocking(res.getMessage());
                                 if (AdminUserManagementController.instance != null)
                                     AdminUserManagementController.instance.reloadUsers();
                             } else {
@@ -415,7 +415,7 @@ public class ResponseListener implements Runnable {
                         String notifyMsg = res.getMessage();
                         Platform.runLater(() -> {
                             // Hiện popup ngay lập tức
-                            if (notifyMsg != null) AlertHelper.showInfo(notifyMsg);
+                            if (notifyMsg != null) AlertHelper.showInfoNonBlocking(notifyMsg);
                             // Tải lại danh sách thông báo để cập nhật badge số
                             String usr2 = com.uet.auction.client.util.SessionManager.getCurrentUsername();
                             if (usr2 != null) SocketClient.sendRequest(

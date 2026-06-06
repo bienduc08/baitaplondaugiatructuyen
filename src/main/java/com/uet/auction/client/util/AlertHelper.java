@@ -26,6 +26,43 @@ public class AlertHelper {
         showAlert(Alert.AlertType.INFORMATION, "Thông báo", message);
     }
 
+    /**
+     * Hiện thông báo KHÔNG block UI — tự đóng sau 3 giây.
+     * Dùng cho các thông báo broadcast (duyệt SP, kết thúc phiên, v.v.)
+     * để tránh đóng băng màn hình.
+     */
+    /**
+     * Hiện thông báo KHÔNG block UI — tự đóng sau 3 giây.
+     * Phải gọi từ JavaFX thread (Platform.runLater) — KHÔNG wrap thêm runLater bên trong.
+     */
+    public static void showInfoNonBlocking(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Thông báo");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        // Gắn owner window để dialog hiện đúng vị trí và không bị trắng
+        try {
+            javafx.stage.Stage owner = null;
+            for (javafx.stage.Window w : javafx.stage.Window.getWindows()) {
+                if (w.isShowing() && w instanceof javafx.stage.Stage) {
+                    owner = (javafx.stage.Stage) w;
+                    break;
+                }
+            }
+            if (owner != null) {
+                alert.initOwner(owner);
+            }
+        } catch (Exception ignored) {}
+
+        alert.show();
+
+        javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(
+                javafx.util.Duration.seconds(3));
+        delay.setOnFinished(e -> alert.close());
+        delay.play();
+    }
+
     public static void showWarning(String message) {
         showAlert(Alert.AlertType.WARNING, "Cảnh báo", message);
     }

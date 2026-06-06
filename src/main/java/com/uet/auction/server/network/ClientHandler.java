@@ -129,10 +129,10 @@ public class ClientHandler implements Runnable {
                             } catch (Exception e) {
                                 System.err.println("Lỗi gửi thông báo APPROVE: " + e.getMessage());
                             }
-                            sendResponse(new AuctionResponse(true, "CHANGE_STATUS_RESULT", "✅ Đã duyệt sản phẩm \"" + pApprove.getName() + "\""));
+                            sendResponse(new AuctionResponse(true, "CHANGE_STATUS_RESULT", "✅ Đã duyệt sản phẩm \"" + pApprove.getName() + "\"", null));
                             SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
                         } else {
-                            sendResponse(new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Lỗi: Không thể cập nhật CSDL!"));
+                            sendResponse(new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Lỗi: Không thể cập nhật CSDL!", null));
                         }
                         break;
                     }
@@ -151,10 +151,10 @@ public class ClientHandler implements Runnable {
                             } catch (Exception e) {
                                 System.err.println("Lỗi gửi thông báo REJECT: " + e.getMessage());
                             }
-                            sendResponse(new AuctionResponse(true, "CHANGE_STATUS_RESULT", "❌ Đã từ chối sản phẩm \"" + pReject.getName() + "\""));
+                            sendResponse(new AuctionResponse(true, "CHANGE_STATUS_RESULT", "❌ Đã từ chối sản phẩm \"" + pReject.getName() + "\"", null));
                             SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
                         } else {
-                            sendResponse(new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Lỗi: Không thể cập nhật CSDL!"));
+                            sendResponse(new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Lỗi: Không thể cập nhật CSDL!", null));
                         }
                         break;
                     }
@@ -170,7 +170,6 @@ public class ClientHandler implements Runnable {
                             ProductDAO pdao = new ProductDAO();
                             // FIX: Dùng cùng 1 DAO instance để extend rồi đọc lại,
                             // đảm bảo freshProduct luôn có end_time mới sau anti-sniping
-                            pdao.extendAuctionIfLastBid();
                             auctionService.triggerAutoBid(productId2, bidder);
 
                             java.util.Map<String, Object> priceData = new java.util.HashMap<>();

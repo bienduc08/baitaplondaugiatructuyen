@@ -197,17 +197,23 @@ public class ProductDAO {
     }
 
     public void extendAuctionIfLastBid() {
-        // Anti-sniping: chi gia han khi co bid trong dung 30 giay cuoi,
-        // gioi han toi da 3 lan gia han qua cot extension_count.
-        String sql = "UPDATE products "
-                + "SET end_time = DATE_ADD(end_time, INTERVAL 5 MINUTE), "
-                + "    extension_count = COALESCE(extension_count, 0) + 1 "
-                + "WHERE status = 'OPEN' "
-                + "AND TIMESTAMPDIFF(SECOND, NOW(), end_time) BETWEEN 0 AND 30 "
-                + "AND COALESCE(extension_count, 0) < 3 "
-                + "AND id IN ("
-                + "  SELECT DISTINCT product_id FROM bids "
-                + "  WHERE bid_time >= DATE_SUB(NOW(), INTERVAL 30 SECOND))";
+        // Anti-sniping: gia han 60 giay neu co bid trong 30 giay cuoi.
+        // Dung last_extended_at de dam bao moi lan bid chi trigger 1 lan gia han,
+        // tranh timer chay moi giay gay gia han lien tuc.
+        String sql = "UPDATE products p "
+                + "JOIN ("
+                + "  SELECT product_id, MAX(bid_time) AS latest_bid "
+                + "  FROM bids "
+                + "  GROUP BY product_id"
+                + ") b ON b.product_id = p.id "
+                + "SET p.end_time = DATE_ADD(p.end_time, INTERVAL 1 MINUTE), "
+                + "    p.extension_count = COALESCE(p.extension_count, 0) + 1, "
+                + "    p.last_extended_at = NOW(3) "
+                + "WHERE p.status = 'OPEN' "
+                + "AND TIMESTAMPDIFF(SECOND, NOW(), p.end_time) BETWEEN 0 AND 30 "
+                + "AND COALESCE(p.extension_count, 0) < 3 "
+                + "AND b.latest_bid >= DATE_SUB(NOW(), INTERVAL 30 SECOND) "
+                + "AND (p.last_extended_at IS NULL OR p.last_extended_at < b.latest_bid)";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.executeUpdate();
         } catch (SQLException ignored) {}
