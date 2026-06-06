@@ -37,11 +37,14 @@ public class SocketServer {
         }
     }
 
-    /** Gửi thông báo tới tất cả client đang kết nối (real-time update) */
-    public static void broadcast(AuctionResponse response) {
+    /** Gửi thông báo tới tất cả client ĐÃ ĐĂNG NHẬP (bỏ qua màn hình Login) */
+    public static void broadcastToLoggedInUsers(AuctionResponse response) {
         synchronized (clients) {
             for (ClientHandler client : clients) {
-                client.sendResponse(response);
+                // Chỉ gửi nếu username không null (tức là đã login thành công)
+                if (client.getLoggedInUsername() != null) {
+                    client.sendResponse(response);
+                }
             }
         }
     }

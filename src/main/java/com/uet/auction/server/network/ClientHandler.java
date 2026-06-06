@@ -168,9 +168,12 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         if (response.isSuccess()) {
                             ProductDAO pdao = new ProductDAO();
-                            // FIX: Dùng cùng 1 DAO instance để extend rồi đọc lại,
-                            // đảm bảo freshProduct luôn có end_time mới sau anti-sniping
+                            // Anti-sniping: gọi ngay sau bid để kiểm tra đúng thời điểm bid đặt
+                            // KHÔNG dựa vào timer (timer chạy muộn sẽ cho kết quả sai)
+                            pdao.extendAuctionIfLastBid();
                             auctionService.triggerAutoBid(productId2, bidder);
+                            // Sau auto-bid cũng kiểm tra lại (auto-bid có thể tạo bid mới)
+                            pdao.extendAuctionIfLastBid();
 
                             java.util.Map<String, Object> priceData = new java.util.HashMap<>();
                             priceData.put("productId", productId2);

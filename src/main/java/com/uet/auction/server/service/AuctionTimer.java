@@ -21,8 +21,8 @@ public class AuctionTimer {
                 // 1. Mở các phiên đến giờ
                 productDAO.openScheduledAuctions();
 
-                // 2. Anti-sniping: gia hạn
-                productDAO.extendAuctionIfLastBid();
+                // 2. Anti-sniping được xử lý trực tiếp tại ClientHandler ngay sau mỗi bid
+                // (không gọi ở đây để tránh timer chạy muộn gây extend sai)
 
                 // 3. KÍCH HOẠT AUTO-BID TRƯỚC KHI CHỐT SỔ ĐÓNG PHIÊN
                 AuctionService.getInstance().triggerAllAutoBids();
@@ -63,11 +63,11 @@ public class AuctionTimer {
                                     productName
                             );
                         }
-                        SocketServer.broadcast(new AuctionResponse(true, "AUCTION_ENDED", message, info));
+                        SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "AUCTION_ENDED", message, info));
                     }
                 } else {
                     // Nếu không có phiên đóng mới gửi UPDATE_PRICE để tránh client load 2 lần
-                    SocketServer.broadcast(new AuctionResponse(true, "UPDATE_PRICE", null));
+                    SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "UPDATE_PRICE", null));
                 }
 
             } catch (Exception e) {
