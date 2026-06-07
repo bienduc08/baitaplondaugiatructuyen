@@ -142,8 +142,27 @@ public class AdminPendingController {
      */
     public void updateTableData(List<ProductDTO> products) {
         Platform.runLater(() -> {
-            // Đổ toàn bộ dữ liệu vào bảng để hiển thị chi tiết
-            pendingListData.setAll(products);
+            // 1. Lưu lại ID của sản phẩm đang được chọn trước khi nạp lại
+            ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
+            int selectedId = selected != null ? selected.getId() : -1;
+
+            // 2. Chỉ hiển thị các sản phẩm có trạng thái PENDING (chờ duyệt)
+            java.util.List<ProductDTO> pendingProducts = products.stream()
+                    .filter(p -> "PENDING".equals(p.getStatus()))
+                    .toList();
+
+            // 3. Đổ dữ liệu đã lọc vào bảng
+            pendingListData.setAll(pendingProducts);
+
+            // 4. Chọn lại sản phẩm cũ nếu nó vẫn còn trong danh sách chờ duyệt
+            if (selectedId != -1) {
+                for (int i = 0; i < pendingListData.size(); i++) {
+                    if (pendingListData.get(i).getId() == selectedId) {
+                        pendingTable.getSelectionModel().select(i);
+                        break;
+                    }
+                }
+            }
         });
     }
 
