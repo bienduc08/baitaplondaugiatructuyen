@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -83,16 +84,16 @@ public class SellerAddProductController {
         }
 
         try {
-            double startingPrice = Double.parseDouble(priceStr.replace(",", ""));
-            if (startingPrice <= 0) {
+            BigDecimal startingPrice = new BigDecimal(priceStr.replace(",", ""));
+            if (startingPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 AlertHelper.showError("Giá khởi điểm phải lớn hơn 0!");
                 return;
             }
 
             // BẠN CẦN THÊM ĐOẠN ĐỌC BƯỚC GIÁ NÀY VÀO
             String stepStr = (txtBidStep != null && !txtBidStep.getText().trim().isEmpty()) ? txtBidStep.getText().trim() : "10000";
-            double stepPrice = Double.parseDouble(stepStr.replace(",", ""));
-            if (stepPrice <= 0) {
+            BigDecimal stepPrice = new BigDecimal(stepStr.replace(",", ""));
+            if (stepPrice.compareTo(BigDecimal.ZERO) <= 0) {
                 AlertHelper.showError("Bước giá phải lớn hơn 0!");
                 return;
             }

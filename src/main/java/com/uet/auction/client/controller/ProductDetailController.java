@@ -22,6 +22,7 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,7 +51,7 @@ public class ProductDetailController {
     @FXML
     private TableColumn<BidDTO, String> colUser, colBidTime;
     @FXML
-    private TableColumn<BidDTO, Double> colBidPrice;
+    private TableColumn<BidDTO, BigDecimal> colBidPrice;
     @FXML
     private TextField txtBidAmount;
     @FXML
@@ -261,7 +262,7 @@ public class ProductDetailController {
             // Lấy giá cao nhất (không phải bid mới nhất — có thể khác nhau)
             recentBidsList.stream()
                     .filter(b -> b.getPrice() != null)
-                    .max(Comparator.comparingDouble(BidDTO::getPrice))
+                    .max(Comparator.comparing(BidDTO::getPrice))
                     .ifPresent(top -> {
                         if (currentProduct != null) {
                             currentProduct.setCurrentPrice(top.getPrice());
@@ -305,14 +306,14 @@ public class ProductDetailController {
                 return;
             }
 
-            double maxBid   = Double.parseDouble(maxBidText);
-            double increment = Double.parseDouble(incrText);
+            BigDecimal maxBid   = new BigDecimal(maxBidText);
+            BigDecimal increment = new BigDecimal(incrText);
 
-            if (maxBid <= currentProduct.getCurrentPrice()) {
+            if (maxBid.compareTo(currentProduct.getCurrentPrice()) <= 0) {
                 AlertHelper.showError("Giá tối đa phải lớn hơn giá hiện tại!");
                 return;
             }
-            if (increment <= 0) {
+            if (increment.compareTo(BigDecimal.ZERO) <= 0) {
                 AlertHelper.showError("Bước tăng phải lớn hơn 0!");
                 return;
             }
@@ -350,8 +351,9 @@ public class ProductDetailController {
                 return;
             }
 
-            double bidAmount = Double.parseDouble(txtBidAmount.getText().replace(",", "").trim());
-            if (bidAmount < (currentProduct.getCurrentPrice() + currentProduct.getStepPrice())) {
+            BigDecimal bidAmount = new BigDecimal(txtBidAmount.getText().replace(",", "").trim());
+            BigDecimal minRequired = currentProduct.getCurrentPrice().add(currentProduct.getStepPrice());
+            if (bidAmount.compareTo(minRequired) < 0) {
                 AlertHelper.showError("Giá đặt phải lớn hơn giá hiện tại + bước giá!");
                 return;
             }

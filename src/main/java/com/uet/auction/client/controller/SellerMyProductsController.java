@@ -21,6 +21,7 @@ import javafx.animation.Timeline;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 public class SellerMyProductsController {
@@ -33,7 +34,7 @@ public class SellerMyProductsController {
     @FXML private TableView<ProductDTO>            tblMyAuctions;
     @FXML private TableColumn<ProductDTO, Integer> colId;
     @FXML private TableColumn<ProductDTO, String>  colName;
-    @FXML private TableColumn<ProductDTO, Double>  colCurrentPrice;
+    @FXML private TableColumn<ProductDTO, BigDecimal>  colCurrentPrice;
     @FXML private TableColumn<ProductDTO, Integer> colBids;
     @FXML private TableColumn<ProductDTO, String>  colStatus;
     @FXML private TableColumn<ProductDTO, Void>    colActions;
@@ -77,7 +78,7 @@ public class SellerMyProductsController {
         if (colCurrentPrice != null) {
             colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
             colCurrentPrice.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(Double v, boolean empty) {
+                @Override protected void updateItem(BigDecimal v, boolean empty) {
                     super.updateItem(v, empty);
                     setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
                 }

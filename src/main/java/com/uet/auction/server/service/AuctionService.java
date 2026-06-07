@@ -9,6 +9,7 @@ import com.uet.auction.server.DAO.UserDAO;
 import com.uet.auction.server.model.AutoBidConfig;
 import com.uet.auction.server.network.SocketServer;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,7 @@ public class AuctionService {
             ProductDTO product = productDAO.getProductById(productId);
             if (product == null || !"OPEN".equals(product.getStatus())) break;
 
-            double currentPrice = product.getCurrentPrice();
+            BigDecimal currentPrice = product.getCurrentPrice();
             String currentOwner = product.getOwnerName();
 
             PriorityQueue<AutoBidConfig> queue = new PriorityQueue<>(configs);
@@ -88,7 +89,7 @@ public class AuctionService {
                 if (lastBidder != null && username.equals(lastBidder)) continue;
                 if (!cfg.isActive()) continue;
 
-                Double nextBid = cfg.calculateNextBid(currentPrice);
+                BigDecimal nextBid = cfg.calculateNextBid(currentPrice);
                 if (nextBid == null) {
                     cfg.setActive(false);
                     // Thông báo cho user biết auto-bid đã hết giới hạn
@@ -175,9 +176,9 @@ public class AuctionService {
             // Validation phía server
             if (product.getName() == null || product.getName().trim().isEmpty())
                 return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Tên sản phẩm không được để trống!", null);
-            if (product.getStartingPrice() <= 0)
+            if (product.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0)
                 return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Giá khởi điểm phải lớn hơn 0!", null);
-            if (product.getStepPrice() <= 0)
+            if (product.getStepPrice().compareTo(BigDecimal.ZERO) <= 0)
                 return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Bước giá phải lớn hơn 0!", null);
             if (product.getEndTime() == null)
                 return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Thời gian kết thúc không được để trống!", null);
@@ -232,7 +233,7 @@ public class AuctionService {
      * 3. Gọi BidDAO.placeBid() — transaction đầy đủ trong DAO
      * Hai bước 1 và 2 gộp vào một try-catch để lỗi DB không bị nuốt im.
      */
-    public AuctionResponse placeBid(int productId, String bidderName, double bidAmount) {
+    public AuctionResponse placeBid(int productId, String bidderName, BigDecimal bidAmount) {
         // Bước 1 + 2: kiểm tra role và số dư — gộp vào một khối try
         try {
             String role = userDAO.getRole(bidderName);
@@ -241,8 +242,8 @@ public class AuctionService {
                         "Tài khoản Người bán và Quản trị viên không được phép tham gia đấu giá!", null);
             }
 
-            double balance = userDAO.getBalance(bidderName);
-            if (balance < bidAmount) {
+            BigDecimal balance = userDAO.getBalance(bidderName);
+            if (balance.compareTo(bidAmount) < 0) {
                 return new AuctionResponse(false, "BID_RESULT",
                         String.format("Số dư không đủ! Số dư hiện tại: %,.0f VNĐ", balance), null);
             }

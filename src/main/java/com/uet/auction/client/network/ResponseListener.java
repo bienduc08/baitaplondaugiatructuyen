@@ -10,6 +10,7 @@ import javafx.application.Platform;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.math.BigDecimal;
 import java.util.List;
 
 public class ResponseListener implements Runnable {
@@ -47,15 +48,12 @@ public class ResponseListener implements Runnable {
                         });
                         break;
                     case "GET_ALL_PRODUCTS_RESULT":
-                    case "GET_PENDING_PRODUCTS_RESULT": // Gộp chung xử lý vì list giống nhau
+                    case "GET_PENDING_PRODUCTS_RESULT":
                         List<ProductDTO> allProducts = (List<ProductDTO>) res.getData();
                         Platform.runLater(() -> {
-                            // 1. Báo cho AdminController đếm số lượng (Open, Pending, Closed)
                             if (AdminController.instance != null) {
                                 AdminController.instance.updatePendingList(allProducts);
                             }
-
-                            // 2. Báo cho AdminPendingController để hiển thị chi tiết vào Bảng
                             if (AdminPendingController.instance != null) {
                                 AdminPendingController.instance.updateTableData(allProducts);
                             }
@@ -98,7 +96,6 @@ public class ResponseListener implements Runnable {
                     case "CHANGE_STATUS_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                // ĐÃ SỬA: Chỉ gọi 1 hàm loadPendingProducts() để làm mới dữ liệu và cập nhật bộ đếm
                                 if (AdminPendingController.instance != null) {
                                     AdminPendingController.instance.loadPendingProducts();
                                 }
@@ -126,20 +123,16 @@ public class ResponseListener implements Runnable {
                         break;
 
                     case "AUCTION_ENDED":
-                        // Server gửi khi một phiên đấu giá vừa kết thúc
-                        // message chứa thông báo đầy đủ, data chứa Map thông tin phiên
                         String endedMsg = res.getMessage();
                         @SuppressWarnings("unchecked")
                         java.util.Map<String, Object> endedInfo =
                                 (java.util.Map<String, Object>) res.getData();
 
                         Platform.runLater(() -> {
-                            // Hiện popup thông báo người thắng cho tất cả client đang online
                             if (endedMsg != null) {
                                 AlertHelper.showInfo(endedMsg);
                             }
 
-                            // Reload giao diện để phản ánh trạng thái CLOSED
                             if (HomecontentController.instance != null)
                                 HomecontentController.instance.loadProducts();
                             if (ProductDetailController.instance != null)
@@ -151,10 +144,6 @@ public class ResponseListener implements Runnable {
                             }
                         });
                         break;
-
-                    // =========================================================
-                    // XỬ LÝ RESPONSE QUẢN LÝ NGƯỜI DÙNG
-                    // =========================================================
 
                     case "GET_ALL_USERS_RESULT":
                     case "SEARCH_USER_RESULT":
@@ -181,8 +170,6 @@ public class ResponseListener implements Runnable {
                             }
                         });
                         break;
-
-
 
                     case "BID_RESULT":
                         Platform.runLater(() -> {
@@ -232,42 +219,24 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage());
-                                double newBalance = ((Number) res.getData()).doubleValue();
+                                BigDecimal newBalance = new BigDecimal(((Number) res.getData()).toString());
 
-                                // 1. Cập nhật Session
                                 UserDTO current = SessionManager.getCurrentUser();
                                 if (current != null) {
                                     current.setBalance(newBalance);
                                 }
 
-                                // 2. Cập nhật ĐỒNG THỜI khung chính (Sidebar) VÀ trang Profile của User
-                                if (UserController.instance != null) {
-                                    UserController.instance.updateBalance(); // Cập nhật sidebar của User
-                                }
-                                if (ProfileUserController.instance != null) {
-                                    ProfileUserController.instance.handleDepositSuccess(newBalance); // Cập nhật Profile của User
-                                }
+                                if (UserController.instance != null) UserController.instance.updateBalance();
+                                if (ProfileUserController.instance != null) ProfileUserController.instance.handleDepositSuccess(newBalance);
 
-                                // 3. Cập nhật ĐỒNG THỜI khung chính (Sidebar) VÀ trang Profile của Seller
-                                if (SellerController.instance != null) {
-                                    SellerController.instance.updateBalance(); // Cập nhật sidebar của Seller
-                                }
-                                if (ProfileSellerController.instance != null) {
-                                    ProfileSellerController.instance.handleDepositSuccess(newBalance); // Cập nhật Profile của Seller
-                                }
+                                if (SellerController.instance != null) SellerController.instance.updateBalance();
+                                if (ProfileSellerController.instance != null) ProfileSellerController.instance.handleDepositSuccess(newBalance);
 
-                                // 4. Cập nhật ĐỒNG THỜI khung chính (Sidebar) VÀ trang Profile của Admin
-                                if (AdminController.instance != null) {
-                                    AdminController.instance.updateBalance(); // Cập nhật sidebar của Admin
-                                }
-                                if (ProfileAdminController.instance != null) {
-                                    ProfileAdminController.instance.handleDepositSuccess(newBalance); // Cập nhật Profile của Admin
-                                }
+                                if (AdminController.instance != null) AdminController.instance.updateBalance();
+                                if (ProfileAdminController.instance != null) ProfileAdminController.instance.handleDepositSuccess(newBalance);
 
                             } else {
                                 AlertHelper.showError(res.getMessage());
-
-                                // Xử lý thất bại (Tắt vòng loading, reset input...)
                                 if (ProfileUserController.instance != null) ProfileUserController.instance.handleDepositFailure();
                                 if (ProfileSellerController.instance != null) ProfileSellerController.instance.handleDepositFailure();
                                 if (ProfileAdminController.instance != null) ProfileAdminController.instance.handleDepositFailure();
@@ -277,48 +246,36 @@ public class ResponseListener implements Runnable {
 
                     case "GET_USER_BALANCE_RESULT":
                         if (res.isSuccess()) {
-                            double bal = ((Number) res.getData()).doubleValue();
+                            BigDecimal bal = new BigDecimal(((Number) res.getData()).toString());
                             Platform.runLater(() -> {
-                                // 1. Cập nhật Session
                                 UserDTO current = SessionManager.getCurrentUser();
                                 if (current != null) {
                                     current.setBalance(bal);
                                 }
 
-                                // 2. Cập nhật ĐỒNG THỜI Sidebar và Profile của User
                                 if (UserController.instance != null) UserController.instance.updateBalance();
-                                if (ProfileUserController.instance != null) ProfileUserController.instance.handleDepositSuccess(bal); // Hoặc gọi hàm updateBalance(bal) nếu bạn viết riêng
+                                if (ProfileUserController.instance != null) ProfileUserController.instance.handleDepositSuccess(bal);
 
-                                // 3. Cập nhật ĐỒNG THỜI Sidebar và Profile của Seller
                                 if (SellerController.instance != null) SellerController.instance.updateBalance();
                                 if (ProfileSellerController.instance != null) ProfileSellerController.instance.handleDepositSuccess(bal);
 
-                                // 4. Cập nhật ĐỒNG THỜI Sidebar và Profile của Admin
                                 if (AdminController.instance != null) AdminController.instance.updateBalance();
                                 if (ProfileAdminController.instance != null) ProfileAdminController.instance.handleDepositSuccess(bal);
                             });
                         }
                         break;
 
-                    case "GET_STATS_SUCCESS":
-                        break;
                     case "UPDATE_PROFILE_SUCCESS":
                         UserDTO updatedUser = (UserDTO) res.getData();
-
-                        // SỬA LỖI 2: Dùng SessionManager của phía Client
                         SessionManager.setCurrentUser(updatedUser);
-
                         Platform.runLater(() -> {
                             AlertHelper.showInfo(res.getMessage());
-
-                            // Kích hoạt nút quay lại màn hình Profile
                             if (ProfileEditController.onBackAction != null) {
                                 ProfileEditController.onBackAction.run();
                             }
                         });
                         break;
 
-                    // Nếu Server báo thất bại (ví dụ: Sai mật khẩu cũ)
                     case "UPDATE_PROFILE_FAILED":
                         Platform.runLater(() -> {
                             AlertHelper.showError(res.getMessage());
@@ -328,7 +285,6 @@ public class ResponseListener implements Runnable {
                     default:
                         System.out.println("Phản hồi không xác định: " + type);
                         break;
-
                 }
             }
         } catch (IOException | ClassNotFoundException e) {

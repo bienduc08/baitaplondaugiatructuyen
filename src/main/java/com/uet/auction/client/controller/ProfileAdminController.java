@@ -12,6 +12,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -100,17 +101,23 @@ public class ProfileAdminController {
         dialog.showAndWait().ifPresent(input -> {
             String raw = input.trim().replace(",", "").replace(".", "");
             if (raw.isEmpty()) { AlertHelper.showError("Vui lòng nhập số tiền!"); return; }
-            double amount;
-            try { amount = Double.parseDouble(raw); }
+            BigDecimal amount;
+            try { amount = new BigDecimal(raw); }
             catch (NumberFormatException e) { AlertHelper.showError("Số tiền không hợp lệ!"); return; }
-            if (amount <= 0) { AlertHelper.showError("Số tiền nạp phải lớn hơn 0!"); return; }
-            if (amount > 500_000_000) { AlertHelper.showError("Mỗi lần nạp tối đa 500.000.000 VNĐ!"); return; }
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                AlertHelper.showError("Số tiền nạp phải lớn hơn 0!");
+                return;
+            }
+            if (amount.compareTo(new BigDecimal("500000000")) > 0) {
+                AlertHelper.showError("Mỗi lần nạp tối đa 500.000.000 VNĐ!");
+                return;
+            }
             if (btnDeposit != null) btnDeposit.setDisable(true);
             SocketClient.sendRequest(new AuctionRequest("DEPOSIT", new Object[]{username, amount}));
         });
     }
 
-    public void handleDepositSuccess(double newBalance) {
+    public void handleDepositSuccess(BigDecimal newBalance) {
         Platform.runLater(() -> {
             UserDTO user = SessionManager.getCurrentUser();
             if (user != null) user.setBalance(newBalance);

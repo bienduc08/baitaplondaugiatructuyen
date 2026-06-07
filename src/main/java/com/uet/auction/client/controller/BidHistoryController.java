@@ -16,6 +16,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +33,7 @@ public class BidHistoryController {
     @FXML private TableView<BidDTO> bidHistoryTable;
     @FXML private TableColumn<BidDTO, String> timeCol;
     @FXML private TableColumn<BidDTO, String> bidderCol;
-    @FXML private TableColumn<BidDTO, Double> priceCol;
+    @FXML private TableColumn<BidDTO, BigDecimal> priceCol;
     @FXML private TableColumn<BidDTO, String> statusCol;
 
     // Biểu đồ LineChart
@@ -56,7 +57,7 @@ public class BidHistoryController {
 
         // Format cột giá
         priceCol.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(Double price, boolean empty) {
+            @Override protected void updateItem(BigDecimal price, boolean empty) {
                 super.updateItem(price, empty);
                 if (empty || price == null) { setText(null); return; }
                 setText(String.format("%,.0f VNĐ", price));

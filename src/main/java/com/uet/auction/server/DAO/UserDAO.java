@@ -3,6 +3,7 @@ package com.uet.auction.server.DAO;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.server.config.DatabaseConnection;
 
+import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -55,9 +56,9 @@ public class UserDAO {
                     user.setPhoneNumber("");
                 }
                 try {
-                    user.setBalance(rs.getDouble("balance"));
+                    user.setBalance(rs.getBigDecimal("balance"));
                 } catch (SQLException e) {
-                    user.setBalance(0.0);
+                    user.setBalance(BigDecimal.ZERO);
                 }
                 try {
                     user.setStatus(rs.getString("status"));
@@ -73,18 +74,23 @@ public class UserDAO {
         }
         return null;
     }
+    /**
+     * Lấy số dư của người dùng theo username
+     * @param username tên đăng nhập
+     * @return số dư kiểu BigDecimal
+     */
 
-    public double getBalance(String username) {
+    public BigDecimal getBalance(String username) {
         String sql = "SELECT balance FROM users WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) return rs.getDouble("balance");
+            if (rs.next()) return rs.getBigDecimal("balance");
         } catch (SQLException e) {
             System.err.println("Lỗi lấy balance: " + e.getMessage());
         }
-        return 0.0;
+        return BigDecimal.ZERO;
     }
 
     public String getStatus(String username) {
@@ -107,11 +113,11 @@ public class UserDAO {
     }
 
     /** Cộng tiền vào số dư; trả về số dư mới hoặc null nếu thất bại. */
-    public Double deposit(String username, double amount) {
+    public BigDecimal deposit(String username, BigDecimal amount) {
         String sql = "UPDATE users SET balance = balance + ? WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setDouble(1, amount);
+            pstmt.setBigDecimal(1, amount);
             pstmt.setString(2, username);
             if (pstmt.executeUpdate() > 0) {
                 return getBalance(username);
@@ -208,7 +214,7 @@ public class UserDAO {
                 user.setId(rs.getInt("id"));
                 user.setUsername(rs.getString("username"));
                 user.setRole(rs.getString("role"));
-                user.setBalance(rs.getDouble("balance"));
+                user.setBalance(rs.getBigDecimal("balance"));
 
                 try { user.setStatus(rs.getString("status")); } catch (SQLException e) { user.setStatus("ACTIVE"); }
                 try { user.setFullName(rs.getString("fullname")); } catch (SQLException e) { user.setFullName(""); }
@@ -237,7 +243,7 @@ public class UserDAO {
                     user.setId(rs.getInt("id"));
                     user.setUsername(rs.getString("username"));
                     user.setRole(rs.getString("role"));
-                    user.setBalance(rs.getDouble("balance"));
+                    user.setBalance(rs.getBigDecimal("balance"));
 
                     try { user.setStatus(rs.getString("status")); } catch (SQLException e) { user.setStatus("ACTIVE"); }
                     try { user.setFullName(rs.getString("fullname")); } catch (SQLException e) { user.setFullName(""); }
@@ -268,6 +274,7 @@ public class UserDAO {
             return false;
         }
     }
+
     // Hàm cập nhật thông tin cá nhân (Có hoặc không đổi mật khẩu)
     public boolean updateProfile(String username, String fullName, String phoneNumber, String newPassword) {
         // Nếu newPassword rỗng tức là người dùng chỉ đổi thông tin, không đổi mật khẩu

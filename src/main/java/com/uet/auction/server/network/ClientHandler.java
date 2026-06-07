@@ -11,6 +11,7 @@ import com.uet.auction.server.service.AuthService;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
 import java.net.Socket;
 
 public class ClientHandler implements Runnable {
@@ -63,13 +64,14 @@ public class ClientHandler implements Runnable {
 
                     case "DEPOSIT":
                         Object[] depData = (Object[]) request.getData();
-                        response = authService.deposit((String) depData[0], ((Number) depData[1]).doubleValue());
+                        BigDecimal depositAmount = new BigDecimal(((Number) depData[1]).toString());
+                        response = authService.deposit((String) depData[0], depositAmount);
                         sendResponse(response);
                         break;
 
                     case "GET_USER_BALANCE":
                         String balanceUsername = (String) request.getData();
-                        double bal = authService.getUserBalance(balanceUsername);
+                        BigDecimal bal = authService.getUserBalance(balanceUsername);
                         response = new AuctionResponse(true, "GET_USER_BALANCE_RESULT", bal);
                         sendResponse(response);
                         break;
@@ -153,7 +155,7 @@ public class ClientHandler implements Runnable {
                         Object[] bidData = (Object[]) request.getData();
                         int productId2 = ((Number) bidData[0]).intValue();
                         String bidder  = (String) bidData[1];
-                        double amount  = ((Number) bidData[2]).doubleValue();
+                        BigDecimal amount = new BigDecimal(((Number) bidData[2]).toString());
                         response = auctionService.placeBid(productId2, bidder, amount);
                         sendResponse(response);
                         if (response.isSuccess()) {
@@ -169,8 +171,8 @@ public class ClientHandler implements Runnable {
                         int abProductId   = ((Number) autoData[0]).intValue();
                         int abBidderId    = ((Number) autoData[1]).intValue();
                         String abUsername = (String) autoData[2];
-                        Double abMax = ((Number) autoData[3]).doubleValue();
-                        Double abIncrement = ((Number) autoData[4]).doubleValue();
+                        BigDecimal abMax = new BigDecimal(((Number) autoData[3]).toString());
+                        BigDecimal abIncrement = new BigDecimal(((Number) autoData[4]).toString());
 
                         AutoBidConfig autoBidConfig = new AutoBidConfig(abBidderId, abUsername, abProductId, abMax, abIncrement);
                         response = auctionService.registerAutoBid(autoBidConfig);

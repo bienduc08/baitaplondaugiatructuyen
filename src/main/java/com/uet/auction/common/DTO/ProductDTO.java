@@ -1,6 +1,7 @@
 package com.uet.auction.common.DTO;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -13,8 +14,8 @@ public class ProductDTO implements Serializable {
 
     private int id;
     private String name;
-    private double startingPrice;
-    private double currentPrice;
+    private BigDecimal startingPrice;
+    private BigDecimal currentPrice;
     private String description;
     private String sellerName;
     private String ownerName;
@@ -23,7 +24,7 @@ public class ProductDTO implements Serializable {
     private String status;
     private String category;
     private String imageUrl;
-    private double stepPrice;
+    private BigDecimal stepPrice;
     private int bidCount;
     private byte[] imageBytes;
 
@@ -32,7 +33,7 @@ public class ProductDTO implements Serializable {
     }
 
     // Constructor đầy đủ để tạo nhanh đối tượng tại Server từ kết quả Database
-    public ProductDTO(int id, String name, double currentPrice,double stepPrice, String sellerName, String ownerName, LocalDateTime startTime, LocalDateTime endTime, String status) {
+    public ProductDTO(int id, String name, BigDecimal currentPrice,BigDecimal stepPrice, String sellerName, String ownerName, LocalDateTime startTime, LocalDateTime endTime, String status) {
         this.id = id;
         this.name = name;
         this.currentPrice = currentPrice;
@@ -53,11 +54,11 @@ public class ProductDTO implements Serializable {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public double getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
+    public BigDecimal getStartingPrice() { return startingPrice; }
+    public void setStartingPrice(BigDecimal startingPrice) { this.startingPrice = startingPrice; }
 
-    public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
+    public BigDecimal getCurrentPrice() { return currentPrice; }
+    public void setCurrentPrice(BigDecimal currentPrice) { this.currentPrice = currentPrice; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
@@ -83,8 +84,8 @@ public class ProductDTO implements Serializable {
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public double getStepPrice() { return stepPrice; }
-    public void setStepPrice(double stepPrice) { this.stepPrice = stepPrice; }
+    public BigDecimal getStepPrice() { return stepPrice; }
+    public void setStepPrice(BigDecimal stepPrice) { this.stepPrice = stepPrice; }
 
     public int getBidCount() { return bidCount; }
     public void setBidCount(int bidCount) { this.bidCount = bidCount; }

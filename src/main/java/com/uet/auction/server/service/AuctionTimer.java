@@ -4,6 +4,7 @@ import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.DAO.ProductDAO;
 import com.uet.auction.server.network.SocketServer;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -18,60 +19,62 @@ public class AuctionTimer {
     public void startChecking() {
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                // Bước 1: Mở các phiên APPROVED đã đến giờ start_time → OPEN
+                // 1. Mở các phiên đến giờ
                 productDAO.openScheduledAuctions();
 
-                // Bước 2: Anti-sniping — gia hạn phiên có bid trong 30 giây cuối
-                productDAO.extendAuctionIfLastBid();
+                // 2. Anti-sniping được xử lý trực tiếp tại ClientHandler ngay sau mỗi bid
+                // (không gọi ở đây để tránh timer chạy muộn gây extend sai)
 
-                // Bước 3: Auto-bid — phải chạy TRƯỚC khi đóng phiên
-                // để không tốn query trên phiên đã CLOSED
+                // 3. KÍCH HOẠT AUTO-BID TRƯỚC KHI CHỐT SỔ ĐÓNG PHIÊN
                 AuctionService.getInstance().triggerAllAutoBids();
 
-                // Bước 4: Đóng các phiên OPEN đã hết giờ → CLOSED
-                // Nhận lại danh sách phiên vừa đóng để broadcast người thắng
+                // 4. Đóng các phiên hết giờ
                 List<Map<String, Object>> closedAuctions = productDAO.closeExpiredAuctions();
+                boolean hasClosedAuctions = closedAuctions != null && !closedAuctions.isEmpty();
 
-                // Bước 4.5: Dọn registry auto-bid cho các phiên vừa đóng
-                List<Integer> closedIds = new java.util.ArrayList<>();
-                for (Map<String, Object> info : closedAuctions) {
-                    closedIds.add((Integer) info.get("productId"));
-                }
-                AuctionService.getInstance().clearClosedAuctions(closedIds);
+                if (hasClosedAuctions) {
+                    for (Map<String, Object> info : closedAuctions) {
+                        String winner      = (String) info.get("winner");
+                        String productName = (String) info.get("productName");
+                        BigDecimal finalPrice  = (BigDecimal) info.get("finalPrice");
 
-                // Bước 5: Broadcast riêng AUCTION_ENDED cho từng phiên vừa đóng
-                boolean hasClosedAuction = !closedAuctions.isEmpty();
-                for (Map<String, Object> info : closedAuctions) {
-                    String winner      = (String) info.get("winner");
-                    String productName = (String) info.get("productName");
-                    double finalPrice  = (Double) info.get("finalPrice");
+                        String message;
+                        if (winner != null && !winner.isBlank()) {
+                            message = String.format(
+                                    "Phiên \"%s\" đã kết thúc!\n🏆 Người thắng: %s\n💰 Giá trúng: %,.0f VNĐ",
+                                    productName, winner, finalPrice
+                            );
 
-                    String message;
-                    if (winner != null && !winner.isBlank()) {
-                        message = String.format(
-                                "Phiên \"%s\" đã kết thúc!\n🏆 Người thắng: %s\n💰 Giá trúng: %,.0f VNĐ",
-                                productName, winner, finalPrice
-                        );
-                    } else {
-                        message = String.format(
-                                "Phiên \"%s\" đã kết thúc.\nKhông có người tham gia đặt giá.",
-                                productName
-                        );
+                            // ---> THÊM MỚI TỪ ĐÂY: Lưu thông báo vào Database cho người thắng cuộc <---
+                            try {
+                                com.uet.auction.server.DAO.NotificationDAO notifDAO = new com.uet.auction.server.DAO.NotificationDAO();
+                                String winNotifMsg = String.format(
+                                        "Chúc mừng! Bạn đã thắng phiên đấu giá sản phẩm \"%s\" với mức giá %,.0f VNĐ.",
+                                        productName, finalPrice
+                                );
+                                notifDAO.insertNotification(winner, winNotifMsg, "AUCTION_WON");
+                            } catch (Exception e) {
+                                System.err.println("[AuctionTimer] Lỗi lưu thông báo thắng cuộc: " + e.getMessage());
+                            }
+                            // ---> KẾT THÚC THÊM MỚI <---
+
+                        } else {
+                            message = String.format(
+                                    "Phiên \"%s\" đã kết thúc.\nKhông có người tham gia đặt giá.",
+                                    productName
+                            );
+                        }
+                        SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "AUCTION_ENDED", message, info));
                     }
-
-                    SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "AUCTION_ENDED", message, info));
+                } else {
+                    // Nếu không có phiên đóng mới gửi UPDATE_PRICE để tránh client load 2 lần
+                    SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "UPDATE_PRICE", null));
                 }
-
-                // Bước 6: Broadcast UPDATE_PRICE để client refresh danh sách
-                // Nếu đã gửi AUCTION_ENDED thì client đã reload rồi — chỉ gửi khi không có phiên đóng
-                // hoặc gửi thêm để đảm bảo tất cả controller đều cập nhật
-                SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "UPDATE_PRICE", null));
 
             } catch (Exception e) {
-                System.err.println("[AuctionTimer] Lỗi: " + e.getMessage());
-                e.printStackTrace();
+                System.err.println("Lỗi AuctionTimer: " + e.getMessage());
             }
-        }, 0, 5, TimeUnit.SECONDS);
+        }, 0, 1, TimeUnit.SECONDS);
     }
 
     public void stopChecking() {

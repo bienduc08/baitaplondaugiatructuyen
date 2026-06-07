@@ -1,6 +1,7 @@
 package com.uet.auction.common.DTO;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 public class UserDTO implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -12,7 +13,7 @@ public class UserDTO implements Serializable {
     private String phoneNumber;
     private String role;
     private String message;
-    private double balance;
+    private BigDecimal balance;
     private String status; // ĐÃ KHÔI PHỤC: Biến trạng thái để Admin khóa/mở khóa tài khoản
 
     public UserDTO() {}
@@ -47,8 +48,8 @@ public class UserDTO implements Serializable {
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
 
-    public double getBalance() { return balance; }
-    public void setBalance(double balance) { this.balance = balance; }
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
 
     // ĐÃ KHÔI PHỤC: Getter và Setter cho status
     public String getStatus() { return status; }

@@ -15,6 +15,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +38,7 @@ public class ProfileUserController {
 
     @FXML private TableView<BidDTO>              tblMyBids;
     @FXML private TableColumn<BidDTO, Integer>   colProduct;
-    @FXML private TableColumn<BidDTO, Double>    colAmount;
+    @FXML private TableColumn<BidDTO, BigDecimal>    colAmount;
     @FXML private TableColumn<BidDTO, String>    colTime;
     @FXML private TableColumn<BidDTO, String>    colStatus;
 
@@ -98,7 +99,7 @@ public class ProfileUserController {
         if (colAmount != null) {
             colAmount.setCellValueFactory(new PropertyValueFactory<>("price"));
             colAmount.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(Double v, boolean empty) {
+                @Override protected void updateItem(BigDecimal v, boolean empty) {
                     super.updateItem(v, empty);
                     setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
                 }
@@ -171,7 +172,7 @@ public class ProfileUserController {
         });
     }
 
-    public void handleDepositSuccess(double newBalance) {
+    public void handleDepositSuccess(BigDecimal newBalance) {
         Platform.runLater(() -> {
             UserDTO user = SessionManager.getCurrentUser();
             if (user != null) user.setBalance(newBalance);

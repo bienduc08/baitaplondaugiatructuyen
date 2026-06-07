@@ -12,6 +12,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +28,7 @@ public class AdminUserManagementController {
     @FXML private TableColumn<UserDTO, Integer> colUserId;
     @FXML private TableColumn<UserDTO, String> colUsername;
     @FXML private TableColumn<UserDTO, String> colRole;
-    @FXML private TableColumn<UserDTO, Double> colBalance;
+    @FXML private TableColumn<UserDTO, BigDecimal> colBalance;
     @FXML private TableColumn<UserDTO, String> colStatus;
     @FXML public static AdminUserManagementController instance;
     private final ObservableList<UserDTO> userList = FXCollections.observableArrayList();
@@ -84,7 +86,7 @@ public class AdminUserManagementController {
         // [THÊM MỚI] Định dạng tiền tệ cho cột Số dư
         colBalance.setCellFactory(col -> new TableCell<>() {
             @Override
-            protected void updateItem(Double balance, boolean empty) {
+            protected void updateItem(BigDecimal balance, boolean empty) {
                 super.updateItem(balance, empty);
                 setText(empty || balance == null ? null : String.format("%,.0f VNĐ", balance));
             }

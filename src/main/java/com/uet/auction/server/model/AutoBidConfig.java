@@ -1,14 +1,15 @@
 package com.uet.auction.server.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
     private int auctionId;
     private int bidderId;
     private String bidderUsername;
-    private Double maxBid;
-    private Double increment;
+    private BigDecimal maxBid;
+    private BigDecimal increment;
     private LocalDateTime registeredAt;
     private boolean active;
 
@@ -18,7 +19,7 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
     }
 
     public AutoBidConfig(int bidderId, String bidderUsername,int auctionId,
-                         Double maxBid, Double increment) {
+                         BigDecimal maxBid, BigDecimal increment) {
         this.bidderId = bidderId;
         this.bidderUsername = bidderUsername;
         this.auctionId = auctionId;
@@ -34,9 +35,9 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
         return cmp != 0 ? cmp : this.registeredAt.compareTo(other.registeredAt);
     }
 
-    public Double calculateNextBid(Double currentPrice) {
-        double nextBid = currentPrice + this.increment;
-        if (nextBid > this.maxBid) {
+    public BigDecimal calculateNextBid(BigDecimal currentPrice) {
+        BigDecimal nextBid = currentPrice.add(this.increment);
+        if (nextBid.compareTo(this.maxBid) > 0) {
             return null;
         }
         return nextBid;
@@ -51,11 +52,11 @@ public class AutoBidConfig implements Serializable, Comparable<AutoBidConfig> {
     public String getBidderUsername() { return bidderUsername; }
     public void setBidderUsername(String bidderUsername) { this.bidderUsername = bidderUsername; }
 
-    public Double getMaxBid() { return maxBid; }
-    public void setMaxBid( Double maxBid) { this.maxBid = maxBid; }
+    public BigDecimal getMaxBid() { return maxBid; }
+    public void setMaxBid( BigDecimal maxBid) { this.maxBid = maxBid; }
 
-    public Double getIncrement() { return increment; }
-    public void setIncrement(Double increment) { this.increment = increment; }
+    public BigDecimal getIncrement() { return increment; }
+    public void setIncrement(BigDecimal increment) { this.increment = increment; }
 
     public LocalDateTime getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }

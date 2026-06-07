@@ -1,13 +1,14 @@
 package com.uet.auction.server.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Product implements Serializable {
     private int id;
     private String name;
-    private double startingPrice;
-    private double currentPrice;
+    private BigDecimal startingPrice;
+    private BigDecimal currentPrice;
     private String description;
     private String sellerName;
     private String ownerName;
@@ -17,7 +18,7 @@ public class Product implements Serializable {
 
     public Product() {}
 
-    public Product(int id, String name, double startingPrice, double currentPrice,
+    public Product(int id, String name, BigDecimal startingPrice, BigDecimal currentPrice,
                    String sellerName, LocalDateTime startTime, LocalDateTime endTime, String status) {
         this.id = id;
         this.name = name;
@@ -35,11 +36,11 @@ public class Product implements Serializable {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public double getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
+    public BigDecimal getStartingPrice() { return startingPrice; }
+    public void setStartingPrice(BigDecimal startingPrice) { this.startingPrice = startingPrice; }
 
-    public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
+    public BigDecimal getCurrentPrice() { return currentPrice; }
+    public void setCurrentPrice(BigDecimal currentPrice) { this.currentPrice = currentPrice; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

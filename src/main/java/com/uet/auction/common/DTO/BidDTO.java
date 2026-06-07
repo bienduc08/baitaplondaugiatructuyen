@@ -1,6 +1,7 @@
 package com.uet.auction.common.DTO;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 public class BidDTO implements Serializable {
 
@@ -10,7 +11,7 @@ public class BidDTO implements Serializable {
     private Integer id;             // ID của lượt trả giá
     private Integer productId;      // ID của sản phẩm
     private String biddername;      // Tên người trả giá (Khớp với PropertyValueFactory)
-    private Double price;           // Số tiền trả giá
+    private BigDecimal price;           // Số tiền trả giá
     private String time;            // Thời gian (để String cho dễ hiển thị lên JavaFX)
     private String status;          // Trạng thái (VD: "Hợp lệ", "Bị hủy")
 
@@ -19,7 +20,7 @@ public class BidDTO implements Serializable {
     }
 
     // 2. Constructor đầy đủ tham số (Dùng để tạo object nhanh hoặc test)
-    public BidDTO(Integer id, Integer productId, String biddername, Double price, String time, String status) {
+    public BidDTO(Integer id, Integer productId, String biddername, BigDecimal price, String time, String status) {
         this.id = id;
         this.productId = productId;
         this.biddername = biddername;
@@ -56,11 +57,11 @@ public class BidDTO implements Serializable {
         this.biddername = biddername;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 

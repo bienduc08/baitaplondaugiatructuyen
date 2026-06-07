@@ -15,6 +15,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -36,7 +37,7 @@ public class ProfileSellerController {
 
     @FXML private TableView<ProductDTO>            tblMyProducts;
     @FXML private TableColumn<ProductDTO, String>  colProdName;
-    @FXML private TableColumn<ProductDTO, Double>  colProdPrice;
+    @FXML private TableColumn<ProductDTO, BigDecimal>  colProdPrice;
     @FXML private TableColumn<ProductDTO, String>  colProdStatus;
     @FXML private TableColumn<ProductDTO, LocalDateTime> colProdTimeStart;
     @FXML private TableColumn<ProductDTO, LocalDateTime> colProdTimeEnd;
@@ -92,7 +93,7 @@ public class ProfileSellerController {
         if (colProdPrice != null) {
             colProdPrice.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
             colProdPrice.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(Double v, boolean empty) {
+                @Override protected void updateItem(BigDecimal v, boolean empty) {
                     super.updateItem(v, empty);
                     setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
                 }
@@ -174,7 +175,7 @@ public class ProfileSellerController {
         });
     }
 
-    public void handleDepositSuccess(double newBalance) {
+    public void handleDepositSuccess(BigDecimal newBalance) {
         Platform.runLater(() -> {
             UserDTO user = SessionManager.getCurrentUser();
             if (user != null) user.setBalance(newBalance);

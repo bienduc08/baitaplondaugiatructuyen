@@ -3,6 +3,7 @@ package com.uet.auction.server.DAO;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.server.config.DatabaseConnection;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -90,14 +91,14 @@ public class ProductDAO {
         return null;
     }
 
-    public boolean addProduct(String name, String description, double startingPrice, double stepPrice, String sellerName, LocalDateTime startTime, LocalDateTime endTime, String imageUrl) {
+    public boolean addProduct(String name, String description, BigDecimal startingPrice, BigDecimal stepPrice, String sellerName, LocalDateTime startTime, LocalDateTime endTime, String imageUrl) {
         String sql = "INSERT INTO products (name, description, starting_price, current_price, step_price, start_time, end_time, seller_name, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.setString(2, description);
-            pstmt.setDouble(3, startingPrice);
-            pstmt.setDouble(4, startingPrice);
-            pstmt.setDouble(5, stepPrice);
+            pstmt.setBigDecimal(3, startingPrice);
+            pstmt.setBigDecimal(4, startingPrice);
+            pstmt.setBigDecimal(5, stepPrice);
             pstmt.setTimestamp(6, Timestamp.valueOf(startTime != null ? startTime : LocalDateTime.now()));
             pstmt.setTimestamp(7, endTime != null ? Timestamp.valueOf(endTime) : null);
             pstmt.setString(8, sellerName);
@@ -126,9 +127,9 @@ public class ProductDAO {
 
             pstmt.setString(1, p.getName());
             pstmt.setString(2, p.getDescription());
-            pstmt.setDouble(3, p.getStartingPrice());
-            pstmt.setDouble(4, p.getStartingPrice()); // giá hiện tại reset về giá khởi điểm
-            pstmt.setDouble(5, p.getStepPrice());
+            pstmt.setBigDecimal(3, p.getStartingPrice());
+            pstmt.setBigDecimal(4, p.getStartingPrice()); // giá hiện tại reset về giá khởi điểm
+            pstmt.setBigDecimal(5, p.getStepPrice());
             pstmt.setInt(6, p.getId());
 
             return pstmt.executeUpdate() > 0;
@@ -155,16 +156,15 @@ public class ProductDAO {
         String closeSql  = "UPDATE products SET status = 'CLOSED' WHERE id = ?";
         String paySql    = "UPDATE users SET balance = balance + ? WHERE username = ?";
 
-        Connection conn = null;
-        try {
-            conn = DatabaseConnection.getConnection();
+        // Dùng try-with-resources để không rò rỉ RAM/Kết nối DB
+        try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
                 ResultSet rs = selectStmt.executeQuery();
                 while (rs.next()) {
                     int    productId   = rs.getInt("id");
                     String productName = rs.getString("name");
-                    double finalPrice  = rs.getDouble("current_price");
+                    BigDecimal finalPrice  = rs.getBigDecimal("current_price");
                     String sellerName  = rs.getString("seller_name");
                     String winnerName  = rs.getString("owner_name");
 
@@ -175,7 +175,7 @@ public class ProductDAO {
 
                     if (winnerName != null && !winnerName.isBlank()) {
                         try (PreparedStatement payStmt = conn.prepareStatement(paySql)) {
-                            payStmt.setDouble(1, finalPrice);
+                            payStmt.setBigDecimal(1, finalPrice);
                             payStmt.setString(2, sellerName);
                             payStmt.executeUpdate();
                         }
@@ -193,16 +193,12 @@ public class ProductDAO {
             conn.commit();
         } catch (SQLException e) {
             System.err.println("[closeExpiredAuctions] Lỗi: " + e.getMessage());
-            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            closedList.clear(); // tránh broadcast thông tin sai khi rollback
-        } finally {
-            if (conn != null) try { conn.close(); } catch (SQLException ignored) {}
         }
         return closedList;
     }
 
     public void extendAuctionIfLastBid() {
-        // Anti-sniping: gia han 3 phut neu co bid trong 30 giay cuoi.
+        // Anti-sniping: gia han 5 phut neu co bid trong 30 giay cuoi.
         // Dung last_extended_at de dam bao moi lan bid chi trigger 1 lan gia han,
         // tranh timer chay moi giay gay gia han lien tuc.
         // Chi gia han neu: thoi gian con lai TAI THOI DIEM BID duoc dat < 30 giay
@@ -236,10 +232,12 @@ public class ProductDAO {
         p.setId(rs.getInt("id"));
         p.setName(rs.getString("name"));
         p.setDescription(safeGetString(rs, "description"));
-        p.setStartingPrice(rs.getDouble("starting_price"));
-        p.setStepPrice(rs.getDouble("step_price"));
-        double cp = rs.getDouble("current_price");
-        p.setCurrentPrice(rs.wasNull() ? p.getStartingPrice() : cp);
+        p.setStartingPrice(rs.getBigDecimal("starting_price"));
+        p.setStepPrice(rs.getBigDecimal("step_price"));
+
+        BigDecimal currentPrice = rs.getBigDecimal("current_price");
+        p.setCurrentPrice(currentPrice == null ? rs.getBigDecimal("starting_price") : currentPrice);
+
         p.setSellerName(safeGetString(rs, "seller_name"));
         p.setOwnerName(safeGetString(rs, "owner_name"));
         p.setStatus(rs.getString("status"));

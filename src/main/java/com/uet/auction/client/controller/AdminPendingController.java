@@ -15,6 +15,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -29,10 +31,10 @@ public class AdminPendingController {
     @FXML private TableView<ProductDTO> pendingTable;
     @FXML private TableColumn<ProductDTO, Integer> idCol;
     @FXML private TableColumn<ProductDTO, String>  nameCol;
-    @FXML private TableColumn<ProductDTO, Double>  priceCol;
-    @FXML private TableColumn<ProductDTO, Double>  currentCol;
+    @FXML private TableColumn<ProductDTO, BigDecimal>  priceCol;
+    @FXML private TableColumn<ProductDTO, BigDecimal>  currentCol;
     @FXML private TableColumn<ProductDTO, String>  sellerCol;
-    @FXML private TableColumn<ProductDTO, Double>  stepCol;
+    @FXML private TableColumn<ProductDTO, BigDecimal>  stepCol;
     @FXML private TableColumn<ProductDTO, LocalDateTime> startTimeCol;
     @FXML private TableColumn<ProductDTO, LocalDateTime> endTimeCol;
     @FXML private TableColumn<ProductDTO, String>  statusCol;
@@ -75,7 +77,7 @@ public class AdminPendingController {
         if (priceCol != null) {
             priceCol.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
             priceCol.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(Double v, boolean empty) {
+                @Override protected void updateItem(BigDecimal v, boolean empty) {
                     super.updateItem(v, empty);
                     setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
                 }
@@ -84,7 +86,7 @@ public class AdminPendingController {
         if (currentCol != null) {
             currentCol.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
             currentCol.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(Double v, boolean empty) {
+                @Override protected void updateItem(BigDecimal v, boolean empty) {
                     super.updateItem(v, empty);
                     setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
                 }
@@ -93,7 +95,7 @@ public class AdminPendingController {
         if (stepCol != null){
             stepCol.setCellValueFactory(new PropertyValueFactory<>("stepPrice"));
             stepCol.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(Double v, boolean empty) {
+                @Override protected void updateItem(BigDecimal v, boolean empty) {
                     super.updateItem(v, empty);
                     setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
                 }

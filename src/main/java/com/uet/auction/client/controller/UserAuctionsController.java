@@ -16,6 +16,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class UserAuctionsController {
     @FXML private TableView<ProductDTO> tblJoinedAuctions;
     @FXML private TableColumn<ProductDTO, Integer> colId;
     @FXML private TableColumn<ProductDTO, String> colName;
-    @FXML private TableColumn<ProductDTO, Double> colCurrentPrice;
+    @FXML private TableColumn<ProductDTO, BigDecimal> colCurrentPrice;
     @FXML private TableColumn<ProductDTO, String> colOwner;
     @FXML private TableColumn<ProductDTO, String> colEndTime;
     @FXML private TableColumn<ProductDTO, String> colStatus;
@@ -55,7 +56,7 @@ public class UserAuctionsController {
         if (colCurrentPrice != null) {
             colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
             colCurrentPrice.setCellFactory(col -> new TableCell<>() {
-                @Override protected void updateItem(Double price, boolean empty) {
+                @Override protected void updateItem(BigDecimal price, boolean empty) {
                     super.updateItem(price, empty);
                     setText(empty || price == null ? null : String.format("%,.0f VNĐ", price));
                     setStyle("-fx-font-weight: bold; -fx-text-fill: #e67e22;");
@@ -132,12 +133,10 @@ public class UserAuctionsController {
         }
     }
 
-    // Hàm này được ResponseListener gọi khi Server trả dữ liệu về
     public void displayJoinedAuctions(List<ProductDTO> products) {
         Platform.runLater(() -> joinedList.setAll(products));
     }
 
-    // Mở cửa sổ Lịch sử + Biểu đồ giá đấu giá trực tiếp trong giao diện User
     private void openBidHistory(ProductDTO product) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/BidHistoryView.fxml"));
@@ -146,19 +145,15 @@ public class UserAuctionsController {
             BidHistoryController ctrl = loader.getController();
             ctrl.setProductContext(product.getId(), product.getName());
 
-            // Nhúng vào BorderPane chính
             if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
                 BorderPane mainPane = UserController.instance.getMainBorderPane();
 
-                // 1. LƯU LẠI GIAO DIỆN HIỆN TẠI (Danh sách phiên đấu giá)
                 Node previousCenterView = mainPane.getCenter();
 
-                // 2. ĐỊNH NGHĨA HÀM QUAY LẠI: setCenter về lại giao diện cũ
                 BidHistoryController.onBackAction = () -> {
                     mainPane.setCenter(previousCenterView);
                 };
 
-                // 3. HIỂN THỊ giao diện BidHistory lên
                 mainPane.setCenter(bidHistoryNode);
             }
         } catch (IOException e) {
@@ -167,7 +162,6 @@ public class UserAuctionsController {
         }
     }
 
-    // Chuyển sang màn hình chi tiết sản phẩm (Giữ nguyên logic Callback BackAction)
     private void openProductDetail(ProductDTO product) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/uet/auction/view/ProductDetailContent.fxml"));
@@ -175,7 +169,7 @@ public class UserAuctionsController {
 
             ProductDetailController ctrl = loader.getController();
             ctrl.setProductData(product, null);
-            ctrl.reloadProductDetails(); // Tải động lịch sử trả giá từ server
+            ctrl.reloadProductDetails();
 
             if (UserController.instance != null && UserController.instance.getMainBorderPane() != null) {
                 BorderPane mainPane = UserController.instance.getMainBorderPane();

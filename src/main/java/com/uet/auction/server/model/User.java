@@ -1,6 +1,7 @@
 package com.uet.auction.server.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List; // Thêm import List
@@ -11,7 +12,7 @@ public class User extends Entity implements Serializable {
     private String gmail;
     private String phonenumber;
     private String password;
-    private double balance;
+    private BigDecimal balance;
     private UserRole role;
 
     // Thêm thuộc tính danh sách thông báo
@@ -22,7 +23,7 @@ public class User extends Entity implements Serializable {
     }
 
     public User(int id, LocalDateTime createdAt, String username, String password,
-                double balance, UserRole role) {
+                BigDecimal balance, UserRole role) {
         super(id, createdAt);
         this.username = username;
         this.password = password;
@@ -70,8 +71,8 @@ public class User extends Entity implements Serializable {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    public double getBalance() { return balance; }
-    public void setBalance(double balance) { this.balance = balance; }
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
 
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }

@@ -6,6 +6,7 @@ import com.uet.auction.common.Request.LoginRequest;
 import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.DAO.UserDAO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class AuthService {
@@ -78,14 +79,14 @@ public class AuthService {
         }
     }
 
-    public AuctionResponse deposit(String username, double amount) {
+    public AuctionResponse deposit(String username, BigDecimal amount) {
         if (username == null || username.isBlank()) {
             return new AuctionResponse(false, "DEPOSIT_RESULT", "Phiên đăng nhập không hợp lệ!", null);
         }
-        if (amount <= 0) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             return new AuctionResponse(false, "DEPOSIT_RESULT", "Số tiền nạp phải lớn hơn 0!", null);
         }
-        if (amount > 500_000_000) {
+        if (amount.compareTo(new BigDecimal("500000000")) > 0) {
             return new AuctionResponse(false, "DEPOSIT_RESULT", "Mỗi lần nạp tối đa 500.000.000 VNĐ!", null);
         }
 
@@ -97,7 +98,7 @@ public class AuthService {
             return new AuctionResponse(false, "DEPOSIT_RESULT", "Tài khoản bị khóa, không thể nạp tiền!", null);
         }
 
-        Double newBalance = userDAO.deposit(username, amount);
+        BigDecimal newBalance = userDAO.deposit(username, amount);
         if (newBalance == null) {
             return new AuctionResponse(false, "DEPOSIT_RESULT", "Nạp tiền thất bại!", null);
         }
@@ -106,9 +107,10 @@ public class AuthService {
                 newBalance);
     }
 
-    public double getUserBalance(String username) {
+    public BigDecimal getUserBalance(String username) {
         return userDAO.getBalance(username);
     }
+
     // Thêm hàm này vào AuthService.java
     public AuctionResponse updateProfile(String username, String fullName, String phone, String oldPass, String newPass) {
         // 1. Nếu người dùng có nhập mật khẩu mới, bắt buộc phải kiểm tra mật khẩu cũ

@@ -3,6 +3,9 @@
 -- ==========================================
 DROP DATABASE IF EXISTS auction_db;
 CREATE DATABASE auction_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+-- ===================================================================
 USE auction_db;
 
 -- ==========================================
@@ -16,7 +19,7 @@ CREATE TABLE users (
                        phonenumber VARCHAR(100) NOT NULL UNIQUE,
                        password    VARCHAR(256) NOT NULL,
                        role        VARCHAR(20)  NOT NULL,
-                       balance     DOUBLE       NOT NULL DEFAULT 0.0,
+                       balance     DECIMAL(19, 4) NOT NULL DEFAULT 0.0,
                        status      VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE'
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -27,9 +30,9 @@ CREATE TABLE products (
                           id               INT AUTO_INCREMENT PRIMARY KEY,
                           name             VARCHAR(255) NOT NULL,
                           description      TEXT         DEFAULT NULL,
-                          starting_price   DOUBLE       NOT NULL DEFAULT 0.0,
-                          current_price    DOUBLE       NOT NULL DEFAULT 0.0,
-                          step_price       DOUBLE       NOT NULL DEFAULT 0.0,
+                          starting_price   DECIMAL(19, 4)       NOT NULL DEFAULT 0.0,
+                          current_price    DECIMAL(19, 4)       NOT NULL DEFAULT 0.0,
+                          step_price       DECIMAL(19, 4)       NOT NULL DEFAULT 0.0,
                           seller_name      VARCHAR(100) DEFAULT NULL,
                           owner_name       VARCHAR(100) DEFAULT NULL,
                           start_time       DATETIME     DEFAULT NULL,
@@ -55,7 +58,7 @@ CREATE TABLE bids (
                       id          INT AUTO_INCREMENT PRIMARY KEY,
                       product_id  INT          NOT NULL,
                       bidder_name VARCHAR(100) NOT NULL,
-                      amount      DOUBLE       NOT NULL,
+                      amount      DECIMAL(19, 4)       NOT NULL,
     -- DATETIME(3): millisecond để anti-sniping so sánh chính xác với last_extended_at
                       bid_time    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
                       status      VARCHAR(20)  NOT NULL DEFAULT 'Hợp lệ',

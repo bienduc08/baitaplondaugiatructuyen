@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -139,8 +140,8 @@ public class SellerEditProductController {
         try {
             String name = txtName.getText().trim();
             String desc = txtDescription.getText().trim();
-            double startPrice = Double.parseDouble(txtStartingPrice.getText().trim().replace(",", ""));
-            double stepPrice = Double.parseDouble(txtStepPrice.getText().trim().replace(",", ""));
+            BigDecimal startPrice = new BigDecimal(txtStartingPrice.getText().trim().replace(",", ""));
+            BigDecimal stepPrice = new BigDecimal(txtStepPrice.getText().trim().replace(",", ""));
 
             if (name.isEmpty() || desc.isEmpty()) {
                 AlertHelper.showError("Vui lòng nhập đầy đủ thông tin tên và mô tả!");
