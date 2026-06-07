@@ -286,7 +286,11 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
                     // Nếu Server báo thành công
-
+                    case "UPDATE_PRODUCT":
+                        ProductDTO updatedProduct = (ProductDTO) request.getData();
+                        response = auctionService.updateProduct(updatedProduct);
+                        sendResponse(response);
+                        break;
                 }
             }
         } catch (IOException e) {

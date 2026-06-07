@@ -119,18 +119,34 @@ public class ProductDAO {
             return false;
         }
     }
+
+
     public boolean updateProduct(ProductDTO p) {
-        String sql = "UPDATE products SET name = ?, description = ?, starting_price = ?, current_price = ?, "
-                + "step_price = ?, status = 'PENDING', owner_name = NULL WHERE id = ?";
+        String sql;
+        if (p.getImageUrl() != null && !p.getImageUrl().isEmpty()) {
+            sql = "UPDATE products SET name = ?, description = ?, starting_price = ?, current_price = ?, "
+                    + "step_price = ?, start_time = ?, end_time = ?, image_url = ?, status = 'PENDING', owner_name = NULL WHERE id = ?";
+        } else {
+            sql = "UPDATE products SET name = ?, description = ?, starting_price = ?, current_price = ?, "
+                    + "step_price = ?, start_time = ?, end_time = ?, status = 'PENDING', owner_name = NULL WHERE id = ?";
+        }
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, p.getName());
             pstmt.setString(2, p.getDescription());
             pstmt.setBigDecimal(3, p.getStartingPrice());
-            pstmt.setBigDecimal(4, p.getStartingPrice()); // giá hiện tại reset về giá khởi điểm
+            pstmt.setBigDecimal(4, p.getStartingPrice());
             pstmt.setBigDecimal(5, p.getStepPrice());
-            pstmt.setInt(6, p.getId());
+            pstmt.setTimestamp(6, p.getStartTime() != null ? java.sql.Timestamp.valueOf(p.getStartTime()) : null);
+            pstmt.setTimestamp(7, p.getEndTime() != null ? java.sql.Timestamp.valueOf(p.getEndTime()) : null);
+
+            if (p.getImageUrl() != null && !p.getImageUrl().isEmpty()) {
+                pstmt.setString(8, p.getImageUrl());
+                pstmt.setInt(9, p.getId());
+            } else {
+                pstmt.setInt(8, p.getId());
+            }
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {

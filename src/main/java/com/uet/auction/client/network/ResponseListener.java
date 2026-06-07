@@ -92,6 +92,17 @@ public class ResponseListener implements Runnable {
                             }
                         });
                         break;
+                    case "UPDATE_PRODUCT_RESULT":
+                        Platform.runLater(() -> {
+                            if (res.isSuccess()) {
+                                AlertHelper.showInfo(res.getMessage());
+                                if (SellerEditProductController.onCancelAction != null)
+                                    SellerEditProductController.onCancelAction.run();
+                            } else {
+                                AlertHelper.showError(res.getMessage());
+                            }
+                        });
+                        break;
 
                     case "CHANGE_STATUS_RESULT":
                         Platform.runLater(() -> {

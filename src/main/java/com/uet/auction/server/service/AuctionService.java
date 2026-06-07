@@ -239,6 +239,38 @@ public class AuctionService {
             return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Lỗi server: " + e.getMessage(), null);
         }
     }
+    public AuctionResponse updateProduct(ProductDTO product) {
+        try {
+            if (product.getName() == null || product.getName().trim().isEmpty())
+                return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Tên sản phẩm không được để trống!", null);
+            if (product.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0)
+                return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Giá khởi điểm phải lớn hơn 0!", null);
+            if (product.getStepPrice().compareTo(BigDecimal.ZERO) <= 0)
+                return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Bước giá phải lớn hơn 0!", null);
+
+            if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
+                java.io.File dir = new java.io.File("images");
+                if (!dir.exists()) dir.mkdirs();
+                String fileName = "sp_" + System.currentTimeMillis() + ".jpg";
+                java.io.File imageFile = new java.io.File("images/" + fileName);
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(imageFile)) {
+                    fos.write(product.getImageBytes());
+                }
+                product.setImageUrl("images/" + fileName);
+                product.setImageBytes(null);
+            }
+
+            boolean ok = productDAO.updateProduct(product);
+            if (ok) {
+                return new AuctionResponse(true, "UPDATE_PRODUCT_RESULT", "Cập nhật sản phẩm thành công! Sản phẩm đang chờ duyệt lại.", null);
+            } else {
+                return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Không thể cập nhật sản phẩm!", null);
+            }
+        } catch (Exception e) {
+            System.err.println("[AuctionService] Lỗi updateProduct: " + e.getMessage());
+            return new AuctionResponse(false, "UPDATE_PRODUCT_RESULT", "Lỗi server: " + e.getMessage(), null);
+        }
+    }
 
     // =========================================================
     // ĐẶT GIÁ
