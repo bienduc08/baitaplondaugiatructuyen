@@ -254,10 +254,15 @@ public class AuctionService {
 
         // Bước 3: đặt giá
         boolean ok = bidDAO.placeBid(productId, bidderName, bidAmount);
-        return ok
-                ? new AuctionResponse(true,  "BID_RESULT", "Đặt giá thành công!", null)
-                : new AuctionResponse(false, "BID_RESULT",
-                "Đặt giá thất bại! Giá phải cao hơn giá hiện tại + bước giá, hoặc bạn đang giữ đỉnh.", null);
+        if (ok) {
+            try {
+                new ProductDAO().extendAuctionIfLastBid();
+            } catch (Exception e) {
+                System.err.println("Lỗi gia hạn: " + e.getMessage());
+            }
+            return new AuctionResponse(true, "BID_RESULT", "Đặt giá thành công!", null);
+        }
+        return new AuctionResponse(false, "BID_RESULT", "Đặt giá thất bại!", null);
     }
 
     // =========================================================
