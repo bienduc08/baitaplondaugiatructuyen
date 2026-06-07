@@ -140,7 +140,7 @@ public class AuthService {
             if (updatedUser == null) {
                 return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Không tìm thấy tài khoản sau khi cập nhật!", null);
             }
-            return new AuctionResponse(true, "UPDATE_PROFILE_SUCCESS", "Cập nhật hồ sơ thành công!", updatedUser);
+            return new AuctionResponse(true, "UPDATE_PROFILE_RESULT", "Cập nhật hồ sơ thành công!", updatedUser);
         } else {
             return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Cập nhật thất bại. Vui lòng thử lại!", null);
         }

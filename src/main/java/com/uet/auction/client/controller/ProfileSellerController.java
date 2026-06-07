@@ -210,4 +210,31 @@ public class ProfileSellerController {
             AlertHelper.showError("Không thể mở trang chỉnh sửa hồ sơ!");
         }
     }
+    // Hàm để làm mới dữ liệu
+    public void refreshProfileData() {
+        UserDTO currentUser = SessionManager.getCurrentUser();
+        if (currentUser != null) {
+
+            // Cập nhật Tên hiển thị
+            if (lblHeaderName != null) {
+                String fullName = (currentUser.getFullName() != null && !currentUser.getFullName().isEmpty())
+                        ? currentUser.getFullName() : currentUser.getUsername();
+                lblHeaderName.setText("👤 " + fullName);
+            }
+
+            // Cập nhật Email
+            if (lblHeaderEmail != null) {
+                String gmail = (currentUser.getGmail() != null && !currentUser.getGmail().isEmpty())
+                        ? currentUser.getGmail() : currentUser.getUsername() + "@gmail.com";
+                lblHeaderEmail.setText("✉ " + gmail);
+            }
+
+            // Cập nhật Số điện thoại
+            if (lblHeaderPhoneNumber != null) {
+                String phone = (currentUser.getPhoneNumber() != null && !currentUser.getPhoneNumber().isEmpty())
+                        ? currentUser.getPhoneNumber() : "Chưa có SĐT";
+                lblHeaderPhoneNumber.setText("📞 " + phone);
+            }
+        }
+    }
 }

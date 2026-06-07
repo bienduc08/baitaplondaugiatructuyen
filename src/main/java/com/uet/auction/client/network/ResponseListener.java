@@ -307,13 +307,25 @@ public class ResponseListener implements Runnable {
                         }
                         break;
 
-                    case "UPDATE_PROFILE_SUCCESS":
-                        UserDTO updatedUser = (UserDTO) res.getData();
-                        SessionManager.setCurrentUser(updatedUser);
+                    case "UPDATE_PROFILE_RESULT":
                         Platform.runLater(() -> {
-                            AlertHelper.showInfo(res.getMessage());
-                            if (ProfileEditController.onBackAction != null) {
-                                ProfileEditController.onBackAction.run();
+                            if (res.isSuccess()) {
+                                UserDTO updatedUser = (UserDTO) res.getData();
+                                SessionManager.setCurrentUser(updatedUser);
+                                AlertHelper.showInfo(res.getMessage());
+
+                                // Gọi refresh cho 3 profile
+                                if (ProfileUserController.instance != null) ProfileUserController.instance.refreshProfileData();
+                                if (ProfileSellerController.instance != null) ProfileSellerController.instance.refreshProfileData();
+                                if (ProfileAdminController.instance != null) ProfileAdminController.instance.refreshProfileData();
+
+                                // Quay lại
+                                if (ProfileEditController.onBackAction != null) {
+                                    ProfileEditController.onBackAction.run();
+                                }
+                            } else {
+                                // Thất bại thì chỉ in lỗi, không chuyển màn hình
+                                AlertHelper.showError(res.getMessage());
                             }
                         });
                         break;
