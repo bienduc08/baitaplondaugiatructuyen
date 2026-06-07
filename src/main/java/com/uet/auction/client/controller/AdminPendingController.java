@@ -19,6 +19,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Controller cho AdminPending.fxml
+ * Quản lý danh sách sản phẩm ở trạng thái PENDING để Admin duyệt.
+ */
 public class AdminPendingController {
 
     public static AdminPendingController instance;
@@ -33,6 +37,7 @@ public class AdminPendingController {
     @FXML private TableColumn<ProductDTO, LocalDateTime> endTimeCol;
     @FXML private TableColumn<ProductDTO, String>  statusCol;
 
+    // Sử dụng DUY NHẤT một danh sách này để map với TableView
     private final ObservableList<ProductDTO> pendingListData = FXCollections.observableArrayList();
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private Timeline autoRefreshTimeline;
@@ -43,15 +48,22 @@ public class AdminPendingController {
         setupTable();
         pendingTable.setItems(pendingListData);
 
+        // Gọi hàm tải danh sách ban đầu khi vừa vào tab này
         loadPendingProducts();
 
+        // Tự động làm mới mỗi 5 giây
         autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> refreshPendingProducts()));
         autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
 
-        if (pendingTable.getScene() != null) autoRefreshTimeline.play();
+        if (pendingTable.getScene() != null) {
+            autoRefreshTimeline.play();
+        }
         pendingTable.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene != null) autoRefreshTimeline.play();
-            else autoRefreshTimeline.stop();
+            if (newScene != null) {
+                autoRefreshTimeline.play();
+            } else {
+                autoRefreshTimeline.stop();
+            }
         });
     }
 
@@ -123,27 +135,13 @@ public class AdminPendingController {
             });
         }
     }
-
-    /** * Đã SỬA: Giữ lại vùng chọn của người dùng khi bảng tự động refresh
+    /**
+     * Nhận danh sách từ Server và đổ dữ liệu lên TableView
      */
     public void updateTableData(List<ProductDTO> products) {
         Platform.runLater(() -> {
-            // Lấy ra ID của sản phẩm đang được chọn
-            ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
-            int selectedId = (selected != null) ? selected.getId() : -1;
-
-            // Nạp dữ liệu mới
+            // Đổ toàn bộ dữ liệu vào bảng để hiển thị chi tiết
             pendingListData.setAll(products);
-
-            // Bôi đen lại đúng sản phẩm đó nếu nó vẫn còn trên bảng
-            if (selectedId != -1) {
-                for (ProductDTO p : pendingListData) {
-                    if (p.getId() == selectedId) {
-                        pendingTable.getSelectionModel().select(p);
-                        break;
-                    }
-                }
-            }
         });
     }
 
@@ -152,42 +150,41 @@ public class AdminPendingController {
     }
 
     /**
-     * Đã SỬA: Sử dụng APPROVE_PRODUCT truyền toàn bộ Object để Server lưu thông báo
+     * Cập nhật lại danh sách trên TableView (Được gọi từ Socket Reader khi Server trả dữ liệu)
      */
+
     @FXML
     public void onApproveButtonClick() {
         ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            AlertHelper.showError("Vui lòng chọn sản phẩm trên bảng để duyệt!");
-            return;
-        }
-        if (!"PENDING".equals(selected.getStatus())) {
-            AlertHelper.showError("Chỉ có thể duyệt sản phẩm đang ở trạng thái 'Chờ duyệt'!");
-            return;
-        }
+        if (selected == null) { AlertHelper.showError("Vui lòng chọn sản phẩm!"); return; }
+        if ("OPEN".equals(selected.getStatus())) { AlertHelper.showError("Sản phẩm này đang được đấu giá!"); return; }
+        if ("CLOSED".equals(selected.getStatus())) { AlertHelper.showError("Sản phẩm này đã đóng!"); return; }
 
-        // Gửi toàn bộ đối tượng ProductDTO lên
+        // Gửi APPROVE_PRODUCT để server set status APPROVED, Timer sẽ tự mở đúng giờ start_time
+        // Không gửi CHANGE_PRODUCT_STATUS với "OPEN" vì sẽ bỏ qua start_time đã đặt
         SocketClient.sendRequest(new AuctionRequest("APPROVE_PRODUCT", selected));
+
+        // Cập nhật UI ngay lập tức
+        pendingListData.remove(selected);
+        AlertHelper.showInfo("Đã duyệt sản phẩm thành công!");
     }
 
-    /**
-     * Đã SỬA: Sử dụng REJECT_PRODUCT để báo tin buồn cho Seller
-     */
     @FXML
     public void onRejectButtonClick() {
         ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            AlertHelper.showError("Vui lòng chọn sản phẩm trên bảng để từ chối!");
-            return;
-        }
-        if (!"PENDING".equals(selected.getStatus())) {
-            AlertHelper.showError("Chỉ có thể từ chối sản phẩm đang ở trạng thái 'Chờ duyệt'!");
-            return;
-        }
+        if (selected == null) { AlertHelper.showError("Vui lòng chọn sản phẩm!"); return; }
 
-        SocketClient.sendRequest(new AuctionRequest("REJECT_PRODUCT", selected));
+        Object[] data = {selected.getId(), "REJECTED"};
+        SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
+
+        // Cập nhật UI ngay lập tức
+        pendingListData.remove(selected);
+        AlertHelper.showInfo("Đã từ chối sản phẩm!");
     }
 
+    /**
+     * Gửi yêu cầu lên server để lấy danh sách sản phẩm đang chờ duyệt mới nhất
+     */
     public void refreshPendingProducts() {
         SocketClient.sendRequest(new AuctionRequest("GET_ALL_PRODUCTS", null));
     }

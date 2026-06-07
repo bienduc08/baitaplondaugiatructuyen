@@ -5,7 +5,7 @@ import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.common.DTO.ProductDTO;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Response.AuctionResponse;
-import com.uet.auction.server.service.SessionManager;
+import com.uet.auction.client.util.SessionManager;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -86,7 +86,7 @@ public class ResponseListener implements Runnable {
                     case "ADD_PRODUCT_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                AlertHelper.showInfoNonBlocking(res.getMessage());
+                                AlertHelper.showInfo(res.getMessage());
                                 if (SellerAddProductController.instance != null)
                                     SellerAddProductController.instance.clearFormAfterSuccess();
                             } else {
@@ -98,14 +98,10 @@ public class ResponseListener implements Runnable {
                     case "CHANGE_STATUS_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                // ✅ Dùng showInfo (showAndWait) thay showInfoNonBlocking để không bị trắng
-                                AlertHelper.showInfo(res.getMessage());
+                                // ĐÃ SỬA: Chỉ gọi 1 hàm loadPendingProducts() để làm mới dữ liệu và cập nhật bộ đếm
                                 if (AdminPendingController.instance != null) {
                                     AdminPendingController.instance.loadPendingProducts();
                                 }
-                                String usr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
-                                if (usr != null) SocketClient.sendRequest(
-                                        new com.uet.auction.common.Request.AuctionRequest("GET_NOTIFICATIONS", usr));
                             } else {
                                 AlertHelper.showError(res.getMessage());
                             }
@@ -113,51 +109,18 @@ public class ResponseListener implements Runnable {
                         break;
 
                     case "UPDATE_PRICE":
-                        // Nếu broadcast kèm sản phẩm mới (từ PLACE_BID) thì cập nhật trực tiếp, không reload
-                        java.util.Map<String,Object> pricePayload =
-                                (res.getData() instanceof java.util.Map) ?
-                                        (java.util.Map<String,Object>) res.getData() : null;
-                        ProductDTO inlineProduct = (pricePayload != null && pricePayload.get("product") instanceof ProductDTO)
-                                ? (ProductDTO) pricePayload.get("product") : null;
                         Platform.runLater(() -> {
-                            if (inlineProduct != null) {
-                                // FIX: Có inlineProduct → cập nhật trực tiếp từng card và ProductDetail
-                                // mà KHÔNG gọi loadProducts() (tránh reload toàn bộ + nhấp nháy)
-                                if (HomecontentController.instance != null)
-                                    HomecontentController.instance.updateProductEndTime(inlineProduct);
-                                if (ProductDetailController.instance != null)
-                                    ProductDetailController.instance.updateProductInfo(inlineProduct);
-                            } else {
-                                // Không có inlineProduct (timer tick thông thường) → reload bình thường
-                                if (HomecontentController.instance != null)
-                                    HomecontentController.instance.loadProducts();
-                                if (ProductDetailController.instance != null)
-                                    ProductDetailController.instance.reloadProductDetails();
-                            }
+                            if (HomecontentController.instance != null)
+                                HomecontentController.instance.loadProducts();
                             if (AdminPendingController.instance != null)
                                 AdminPendingController.instance.refreshPendingProducts();
+                            if (ProductDetailController.instance != null)
+                                ProductDetailController.instance.reloadProductDetails();
                             if (SellerMyProductsController.instance != null)
                                 SellerMyProductsController.instance.loadMyAuctions();
-                            String currentUsr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
+                            String currentUsr = SessionManager.getCurrentUsername();
                             if (currentUsr != null) {
                                 SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", currentUsr));
-                            }
-                        });
-                        break;
-                    case "UPDATE_PRODUCT_RESULT":
-                        Platform.runLater(() -> {
-                            if (res.isSuccess()) {
-                                AlertHelper.showInfoNonBlocking(res.getMessage());
-                                // Đóng form sửa, kích hoạt quay về màn hình danh sách sản phẩm cũ
-                                if (SellerEditProductController.onCancelAction != null) {
-                                    SellerEditProductController.onCancelAction.run();
-                                }
-                                // Tải lại danh sách sản phẩm của tôi để thấy trạng thái đổi thành PENDING
-                                if (SellerMyProductsController.instance != null) {
-                                    SellerMyProductsController.instance.loadMyAuctions();
-                                }
-                            } else {
-                                AlertHelper.showError(res.getMessage());
                             }
                         });
                         break;
@@ -170,32 +133,19 @@ public class ResponseListener implements Runnable {
                         java.util.Map<String, Object> endedInfo =
                                 (java.util.Map<String, Object>) res.getData();
 
-                        // Lấy winner và finalPrice từ endedInfo để hiển thị ngay trên ProductDetail
-                        String endedWinner = (endedInfo != null) ? (String) endedInfo.get("winner") : null;
-                        double endedFinalPrice = (endedInfo != null && endedInfo.get("finalPrice") instanceof Double)
-                                ? (Double) endedInfo.get("finalPrice") : 0.0;
-                        int endedProductId = (endedInfo != null && endedInfo.get("productId") instanceof Integer)
-                                ? (Integer) endedInfo.get("productId") : -1;
-
                         Platform.runLater(() -> {
                             // Hiện popup thông báo người thắng cho tất cả client đang online
                             if (endedMsg != null) {
-                                AlertHelper.showInfoNonBlocking(endedMsg);
+                                AlertHelper.showInfo(endedMsg);
                             }
 
-                            // Nếu ProductDetail đang mở đúng sản phẩm vừa kết thúc → hiện kết quả ngay
-                            if (ProductDetailController.instance != null) {
-                                ProductDetailController ctrl = ProductDetailController.instance;
-                                if (endedProductId == -1 || ctrl.getCurrentProductId() == endedProductId) {
-                                    ctrl.showAuctionResult(endedWinner, endedFinalPrice);
-                                }
-                            }
-
-                            // Reload danh sách để phản ánh trạng thái CLOSED
+                            // Reload giao diện để phản ánh trạng thái CLOSED
                             if (HomecontentController.instance != null)
                                 HomecontentController.instance.loadProducts();
+                            if (ProductDetailController.instance != null)
+                                ProductDetailController.instance.reloadProductDetails();
                             if (UserAuctionsController.instance != null) {
-                                String username = com.uet.auction.client.util.SessionManager.getCurrentUsername();
+                                String username = SessionManager.getCurrentUsername();
                                 if (username != null)
                                     SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_JOINED_PRODUCTS", username));
                             }
@@ -223,7 +173,7 @@ public class ResponseListener implements Runnable {
                     case "UNLOCK_USER_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                AlertHelper.showInfoNonBlocking(res.getMessage());
+                                AlertHelper.showInfo(res.getMessage());
                                 if (AdminUserManagementController.instance != null)
                                     AdminUserManagementController.instance.reloadUsers();
                             } else {
@@ -238,10 +188,6 @@ public class ResponseListener implements Runnable {
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
                                 AlertHelper.showInfo(res.getMessage() != null ? res.getMessage() : "Đặt giá thành công!");
-                                // Cập nhật số dư ngay lập tức sau khi đặt giá thành công
-                                String usr = com.uet.auction.client.util.SessionManager.getCurrentUsername();
-                                if (usr != null) SocketClient.sendRequest(
-                                        new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", usr));
                             } else {
                                 AlertHelper.showError(res.getMessage() != null ? res.getMessage() : "Đặt giá thất bại!");
                             }
@@ -289,7 +235,7 @@ public class ResponseListener implements Runnable {
                                 double newBalance = ((Number) res.getData()).doubleValue();
 
                                 // 1. Cập nhật Session
-                                com.uet.auction.common.DTO.UserDTO current = com.uet.auction.client.util.SessionManager.getCurrentUser();
+                                UserDTO current = SessionManager.getCurrentUser();
                                 if (current != null) {
                                     current.setBalance(newBalance);
                                 }
@@ -334,7 +280,7 @@ public class ResponseListener implements Runnable {
                             double bal = ((Number) res.getData()).doubleValue();
                             Platform.runLater(() -> {
                                 // 1. Cập nhật Session
-                                com.uet.auction.common.DTO.UserDTO current = com.uet.auction.client.util.SessionManager.getCurrentUser();
+                                UserDTO current = SessionManager.getCurrentUser();
                                 if (current != null) {
                                     current.setBalance(bal);
                                 }
@@ -354,11 +300,13 @@ public class ResponseListener implements Runnable {
                         }
                         break;
 
+                    case "GET_STATS_SUCCESS":
+                        break;
                     case "UPDATE_PROFILE_SUCCESS":
                         UserDTO updatedUser = (UserDTO) res.getData();
 
                         // SỬA LỖI 2: Dùng SessionManager của phía Client
-                        com.uet.auction.client.util.SessionManager.setCurrentUser(updatedUser);
+                        SessionManager.setCurrentUser(updatedUser);
 
                         Platform.runLater(() -> {
                             AlertHelper.showInfo(res.getMessage());
@@ -376,52 +324,6 @@ public class ResponseListener implements Runnable {
                             AlertHelper.showError(res.getMessage());
                         });
                         break;
-                    case "GET_NOTIFICATIONS_SUCCESS":
-                        java.util.List<com.uet.auction.common.DTO.NotificationDTO> notifs =
-                                (java.util.List<com.uet.auction.common.DTO.NotificationDTO>) res.getData();
-
-                        int unreadCount = notifs.size();
-
-                        javafx.application.Platform.runLater(() -> {
-                            if (com.uet.auction.client.controller.UserController.instance != null) {
-                                com.uet.auction.client.controller.UserController.instance.updateNotificationCount(unreadCount);
-                            }
-                            if (com.uet.auction.client.controller.SellerController.instance != null) {
-                                com.uet.auction.client.controller.SellerController.instance.updateNotificationCount(unreadCount);
-                            }
-                            if (com.uet.auction.client.controller.AdminController.instance != null) {
-                                com.uet.auction.client.controller.AdminController.instance.updateNotificationCount(unreadCount);
-                            }
-
-                            // ---> THÊM DÒNG NÀY: Nếu đang mở màn hình danh sách thông báo thì render ra danh sách luôn
-                            if (com.uet.auction.client.controller.NotificationListController.instance != null) {
-                                com.uet.auction.client.controller.NotificationListController.instance.displayNotifications(notifs);
-                            }
-                        });
-                        break;
-
-                    case "GET_PRODUCT_BY_ID_RESULT":
-                        if (res.isSuccess() && res.getData() instanceof ProductDTO) {
-                            ProductDTO updatedProd = (ProductDTO) res.getData();
-                            Platform.runLater(() -> {
-                                if (ProductDetailController.instance != null)
-                                    ProductDetailController.instance.updateProductInfo(updatedProd);
-                            });
-                        }
-                        break;
-
-                    case "NOTIFY_REFRESH":
-                        // Server push: thông báo mới dành riêng cho user này
-                        String notifyMsg = res.getMessage();
-                        Platform.runLater(() -> {
-                            // Hiện popup ngay lập tức
-                            if (notifyMsg != null) AlertHelper.showInfoNonBlocking(notifyMsg);
-                            // Tải lại danh sách thông báo để cập nhật badge số
-                            String usr2 = com.uet.auction.client.util.SessionManager.getCurrentUsername();
-                            if (usr2 != null) SocketClient.sendRequest(
-                                    new com.uet.auction.common.Request.AuctionRequest("GET_NOTIFICATIONS", usr2));
-                        });
-                        break;
 
                     default:
                         System.out.println("Phản hồi không xác định: " + type);
@@ -431,8 +333,6 @@ public class ResponseListener implements Runnable {
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("Mất kết nối tới Server.");
-            // Kích hoạt kết nối lại từ phía listener
-            com.uet.auction.client.network.SocketClient.startAutoReconnect();
         }
     }
 }

@@ -151,10 +151,11 @@ public class BidHistoryController {
 
         // Sắp xếp tăng dần theo Giá tiền (đảm bảo biểu đồ luôn đi lên)
         List<BidDTO> sorted = new ArrayList<>(list);
+        // Sort theo thời gian tăng dần để biểu đồ phản ánh diễn biến thực
         sorted.sort((a, b) -> {
-            if (a.getPrice() == null) return -1;
-            if (b.getPrice() == null) return 1;
-            return a.getPrice().compareTo(b.getPrice());
+            if (a.getTime() == null) return -1;
+            if (b.getTime() == null) return 1;
+            return a.getTime().compareTo(b.getTime());
         });
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
