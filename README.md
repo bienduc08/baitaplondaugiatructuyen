@@ -233,4 +233,4 @@ Xem chi tiết tại [`schema.sql`](schema.sql).
 ## 📄 Báo cáo
 
 - 📝 Báo cáo: [Google Docs](https://docs.google.com/document/d/1wZ_LSpcFZGR3Xeszm4fEgzW_rkjZoU1Z/edit?usp=sharing&ouid=111826535776200247084&rtpof=true&sd=true)
-- 🎬 Video demo: *(cập nhật link)*
+- 🎬 Video demo: [Google Divers](https://drive.google.com/file/d/17u22NXIbkbY4chtTHqUnznPAl_O5r0iq/view?usp=sharing)

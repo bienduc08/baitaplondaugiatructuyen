@@ -84,7 +84,7 @@ public class ProductDetailController {
         lblTopBidder.setText(product.getOwnerName() != null && !product.getOwnerName().isBlank() ? product.getOwnerName() : "Chưa có");
 
         loadImage(product.getImageUrl());
-        updateBidHistory(allBids);
+        displayBidHistory(allBids);
 
         if (product.getEndTime() != null) startCountdown();
         else if (lblTimeRemaining != null) lblTimeRemaining.setText("Hết hạn: —");
@@ -105,14 +105,6 @@ public class ProductDetailController {
             imgProduct.setImage(new Image(file.toURI().toString(), 360, 280, true, true, false));
         } else {
             loadDefaultImage();
-        }
-    }
-
-    private void updateBidHistory(List<BidDTO> bids) {
-        if (bids != null) {
-            recentBidsList.setAll(bids.stream()
-                    .sorted((b1, b2) -> b2.getTime().compareTo(b1.getTime()))
-                    .collect(Collectors.toList()));
         }
     }
 
@@ -213,41 +205,6 @@ public class ProductDetailController {
         }
     }
 
-    /**
-     * Được gọi khi phiên đấu giá kết thúc (AUCTION_ENDED).
-     * Hiển thị người chiến thắng và giá trúng ngay trên ProductDetail.
-     */
-    public void showAuctionResult(String winner, double finalPrice) {
-        if (countdown != null) { countdown.stop(); countdown = null; }
-
-        if (lblTimeRemaining != null) {
-            if (winner != null && !winner.isBlank()) {
-                lblTimeRemaining.setText("🏆 Phiên đã kết thúc");
-            } else {
-                lblTimeRemaining.setText("⏰ Phiên đã kết thúc — Không có người tham gia");
-            }
-            lblTimeRemaining.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-        }
-
-        if (winner != null && !winner.isBlank()) {
-            if (lblTopBidder != null)
-                lblTopBidder.setText("🏆 Người thắng: " + winner);
-            if (lblCurrentPrice != null)
-                lblCurrentPrice.setText(String.format("%,.0f VNĐ", finalPrice));
-        } else {
-            if (lblTopBidder != null)
-                lblTopBidder.setText("Không có người thắng");
-        }
-
-        // Khóa toàn bộ form đặt giá
-        if (txtBidAmount != null) txtBidAmount.setDisable(true);
-        if (txtAutoMaxBid != null) txtAutoMaxBid.setDisable(true);
-        if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
-
-        // Cập nhật status trong object để countdown không restart sai
-        if (currentProduct != null) currentProduct.setStatus("CLOSED");
-    }
-
     public void displayBidHistory(List<BidDTO> bids) {
         if (bids != null) {
             // Sắp xếp mới nhất lên đầu (thời gian giảm dần)
@@ -277,6 +234,19 @@ public class ProductDetailController {
         }
     }
 
+    private boolean checkUserPermission() {
+        UserDTO u = SessionManager.getCurrentUser();
+        if (u == null) {
+            AlertHelper.showWarning("Bạn cần đăng nhập với tài khoản Người mua để tham gia đấu giá!");
+            return false;
+        }
+        if (!"USER".equals(u.getRole())) {
+            AlertHelper.showError("Chỉ tài khoản Người mua (User) mới được tham gia đấu giá!");
+            return false;
+        }
+        return true;
+    }
+
     /**
      * TÍNH NĂNG 14: Đăng ký đấu thầu tự động
      * Gửi request REGISTER_AUTO_BID với [productId, bidderId, username, maxBid, increment]
@@ -284,19 +254,8 @@ public class ProductDetailController {
     @FXML
     public void onRegisterAutoBidClick() {
         try {
+            if (!checkUserPermission()) return;
             UserDTO sessionUser = SessionManager.getCurrentUser();
-
-            // Chặn khách
-            if (sessionUser == null) {
-                AlertHelper.showWarning("Bạn cần đăng nhập với tài khoản Người mua để đăng ký đấu giá tự động!");
-                return;
-            }
-
-            // Chặn Seller/Admin
-            if (!"USER".equals(sessionUser.getRole())) {
-                AlertHelper.showError("Chỉ tài khoản Người mua (User) mới được dùng tính năng đấu giá tự động!");
-                return;
-            }
 
             String maxBidText  = txtAutoMaxBid != null ? txtAutoMaxBid.getText().replace(",", "").trim() : "";
             String incrText    = txtAutoIncrement != null ? txtAutoIncrement.getText().replace(",", "").trim() : "";
@@ -337,19 +296,8 @@ public class ProductDetailController {
     @FXML
     public void onPlaceBidClick() {
         try {
+            if (!checkUserPermission()) return;
             UserDTO sessionUser = SessionManager.getCurrentUser();
-
-            // Nếu là khách (chưa đăng nhập)
-            if (sessionUser == null) {
-                AlertHelper.showWarning("Bạn cần đăng nhập với tài khoản Người mua để đặt giá!");
-                return;
-            }
-
-            // Nếu là Admin hoặc Seller
-            if (!"USER".equals(sessionUser.getRole())) {
-                AlertHelper.showError("Chỉ tài khoản Người mua (User) mới được tham gia đấu giá!");
-                return;
-            }
 
             BigDecimal bidAmount = new BigDecimal(txtBidAmount.getText().replace(",", "").trim());
             BigDecimal minRequired = currentProduct.getCurrentPrice().add(currentProduct.getStepPrice());
@@ -373,12 +321,16 @@ public class ProductDetailController {
             System.err.println("Không thể load ảnh mặc định");
         }
     }
+    private void setBidInputsDisabled(boolean disabled) {
+        if (txtBidAmount     != null) txtBidAmount.setDisable(disabled);
+        if (txtAutoMaxBid    != null) txtAutoMaxBid.setDisable(disabled);
+        if (txtAutoIncrement != null) txtAutoIncrement.setDisable(disabled);
+    }
+
     private void updateTimeDisplay(ProductDTO product, Label timeLabel) {
         if (product == null || product.getStartTime() == null || product.getEndTime() == null || timeLabel == null) {
             if (timeLabel != null) timeLabel.setText("Thời gian không xác định");
-            if (txtBidAmount != null) txtBidAmount.setDisable(true);
-            if (txtAutoMaxBid != null) txtAutoMaxBid.setDisable(true);
-            if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
+            setBidInputsDisabled(true);
             return;
         }
 
@@ -395,9 +347,7 @@ public class ProductDetailController {
             java.time.Duration duration = java.time.Duration.between(now, start);
             timeLabel.setText("Bắt đầu sau: " + formatDuration(duration));
             timeLabel.setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;"); // Màu cam
-            if (txtBidAmount != null) txtBidAmount.setDisable(true);
-            if (txtAutoMaxBid != null) txtAutoMaxBid.setDisable(true);
-            if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
+            setBidInputsDisabled(true);
         }
         // Trường hợp 2: Đang diễn ra
         else if (now.isBefore(end)) {
@@ -406,9 +356,7 @@ public class ProductDetailController {
             timeLabel.setStyle("-fx-text-fill: #2ecc71; -fx-font-weight: bold;"); // Màu xanh lá
 
             // CHỈ MỞ KHÓA KHI LÀ TÀI KHOẢN USER
-            if (txtBidAmount != null) txtBidAmount.setDisable(!isUser);
-            if (txtAutoMaxBid != null) txtAutoMaxBid.setDisable(!isUser);
-            if (txtAutoIncrement != null) txtAutoIncrement.setDisable(!isUser);
+            setBidInputsDisabled(!isUser);
 
             // Thêm gợi ý (Prompt text) cho người không phải User
             if (!isUser && txtBidAmount != null) {
@@ -419,9 +367,7 @@ public class ProductDetailController {
         else {
             timeLabel.setText("⏰ Phiên đấu giá đã kết thúc");
             timeLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;"); // Màu đỏ
-            if (txtBidAmount != null) txtBidAmount.setDisable(true);
-            if (txtAutoMaxBid != null) txtAutoMaxBid.setDisable(true);
-            if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
+            setBidInputsDisabled(true);
             if (countdown != null) countdown.stop();
         }
     }

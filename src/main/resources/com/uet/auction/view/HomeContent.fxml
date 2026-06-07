@@ -5,7 +5,7 @@
 
 <VBox prefHeight="600.0" prefWidth="782.0" spacing="15.0" style="-fx-padding: 20;"
       xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.uet.auction.client.controller.HomecontentController">
+      fx:controller="com.uet.auction.client.controller.HomeContentController">
 
     <HBox alignment="CENTER_LEFT" spacing="10.0">
         <TextField fx:id="txtSearch" prefHeight="35.0" prefWidth="400.0" promptText="Tìm kiếm sản phẩm..." style="-fx-background-radius: 20; -fx-border-color: #dcdde1; -fx-border-radius: 20;" />

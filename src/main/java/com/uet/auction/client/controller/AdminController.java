@@ -22,7 +22,7 @@ public class AdminController {
     @FXML
     private BorderPane mainBorderPane;
     @FXML
-    private Label welcomeLabel; // Đã sửa tên biến khớp với FXML
+    private Label welcomeLabel;
     @FXML
     private Label lblCountPending;
     @FXML
@@ -33,14 +33,10 @@ public class AdminController {
     private Label lblBalance;
 
     @FXML
-    private TableView<ProductDTO> pendingTable;
-    @FXML
     private Button btnNotifications;
 
-    // Đã đổi String thành LocalDateTime để chuẩn hóa hiển thị thời gian
-
     private enum ActiveView { HOME, PENDING,MANAGEMENT, PROFILE }
-    private AdminController.ActiveView activeView = AdminController.ActiveView.HOME;
+    private ActiveView activeView = ActiveView.HOME;
 
     @FXML
     public void initialize() {
@@ -50,13 +46,8 @@ public class AdminController {
         }
         if (lblBalance != null && SessionManager.getCurrentUser() != null) {
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
-
-            // Tải số dư mới nhất từ server
-            String username = SessionManager.getCurrentUsername();
-            if (username != null) {
-                SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
-            }
         }
+
         loadPendingProducts();
         onShowHomeClick();
         // Tải số dư mới nhất từ server
@@ -90,36 +81,13 @@ public class AdminController {
             if (lblCountClosed != null) lblCountClosed.setText(String.valueOf(closed));
         });
     }
-
-    @FXML
-    public void onApproveButtonClick() {
-        // Điều hướng sang tab AdminPending để duyệt sản phẩm
-        onPendingClick();
-    }
-
-    @FXML
-    public void onRejectButtonClick() {
-        // Điều hướng sang tab AdminPending để từ chối sản phẩm
-        onPendingClick();
-    }
-
-    @FXML
-    public void onRefreshButtonClick() {
-        // Tải số dư mới nhất từ server khi nhấn làm mới
-        String username = SessionManager.getCurrentUsername();
-        if (username != null) {
-            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
-        }
-        onShowHomeClick();
-    }
-
-    @FXML
-    public void onLogoutButtonClick() {
-        try {
-            SessionManager.clearSession();
-            SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
-        } catch (IOException e) {
-            e.printStackTrace();
+    // Hàm tiện ích để cập nhật số lượng thông báo
+    public void updateNotificationCount(int unreadCount) {
+        if (unreadCount > 0) {
+            btnNotifications.setText("🔔 (" + unreadCount + ")");
+            // Có thể thêm đổi màu chữ đậm hơn ở đây
+        } else {
+            btnNotifications.setText("🔔"); // Ẩn số 0 đi cho đẹp
         }
     }
 
@@ -143,7 +111,6 @@ public class AdminController {
     public void onUserManageClick() {
         loadView("/com/uet/auction/view/AdminUserManagement.fxml",ActiveView.MANAGEMENT);
     }
-
 
     @FXML
     public void onProfileButtonClick() {
@@ -185,13 +152,39 @@ public class AdminController {
         }
     }
 
-    // Hàm tiện ích để cập nhật số lượng thông báo
-    public void updateNotificationCount(int unreadCount) {
-        if (unreadCount > 0) {
-            btnNotifications.setText("🔔 (" + unreadCount + ")");
-            // Có thể thêm đổi màu chữ đậm hơn ở đây
-        } else {
-            btnNotifications.setText("🔔"); // Ẩn số 0 đi cho đẹp
+    @FXML
+    public void onRefreshButtonClick() {
+        // Tải số dư mới nhất từ server khi nhấn làm mới
+        String username = SessionManager.getCurrentUsername();
+        if (username != null)
+            SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+
+        switch (activeView) {
+            case PENDING:
+                loadPendingProducts();   // reload danh sách chờ duyệt
+                break;
+            case MANAGEMENT:
+                onUserManageClick();
+                break;
+            case PROFILE:
+                if (ProfileAdminController.instance != null)
+                    SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+                else
+                    onProfileButtonClick();
+                break;
+            default:
+                onShowHomeClick();
+                break;
+        }
+    }
+
+    @FXML
+    public void onLogoutButtonClick() {
+        try {
+            SessionManager.clearSession();
+            SceneManager.switchScene("/com/uet/auction/view/Login.fxml", "Đăng nhập");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

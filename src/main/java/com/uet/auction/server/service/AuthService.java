@@ -2,7 +2,6 @@ package com.uet.auction.server.service;
 
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
-import com.uet.auction.common.Request.LoginRequest;
 import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.DAO.UserDAO;
 
@@ -18,8 +17,14 @@ public class AuthService {
     // =========================================================
 
     public AuctionResponse login(AuctionRequest request) {
-        LoginRequest loginReq = (LoginRequest) request.getData();
-        UserDTO user = userDAO.checkLogin(loginReq.getUsername(), loginReq.getPassword());
+        Object raw = request.getData();
+        if (!(raw instanceof Object[]) || ((Object[]) raw).length < 2) {
+            return new AuctionResponse(false, "LOGIN_RESULT", "Dữ liệu đăng nhập không hợp lệ!", null);
+        }
+        Object[] data = (Object[]) raw;
+        String username = (String) data[0];
+        String password = (String) data[1];
+        UserDTO user = userDAO.checkLogin(username, password);
         if (user != null) {
             // [THÊM MỚI] Chặn tài khoản bị khóa đăng nhập
             // File gốc không có đoạn kiểm tra này, user LOCKED vẫn login được bình thường
@@ -66,6 +71,9 @@ public class AuthService {
     }
 
     public AuctionResponse changeUserStatus(int userId, String newStatus) {
+        if (!"LOCKED".equalsIgnoreCase(newStatus) && !"ACTIVE".equalsIgnoreCase(newStatus)) {
+            return new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Trạng thái không hợp lệ!", null);
+        }
         boolean success = userDAO.changeUserStatus(userId, newStatus);
 
         // Trả về type tương ứng cho Client dễ bắt (LOCK hay UNLOCK)
@@ -90,7 +98,7 @@ public class AuthService {
             return new AuctionResponse(false, "DEPOSIT_RESULT", "Mỗi lần nạp tối đa 500.000.000 VNĐ!", null);
         }
 
-        String status = userDAO.getStatus(username);
+        String status = userDAO.getUserByUsername(username).getStatus();
         if (status == null) {
             return new AuctionResponse(false, "DEPOSIT_RESULT", "Không tìm thấy tài khoản!", null);
         }
@@ -128,11 +136,10 @@ public class AuthService {
         boolean success = userDAO.updateProfile(username, fullName, phone, newPass);
 
         if (success) {
-            List<UserDTO> result = userDAO.searchUser(username);
-            if (result == null || result.isEmpty()) {
+            UserDTO updatedUser = userDAO.getUserByUsername(username);
+            if (updatedUser == null) {
                 return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Không tìm thấy tài khoản sau khi cập nhật!", null);
             }
-            UserDTO updatedUser = result.get(0);
             return new AuctionResponse(true, "UPDATE_PROFILE_SUCCESS", "Cập nhật hồ sơ thành công!", updatedUser);
         } else {
             return new AuctionResponse(false, "UPDATE_PROFILE_FAILED", "Cập nhật thất bại. Vui lòng thử lại!", null);

@@ -5,19 +5,13 @@ import com.uet.auction.client.util.SceneManager;
 import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.UserDTO;
 import com.uet.auction.common.Request.AuctionRequest;
-import com.uet.auction.common.Request.LoginRequest;
 import com.uet.auction.common.Response.AuctionResponse;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 
 import java.io.IOException;
 
@@ -46,8 +40,7 @@ public class LoginController {
 
         statusLabel.setText("Đang gửi yêu cầu đăng nhập...");
 
-        LoginRequest loginReq = new LoginRequest(username, password);
-        SocketClient.sendRequest(new AuctionRequest("LOGIN", loginReq));
+        SocketClient.sendRequest(new AuctionRequest("LOGIN", new Object[]{username, password}));
     }
 
     public void handleLoginResponse(AuctionResponse res) {
@@ -79,12 +72,7 @@ public class LoginController {
     @FXML
     private void handleRegisterButton(ActionEvent event) {
         try {
-            Parent root = FXMLLoader.load(
-                    getClass().getResource("/com/uet/auction/view/Register.fxml"));
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("Đăng ký tài khoản");
-            stage.show();
+            SceneManager.switchScene("/com/uet/auction/view/Register.fxml", "Đăng ký tài khoản");
         } catch (IOException e) {
             e.printStackTrace();
             statusLabel.setText("Không thể mở màn hình đăng ký!");

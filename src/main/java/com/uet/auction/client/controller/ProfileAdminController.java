@@ -28,7 +28,7 @@ public class ProfileAdminController {
     @FXML private Label lblHeaderPhoneNumber;
     @FXML private Label lblCurrentTime;
     @FXML private Label lblSystemStatus;
-    public static Runnable onBackAction;
+    @FXML public static Runnable onBackAction;
     @FXML private Button btnDeposit;
 
     @FXML

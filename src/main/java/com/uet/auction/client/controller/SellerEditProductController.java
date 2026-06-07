@@ -15,7 +15,6 @@ import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -65,11 +64,17 @@ public class SellerEditProductController {
         txtStepPrice.setText(String.format("%.0f", product.getStepPrice()));
 
         // Đổ dữ liệu ảnh cũ (Sử dụng đúng hàm getImageBytes())
-        if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
-            this.selectedImageBytes = product.getImageBytes();
-            imgPreview.setImage(new Image(new ByteArrayInputStream(selectedImageBytes)));
-            btnRemoveImage.setVisible(true);
-            btnRemoveImage.setManaged(true);
+        String imageUrl = product.getImageUrl();
+        if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+            java.io.File file = new java.io.File("images/" + new java.io.File(imageUrl.trim()).getName());
+            if (file.exists()) {
+                imgPreview.setImage(new Image(file.toURI().toString()));
+                if (lblImageName != null) lblImageName.setText(file.getName());
+                if (btnRemoveImage != null) {
+                    btnRemoveImage.setVisible(true);
+                    btnRemoveImage.setManaged(true);
+                }
+            }
         }
 
         // Đổ dữ liệu thời gian cũ (Dùng thẳng LocalDateTime)
@@ -122,6 +127,7 @@ public class SellerEditProductController {
     @FXML
     public void onRemoveImageClick() {
         selectedImageBytes = null;
+        currentProduct.setImageUrl(null);
         if (imgPreview != null) imgPreview.setImage(null);
         if (lblImageName != null) lblImageName.setText("");
         if (btnRemoveImage != null) {
@@ -149,6 +155,15 @@ public class SellerEditProductController {
             }
             if (dpStartDate.getValue() == null || dpEndDate.getValue() == null) {
                 AlertHelper.showError("Vui lòng chọn ngày bắt đầu và kết thúc!");
+                return;
+            }
+
+            if (startPrice.compareTo(BigDecimal.ZERO) <= 0) {
+                AlertHelper.showError("Giá khởi điểm phải lớn hơn 0!");
+                return;
+            }
+            if (stepPrice.compareTo(BigDecimal.ZERO) <= 0) {
+                AlertHelper.showError("Bước giá phải lớn hơn 0!");
                 return;
             }
 

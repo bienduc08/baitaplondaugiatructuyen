@@ -1,7 +1,6 @@
 package com.uet.auction.server.service;
 
 import com.uet.auction.common.Request.AuctionRequest;
-import com.uet.auction.common.Request.LoginRequest;
 import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.DAO.UserDAO;
 import com.uet.auction.server.config.DatabaseConnection;
@@ -82,7 +81,7 @@ public class WalletAndAuthTest {
     public void testLogin_Success() {
         Assumptions.assumeTrue(dbConnected, "Bỏ qua test vì không có kết nối Database");
 
-        AuctionRequest request = new AuctionRequest("LOGIN", new LoginRequest(testUserNormal, "password123"));
+        AuctionRequest request = new AuctionRequest("LOGIN", new Object[]{testUserNormal, "password123"});
         AuctionResponse response = authService.login(request);
 
         assertTrue(response.isSuccess(), "Đăng nhập với tài khoản thường phải thành công");
@@ -96,7 +95,7 @@ public class WalletAndAuthTest {
     public void testLogin_LockedUser() {
         Assumptions.assumeTrue(dbConnected, "Bỏ qua test vì không có kết nối Database");
 
-        AuctionRequest request = new AuctionRequest("LOGIN", new LoginRequest(testUserLocked, "password123"));
+        AuctionRequest request = new AuctionRequest("LOGIN", new Object[]{testUserLocked, "password123"});
         AuctionResponse response = authService.login(request);
 
         assertFalse(response.isSuccess(), "Đăng nhập với tài khoản bị khóa phải thất bại");

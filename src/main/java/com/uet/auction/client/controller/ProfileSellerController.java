@@ -32,7 +32,6 @@ public class ProfileSellerController {
     @FXML private Label lblHeaderPhoneNumber;
     @FXML private Label lblTotalBids;
     public static Runnable onBackAction;
-
     @FXML private Button btnDeposit;
 
     @FXML private TableView<ProductDTO>            tblMyProducts;

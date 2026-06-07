@@ -1,6 +1,5 @@
 package com.uet.auction.client.controller;
 
-// CHÚ Ý: Đã sửa lại toàn bộ thư viện import cho chuẩn JavaFX
 import com.uet.auction.client.network.SocketClient;
 import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.client.util.SessionManager;

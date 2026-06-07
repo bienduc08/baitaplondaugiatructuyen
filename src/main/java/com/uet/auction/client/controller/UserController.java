@@ -32,12 +32,6 @@ public class UserController {
         if (SessionManager.getCurrentUser() != null) {
             welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
-
-            // Tải số dư mới nhất từ server
-            String username = SessionManager.getCurrentUsername();
-            if (username != null) {
-                SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
-            }
         }
         onShowHomeClick();
         // Tải số dư mới nhất từ server
@@ -124,11 +118,6 @@ public class UserController {
         return mainBorderPane;
     }
 
-    public void refreshBalance() {
-        if (SessionManager.getCurrentUser() != null && lblBalance != null) {
-            lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
-        }
-    }
     // Sự kiện khi click vào nút chuông
     @FXML
     private void onShowNotificationsClick() {

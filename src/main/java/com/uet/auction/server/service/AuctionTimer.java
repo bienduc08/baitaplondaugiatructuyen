@@ -1,6 +1,7 @@
 package com.uet.auction.server.service;
 
 import com.uet.auction.common.Response.AuctionResponse;
+import com.uet.auction.server.DAO.NotificationDAO;
 import com.uet.auction.server.DAO.ProductDAO;
 import com.uet.auction.server.network.SocketServer;
 
@@ -19,58 +20,50 @@ public class AuctionTimer {
     public void startChecking() {
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                // 1. Mở các phiên đến giờ
+                //  Mở các phiên đến giờ
                 productDAO.openScheduledAuctions();
 
-                // 2. Anti-sniping: gia hạn trước khi đóng, để bid cuối cùng kịp extend
-                // trước khi closeExpiredAuctions() chạy trong cùng chu kỳ Timer này
-                productDAO.extendAuctionIfLastBid();
-
-                // 3. KÍCH HOẠT AUTO-BID TRƯỚC KHI CHỐT SỔ ĐÓNG PHIÊN
+                //  Anti-sniping: gia hạn trước khi đóng, để bid cuối cùng kịp extend
+                //  KÍCH HOẠT AUTO-BID TRƯỚC KHI CHỐT SỔ ĐÓNG PHIÊN
                 AuctionService.getInstance().triggerAllAutoBids();
                 productDAO.extendAuctionIfLastBid();
 
-                // 4. Đóng các phiên hết giờ
+                //  Đóng các phiên hết giờ
                 List<Map<String, Object>> closedAuctions = productDAO.closeExpiredAuctions();
-                boolean hasClosedAuctions = closedAuctions != null && !closedAuctions.isEmpty();
 
-                if (hasClosedAuctions) {
-                    for (Map<String, Object> info : closedAuctions) {
-                        String winner      = (String) info.get("winner");
-                        String productName = (String) info.get("productName");
-                        BigDecimal finalPrice  = (BigDecimal) info.get("finalPrice");
+                if (closedAuctions == null || closedAuctions.isEmpty()) return;
 
-                        String message;
-                        if (winner != null && !winner.isBlank()) {
-                            message = String.format(
-                                    "Phiên \"%s\" đã kết thúc!\n🏆 Người thắng: %s\n💰 Giá trúng: %,.0f VNĐ",
-                                    productName, winner, finalPrice
-                            );
+                NotificationDAO notifDAO = new NotificationDAO();
 
-                            // ---> THÊM MỚI TỪ ĐÂY: Lưu thông báo vào Database cho người thắng cuộc <---
-                            try {
-                                com.uet.auction.server.DAO.NotificationDAO notifDAO = new com.uet.auction.server.DAO.NotificationDAO();
-                                String winNotifMsg = String.format(
-                                        "Chúc mừng! Bạn đã thắng phiên đấu giá sản phẩm \"%s\" với mức giá %,.0f VNĐ.",
-                                        productName, finalPrice
-                                );
-                                notifDAO.insertNotification(winner, winNotifMsg, "AUCTION_WON");
-                            } catch (Exception e) {
-                                System.err.println("[AuctionTimer] Lỗi lưu thông báo thắng cuộc: " + e.getMessage());
-                            }
-                            // ---> KẾT THÚC THÊM MỚI <---
+                for (Map<String, Object> info : closedAuctions) {
+                    String winner      = (String) info.get("winner");
+                    String productName = (String) info.get("productName");
+                    BigDecimal finalPrice  = (BigDecimal) info.get("finalPrice");
 
-                        } else {
-                            message = String.format(
-                                    "Phiên \"%s\" đã kết thúc.\nKhông có người tham gia đặt giá.",
-                                    productName
-                            );
+                    String message;
+                    if (winner != null && !winner.isBlank()) {
+                        message = String.format(
+                                "Phiên \"%s\" đã kết thúc!\n🏆 Người thắng: %s\n💰 Giá trúng: %,.0f VNĐ",
+                                productName, winner, finalPrice
+                        );
+                        try {
+                            notifDAO.insertNotification(winner,
+                                    String.format("Chúc mừng! Bạn đã thắng phiên đấu giá sản phẩm \"%s\" với mức giá %,.0f VNĐ.",
+                                            productName, finalPrice),
+                                    "AUCTION_WON");
+                        } catch (Exception e) {
+                            System.err.println("[AuctionTimer] Lỗi lưu thông báo thắng cuộc: " + e.getMessage());
                         }
-                        SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "AUCTION_ENDED", message, info));
+                    } else {
+                        message = String.format(
+                                "Phiên \"%s\" đã kết thúc.\nKhông có người tham gia đặt giá.",
+                                productName
+                        );
                     }
-                } else {
-                    // Nếu không có phiên đóng mới gửi UPDATE_PRICE để tránh client load 2 lần
-                    SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "UPDATE_PRICE", null));
+
+                    SocketServer.broadcastToLoggedInUsers(
+                            new AuctionResponse(true, "AUCTION_ENDED", message, info)
+                    );
                 }
 
             } catch (Exception e) {

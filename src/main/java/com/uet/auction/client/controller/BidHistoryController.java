@@ -21,8 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.uet.auction.client.controller.UserController.onBackAction;
-
 public class BidHistoryController {
 
     public static Runnable onBackAction;
@@ -101,8 +99,6 @@ public class BidHistoryController {
         productNameLabel.setText("Tên sản phẩm: " + productName);
         loadBidHistory(false);
     }
-
-    private void loadBidHistory() { loadBidHistory(false); }
 
     private void loadBidHistory(boolean isAutoRefresh) {
         if (currentProductId == null) return;
@@ -203,7 +199,8 @@ public class BidHistoryController {
 
     @FXML
     private void onRefreshClick() {
-        loadBidHistory(); }
+        loadBidHistory(false);
+    }
 
     @FXML
     private void onCloseClick() {

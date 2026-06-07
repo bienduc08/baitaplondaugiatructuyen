@@ -32,8 +32,7 @@ public class ProfileUserController {
     @FXML private Label lblHeaderPhoneNumber;
     @FXML private Label lblTotalBids;
     @FXML private Label lblTotalWins;
-    public static Runnable onBackAction;
-
+    @FXML public static Runnable onBackAction;
     @FXML private Button btnDeposit;
 
     @FXML private TableView<BidDTO>              tblMyBids;

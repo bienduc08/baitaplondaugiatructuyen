@@ -42,11 +42,7 @@ public class UserAuctionsController {
         setupTable();
         tblJoinedAuctions.setItems(joinedList);
 
-        // Gửi yêu cầu lấy danh sách các phiên đấu giá mà user này đã tham gia
-        String username = SessionManager.getCurrentUsername();
-        if (username != null) {
-            SocketClient.sendRequest(new AuctionRequest("GET_JOINED_PRODUCTS", username));
-        }
+        reloadJoinedAuctions();
     }
 
     private void setupTable() {

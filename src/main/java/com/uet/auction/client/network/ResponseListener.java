@@ -43,8 +43,8 @@ public class ResponseListener implements Runnable {
                     case "GET_PRODUCTS_RESULT":
                         List<ProductDTO> products = (List<ProductDTO>) res.getData();
                         Platform.runLater(() -> {
-                            if (HomecontentController.instance != null)
-                                HomecontentController.instance.displayProducts(products);
+                            if (HomeContentController.instance != null)
+                                HomeContentController.instance.displayProducts(products);
                         });
                         break;
                     case "GET_ALL_PRODUCTS_RESULT":
@@ -118,8 +118,8 @@ public class ResponseListener implements Runnable {
 
                     case "UPDATE_PRICE":
                         Platform.runLater(() -> {
-                            if (HomecontentController.instance != null)
-                                HomecontentController.instance.loadProducts();
+                            if (HomeContentController.instance != null)
+                                HomeContentController.instance.loadProducts();
                             if (AdminPendingController.instance != null)
                                 AdminPendingController.instance.refreshPendingProducts();
                             if (ProductDetailController.instance != null)
@@ -136,17 +136,14 @@ public class ResponseListener implements Runnable {
 
                     case "AUCTION_ENDED":
                         String endedMsg = res.getMessage();
-                        @SuppressWarnings("unchecked")
-                        java.util.Map<String, Object> endedInfo =
-                                (java.util.Map<String, Object>) res.getData();
 
                         Platform.runLater(() -> {
                             if (endedMsg != null) {
                                 AlertHelper.showInfo(endedMsg);
                             }
 
-                            if (HomecontentController.instance != null)
-                                HomecontentController.instance.loadProducts();
+                            if (HomeContentController.instance != null)
+                                HomeContentController.instance.loadProducts();
                             if (ProductDetailController.instance != null)
                                 ProductDetailController.instance.reloadProductDetails();
                             if (UserAuctionsController.instance != null) {

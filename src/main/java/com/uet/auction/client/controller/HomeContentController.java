@@ -15,9 +15,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class HomecontentController {
+public class HomeContentController {
 
-    public static HomecontentController instance;
+    public static HomeContentController instance;
 
     @FXML private GridPane productContainer;
     @FXML private TextField txtSearch;

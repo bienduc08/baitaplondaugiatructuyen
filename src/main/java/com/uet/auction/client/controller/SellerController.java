@@ -21,9 +21,11 @@ public class SellerController {
     @FXML private BorderPane mainBorderPane;
     @FXML private Label welcomeLabel;
     @FXML private Label lblBalance;
-    public static Runnable onBackAction;
+    @FXML public static Runnable onBackAction;
     @FXML
     private Button btnNotifications;
+    private enum ActiveView { HOME, ADD_PRODUCT, MY_PRODUCTS, PROFILE, NOTIFICATIONS }
+    private ActiveView activeView = ActiveView.HOME;
 
 
     @FXML
@@ -32,12 +34,6 @@ public class SellerController {
         if (SessionManager.getCurrentUser() != null) {
             welcomeLabel.setText("Xin chào, " + SessionManager.getCurrentUsername() + "!");
             lblBalance.setText(String.format("%,.0f VNĐ", SessionManager.getCurrentUser().getBalance()));
-
-            // Tải số dư mới nhất từ server
-            String username = SessionManager.getCurrentUsername();
-            if (username != null) {
-                SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
-            }
         }
         onShowHomeClick();
         // Tải số dư mới nhất từ server
@@ -56,11 +52,11 @@ public class SellerController {
         }
     }
 
-    private void loadView(String fxmlPath) {
+    private void loadView(String fxmlPath, ActiveView view) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            Parent root = loader.load();
-            mainBorderPane.setCenter(root);
+            mainBorderPane.setCenter(loader.load());
+            activeView = view;
         } catch (IOException e) {
             e.printStackTrace();
             javafx.application.Platform.runLater(() ->
@@ -69,24 +65,39 @@ public class SellerController {
         }
     }
 
-    @FXML public void onShowHomeClick()       { loadView("/com/uet/auction/view/HomeContent.fxml"); }
-    @FXML public void onShowAddProductClick()    { loadView("/com/uet/auction/view/SellerAddProduct.fxml"); }
-    @FXML public void onShowMyProductsClick() { loadView("/com/uet/auction/view/SellerMyProduct.fxml"); }
+    @FXML public void onShowHomeClick()       { loadView("/com/uet/auction/view/HomeContent.fxml",       ActiveView.HOME); }
+    @FXML public void onShowAddProductClick() { loadView("/com/uet/auction/view/SellerAddProduct.fxml",  ActiveView.ADD_PRODUCT); }
+    @FXML public void onShowMyProductsClick() { loadView("/com/uet/auction/view/SellerMyProduct.fxml",   ActiveView.MY_PRODUCTS); }
+
 
     @FXML public void onRefreshButtonClick() {
         // Tải số dư mới nhất từ server khi nhấn làm mới
         String username = SessionManager.getCurrentUsername();
-        if (username != null) {
+        if (username != null)
             SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+
+        switch (activeView) {
+            case MY_PRODUCTS:
+                onShowMyProductsClick();
+                break;
+            case PROFILE:
+                if (ProfileSellerController.instance != null)
+                    SocketClient.sendRequest(new AuctionRequest("GET_USER_BALANCE", username));
+                else
+                    onProfileButtonClick();
+                break;
+            default:
+                onShowHomeClick();
+                break;
         }
-        onShowHomeClick(); /* Nút refresh */
     }
 
     @FXML public void onProfileButtonClick() {
         Node previousView = mainBorderPane.getCenter();
         ProfileSellerController.onBackAction = () -> mainBorderPane.setCenter(previousView);
-        loadView("/com/uet/auction/view/ProfileSeller.fxml");
+        loadView("/com/uet/auction/view/ProfileSeller.fxml", ActiveView.PROFILE);
     }
+
 
     @FXML public void onLogoutButtonClick() {
         try {

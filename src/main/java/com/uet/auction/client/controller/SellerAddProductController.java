@@ -138,6 +138,7 @@ public class SellerAddProductController {
             product.setStartingPrice(startingPrice);
             product.setCurrentPrice(startingPrice);
             product.setStepPrice(stepPrice);
+            // Gắn dữ liệu ảnh nếu người dùng đã chọn
             if (selectedImageBytes != null) {
                 product.setImageBytes(selectedImageBytes);
             }
@@ -147,10 +148,6 @@ public class SellerAddProductController {
             product.setStartTime(startTime);
             product.setEndTime(endTime);
             product.setStatus("PENDING");
-            // Gắn dữ liệu ảnh nếu người dùng đã chọn
-            if (selectedImageBytes != null) {
-                product.setImageBytes(selectedImageBytes);
-            }
 
             SocketClient.sendRequest(new AuctionRequest("ADD_PRODUCT", product));
             // clearForm() sẽ được gọi sau khi server phản hồi thành công (ADD_PRODUCT_RESULT)

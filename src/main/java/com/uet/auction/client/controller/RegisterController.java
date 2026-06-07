@@ -84,7 +84,7 @@ public class RegisterController {
         Platform.runLater(() -> {
             if (success) {
                 statusLabel.setStyle("-fx-text-fill: green;");
-                statusLabel.setText("Đăng ký thành công! Quay lại đăng nhập.");
+                statusLabel.setText("Đăng ký thành công!");
             } else {
                 statusLabel.setStyle("-fx-text-fill: red;");
                 statusLabel.setText("Lỗi: " + message);

@@ -162,10 +162,6 @@ public class AdminPendingController {
         });
     }
 
-    public void loadPendingProducts() {
-        SocketClient.sendRequest(new AuctionRequest("GET_ALL_PRODUCTS", null));
-    }
-
     /**
      * Cập nhật lại danh sách trên TableView (Được gọi từ Socket Reader khi Server trả dữ liệu)
      */
@@ -194,6 +190,10 @@ public class AdminPendingController {
      * Gửi yêu cầu lên server để lấy danh sách sản phẩm đang chờ duyệt mới nhất
      */
     public void refreshPendingProducts() {
+        SocketClient.sendRequest(new AuctionRequest("GET_ALL_PRODUCTS", null));
+    }
+
+    public void loadPendingProducts() {
         SocketClient.sendRequest(new AuctionRequest("GET_ALL_PRODUCTS", null));
     }
 }

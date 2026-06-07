@@ -3,7 +3,7 @@ package com.uet.auction.client.controller;
 import com.uet.auction.client.network.SocketClient;
 import com.uet.auction.client.util.AlertHelper;
 import com.uet.auction.common.Request.AuctionRequest;
-import com.uet.auction.common.DTO.UserDTO; // Hãy đảm bảo lớp này tồn tại trong common DTO của bạn
+import com.uet.auction.common.DTO.UserDTO;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -83,7 +83,7 @@ public class AdminUserManagementController {
                 }
             }
         });
-        // [THÊM MỚI] Định dạng tiền tệ cho cột Số dư
+        //  Định dạng tiền tệ cho cột Số dư
         colBalance.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(BigDecimal balance, boolean empty) {
@@ -92,7 +92,7 @@ public class AdminUserManagementController {
             }
         });
 
-        // [THÊM MỚI] Màu sắc cho cột Trạng thái
+        // Màu sắc cho cột Trạng thái
         colStatus.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -113,7 +113,6 @@ public class AdminUserManagementController {
                 }
             }
         });
-        // [KẾT THÚC THÊM MỚI - cell factories]
 
         tbvUsers.setItems(userList);
         loadAllUsers();
@@ -165,7 +164,7 @@ public class AdminUserManagementController {
         UserDTO selected = getSelectedUser();
         if (selected == null) return;
 
-        // [THÊM MỚI] 2 kiểm tra bên dưới - file gốc không có
+        //  2 kiểm tra bên dưới - file gốc không có
         if ("LOCKED".equalsIgnoreCase(selected.getStatus())) {
             AlertHelper.showError("Tài khoản này đã bị khóa rồi!");
             return;
@@ -175,7 +174,7 @@ public class AdminUserManagementController {
             return;
         }
 
-        // [THÊM MỚI] Hộp thoại xác nhận - file gốc gửi request luôn không hỏi
+        //  Hộp thoại xác nhận - file gốc gửi request luôn không hỏi
         Optional<ButtonType> confirm = AlertHelper.showConfirm(
                 "Xác nhận khóa tài khoản",
                 "Bạn có chắc muốn khóa tài khoản \"" + selected.getUsername() + "\" không?"
@@ -193,13 +192,13 @@ public class AdminUserManagementController {
         UserDTO selected = getSelectedUser();
         if (selected == null) return;
 
-        // [THÊM MỚI] kiểm tra trạng thái trước
+        //  Kiểm tra trạng thái trước
         if ("ACTIVE".equalsIgnoreCase(selected.getStatus())) {
             AlertHelper.showError("Tài khoản này đang hoạt động bình thường!");
             return;
         }
 
-        // [THÊM MỚI] Hộp thoại xác nhận
+        //  Hộp thoại xác nhận
         Optional<ButtonType> confirm = AlertHelper.showConfirm(
                 "Xác nhận mở khóa",
                 "Bạn có chắc muốn mở khóa tài khoản \"" + selected.getUsername() + "\" không?"

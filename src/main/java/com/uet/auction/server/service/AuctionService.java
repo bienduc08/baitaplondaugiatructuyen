@@ -204,7 +204,7 @@ public class AuctionService {
                 return new AuctionResponse(false, "ADD_PRODUCT_RESULT", "Không xác định được người bán!", null);
 
             // Lưu ảnh
-            String imageUrl = "images/default-product.png";
+            String imageUrl = null;
             if (product.getImageBytes() != null && product.getImageBytes().length > 0) {
                 java.io.File dir = new java.io.File("images");
                 if (!dir.exists()) dir.mkdirs();
@@ -286,7 +286,7 @@ public class AuctionService {
     public AuctionResponse placeBid(int productId, String bidderName, BigDecimal bidAmount) {
         // Bước 1 + 2: kiểm tra role và số dư — gộp vào một khối try
         try {
-            String role = userDAO.getRole(bidderName);
+            String role = userDAO.getUserByUsername(bidderName).getRole();
             if ("ADMIN".equals(role) || "SELLER".equals(role)) {
                 return new AuctionResponse(false, "BID_RESULT",
                         "Tài khoản Người bán và Quản trị viên không được phép tham gia đấu giá!", null);

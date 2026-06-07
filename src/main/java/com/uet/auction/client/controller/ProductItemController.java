@@ -1,7 +1,6 @@
 package com.uet.auction.client.controller;
 
 import com.uet.auction.client.util.AlertHelper;
-import com.uet.auction.client.util.SessionManager;
 import com.uet.auction.common.DTO.ProductDTO;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -11,7 +10,6 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
@@ -26,8 +24,6 @@ public class ProductItemController {
     @FXML private Label sellerLabel;
     @FXML private Label ownerLabel;
     @FXML private Label timeLabel;
-    @FXML private TextField bidInput;
-    @FXML private Label descriptionLabel;
 
     private ProductDTO currentProduct;
     private Timeline countdown;
@@ -41,13 +37,6 @@ public class ProductItemController {
         nameLabel.setText(product.getName());
         priceLabel.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
         sellerLabel.setText("Người bán: " + (product.getSellerName() != null ? product.getSellerName() : "—"));
-
-        if (descriptionLabel != null) {
-            String desc = product.getDescription();
-            descriptionLabel.setText((desc != null && !desc.isBlank()) ? desc : "");
-            descriptionLabel.setVisible(desc != null && !desc.isBlank());
-            descriptionLabel.setManaged(desc != null && !desc.isBlank());
-        }
 
         String owner = (product.getOwnerName() != null && !product.getOwnerName().isBlank())
                 ? product.getOwnerName() : "Chưa có ai";
@@ -88,8 +77,6 @@ public class ProductItemController {
                 }
             }
         }
-
-        updateBidInputState();
     }
 
     /**
@@ -130,15 +117,6 @@ public class ProductItemController {
         if (countdown != null) {
             countdown.stop();
         }
-    }
-
-    private void updateBidInputState() {
-        if (bidInput == null || currentProduct == null) return;
-        String currentUser = SessionManager.getCurrentUsername();
-        boolean isOwnProduct = currentUser != null && currentUser.equals(currentProduct.getSellerName());
-        boolean isLeading = currentUser != null && currentUser.equals(currentProduct.getOwnerName());
-        boolean canBid = "OPEN".equals(currentProduct.getStatus()) && !isOwnProduct && !isLeading;
-        bidInput.setDisable(!canBid);
     }
 
     private void startCountdown() {
