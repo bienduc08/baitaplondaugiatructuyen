@@ -198,11 +198,13 @@ public class ProductDAO {
     }
 
     public void extendAuctionIfLastBid() {
-        // Anti-sniping: gia han 5 phut neu co bid trong 30 giay cuoi.
+        // Anti-sniping: gia han 3 phut neu co bid trong 30 giay cuoi.
         // Dung last_extended_at de dam bao moi lan bid chi trigger 1 lan gia han,
         // tranh timer chay moi giay gay gia han lien tuc.
-        // Chi gia han neu: thoi gian con lai TAI THOI DIEM BID duoc dat < 30 giay
-        // (KHONG dung NOW() de tranh timer chay muon van trigger)
+        // Dung NOW() de tinh thoi gian con lai chinh xac tai thoi diem chay lenh,
+        // tranh race condition khi latest_bid va end_time co do lech nho.
+        // Cho phep buffer -5 giay (end_time da qua nhung timer chua kip dong)
+        // de dam bao bid cuoi cuoc van duoc gia han truoc khi closeExpiredAuctions chay.
         String sql = "UPDATE products p "
                 + "JOIN ("
                 + "  SELECT product_id, MAX(bid_time) AS latest_bid "
@@ -215,9 +217,8 @@ public class ProductDAO {
                 + "WHERE p.status = 'OPEN' "
                 + "AND COALESCE(p.extension_count, 0) < 3 "
                 + "AND (p.last_extended_at IS NULL OR p.last_extended_at < b.latest_bid) "
-                // Dieu kien duy nhat: luc bid duoc dat, con lai < 30 giay
-                // end_time o day la end_time CHUA duoc gia han (vi latest_bid < last_extended_at da bi filter o tren)
-                + "AND TIMESTAMPDIFF(SECOND, b.latest_bid, p.end_time) BETWEEN 0 AND 29";
+                // Dieu kien: tinh tu NOW(), con lai < 30 giay (hoac da qua <= 5 giay - buffer race condition)
+                + "AND TIMESTAMPDIFF(SECOND, NOW(), p.end_time) BETWEEN -5 AND 29";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.executeUpdate();
         } catch (SQLException ignored) {}

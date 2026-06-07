@@ -96,9 +96,9 @@ public class ResponseListener implements Runnable {
                     case "CHANGE_STATUS_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {
-                                if (AdminPendingController.instance != null) {
+                                AlertHelper.showInfo("Cập nhật trạng thái thành công!");
+                                if (AdminPendingController.instance != null)
                                     AdminPendingController.instance.loadPendingProducts();
-                                }
                             } else {
                                 AlertHelper.showError(res.getMessage());
                             }

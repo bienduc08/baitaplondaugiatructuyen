@@ -184,10 +184,6 @@ public class AdminPendingController {
         // Gửi APPROVE_PRODUCT để server set status APPROVED, Timer sẽ tự mở đúng giờ start_time
         // Không gửi CHANGE_PRODUCT_STATUS với "OPEN" vì sẽ bỏ qua start_time đã đặt
         SocketClient.sendRequest(new AuctionRequest("APPROVE_PRODUCT", selected));
-
-        // Cập nhật UI ngay lập tức
-        pendingListData.remove(selected);
-        AlertHelper.showInfo("Đã duyệt sản phẩm thành công!");
     }
 
     @FXML

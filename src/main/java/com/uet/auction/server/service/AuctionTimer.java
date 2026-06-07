@@ -22,8 +22,9 @@ public class AuctionTimer {
                 // 1. Mở các phiên đến giờ
                 productDAO.openScheduledAuctions();
 
-                // 2. Anti-sniping được xử lý trực tiếp tại ClientHandler ngay sau mỗi bid
-                // (không gọi ở đây để tránh timer chạy muộn gây extend sai)
+                // 2. Anti-sniping: gia hạn trước khi đóng, để bid cuối cùng kịp extend
+                // trước khi closeExpiredAuctions() chạy trong cùng chu kỳ Timer này
+                productDAO.extendAuctionIfLastBid();
 
                 // 3. KÍCH HOẠT AUTO-BID TRƯỚC KHI CHỐT SỔ ĐÓNG PHIÊN
                 AuctionService.getInstance().triggerAllAutoBids();
