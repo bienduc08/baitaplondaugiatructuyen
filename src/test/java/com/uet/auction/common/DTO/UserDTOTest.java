@@ -1,6 +1,7 @@
 package com.uet.auction.common.DTO;
 
 import org.junit.jupiter.api.Test;
+import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -25,7 +26,7 @@ public class UserDTOTest {
         assertNull(dto.getPhoneNumber(), "Số điện thoại mặc định phải là null");
         assertNull(dto.getRole(), "Vai trò mặc định phải là null");
         assertNull(dto.getStatus(), "Trạng thái tài khoản mặc định phải là null");
-        assertEquals(0.0, dto.getBalance(), "Số dư mặc định phải là 0.0");
+        assertNull(dto.getBalance(), "Số dư mặc định phải là null");
     }
 
     /**
@@ -59,7 +60,7 @@ public class UserDTOTest {
         dto.setUsername("beckham7");
         dto.setRole("ADMIN");
         dto.setMessage("Thao tác thành công");
-        dto.setBalance(88000.5);
+        dto.setBalance(new BigDecimal("88000.5"));
         dto.setStatus("ACTIVE");
 
         assertEquals(77, dto.getId());
@@ -69,7 +70,7 @@ public class UserDTOTest {
         assertEquals("beckham7", dto.getUsername());
         assertEquals("ADMIN", dto.getRole());
         assertEquals("Thao tác thành công", dto.getMessage());
-        assertEquals(88000.5, dto.getBalance());
+        assertEquals(new BigDecimal("88000.5"), dto.getBalance());
         assertEquals("ACTIVE", dto.getStatus());
     }
 
@@ -80,7 +81,7 @@ public class UserDTOTest {
     @Test
     public void testToString() {
         UserDTO dto = new UserDTO("Jane Doe", "jane@gmail.com", "0909090909", 55, "jane_username", "SELLER");
-        dto.setBalance(5000.0);
+        dto.setBalance(new BigDecimal("5000.0"));
         dto.setStatus("LOCKED");
 
         String str = dto.toString();

@@ -1,6 +1,7 @@
 package com.uet.auction.server.model;
 
 import org.junit.jupiter.api.Test;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +23,7 @@ public class UserTest {
         assertNotNull(user, "Đối tượng User không được null");
         assertNull(user.getUsername(), "Username mặc định phải là null");
         assertNull(user.getRole(), "Role mặc định phải là null");
-        assertEquals(0.0, user.getBalance(), "Số dư mặc định phải bằng 0.0");
+        assertNull(user.getBalance(), "Số dư mặc định phải là null");
         assertNotNull(user.getNotifications(), "Danh sách thông báo phải được khởi tạo");
         assertTrue(user.getNotifications().isEmpty(), "Danh sách thông báo ban đầu phải rỗng");
     }
@@ -35,13 +36,13 @@ public class UserTest {
     public void testParameterizedConstructor() {
         LocalDateTime now = LocalDateTime.now();
         // Khởi tạo User với ID, thời gian tạo, tên đăng nhập, mật khẩu, số dư, và vai trò
-        User user = new User(101, now, "john_doe", "password123", 1500000.0, UserRole.BIDDER);
+        User user = new User(101, now, "john_doe", "password123", new BigDecimal("1500000.0"), UserRole.BIDDER);
 
         assertEquals(101, user.getId(), "ID phải khớp với giá trị truyền vào");
         assertEquals(now, user.getCreatedAt(), "Thời gian tạo phải khớp với giá trị truyền vào");
         assertEquals("john_doe", user.getUsername(), "Username phải khớp");
         assertEquals("password123", user.getPassword(), "Mật khẩu phải khớp");
-        assertEquals(1500000.0, user.getBalance(), "Số dư phải khớp");
+        assertEquals(new BigDecimal("1500000.0"), user.getBalance(), "Số dư phải khớp");
         assertEquals(UserRole.BIDDER, user.getRole(), "Vai trò phải là BIDDER");
     }
 
@@ -69,7 +70,7 @@ public class UserTest {
         user.setGmail("alice@gmail.com");
         user.setPhonenumber("0987654321");
         user.setPassword("securepass");
-        user.setBalance(250000.0);
+        user.setBalance(new BigDecimal("250000.0"));
         user.setRole(UserRole.SELLER);
 
         assertEquals("alice", user.getUsername());
@@ -77,7 +78,7 @@ public class UserTest {
         assertEquals("alice@gmail.com", user.getGmail());
         assertEquals("0987654321", user.getPhonenumber());
         assertEquals("securepass", user.getPassword());
-        assertEquals(250000.0, user.getBalance());
+        assertEquals(new BigDecimal("250000.0"), user.getBalance());
         assertEquals(UserRole.SELLER, user.getRole());
     }
 
