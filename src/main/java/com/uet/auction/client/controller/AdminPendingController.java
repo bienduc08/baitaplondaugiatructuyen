@@ -178,7 +178,6 @@ public class AdminPendingController {
 
         // Gửi APPROVE_PRODUCT để server set status APPROVED, Timer sẽ tự mở đúng giờ start_time
         SocketClient.sendRequest(new AuctionRequest("APPROVE_PRODUCT", selected));
-        AlertHelper.showInfo("Đã duyệt sản phẩm thành công!");
     }
 
     @FXML
@@ -189,7 +188,6 @@ public class AdminPendingController {
 
         Object[] data = {selected.getId(), "REJECTED"};
         SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
-        AlertHelper.showInfo("Đã từ chối sản phẩm!");
     }
 
     /**
