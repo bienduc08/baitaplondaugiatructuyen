@@ -13,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.net.Socket;
+import java.util.List;
 
 public class ClientHandler implements Runnable {
 
@@ -220,6 +221,18 @@ public class ClientHandler implements Runnable {
                         String bidUsername = (String) request.getData();
                         response = auctionService.getMyBids(bidUsername);
                         sendResponse(response);
+                        break;
+
+                    case "GET_NOTIFICATIONS":
+                        String notifUsername = (String) request.getData();
+                        List<com.uet.auction.common.DTO.NotificationDTO> listNotifs = new com.uet.auction.server.DAO.NotificationDAO().getUnreadNotifications(notifUsername);
+                        sendResponse(new AuctionResponse(true, "GET_NOTIFICATIONS_RESULT", listNotifs));
+                        break;
+
+                    case "MARK_NOTIFICATION_READ":
+                        int notifId = ((Number) request.getData()).intValue();
+                        boolean markOk = new com.uet.auction.server.DAO.NotificationDAO().markAsRead(notifId);
+                        sendResponse(new AuctionResponse(markOk, "MARK_NOTIFICATION_READ_RESULT", null));
                         break;
 
                     // QUẢN LÝ NGƯỜI DÙNG — CHỈ ADMIN

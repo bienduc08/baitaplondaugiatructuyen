@@ -265,6 +265,24 @@ public class AuctionAntiSnipingTest {
         Timestamp initialEndTime = getProductEndTime(testProductIdNegativeBid);
         assertNotNull(initialEndTime);
 
+        // Debug: In các giá trị hiện tại trước khi chạy gia hạn
+        try (Connection c = DatabaseConnection.getConnection();
+             Statement stmt = c.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT p.end_time, b.latest_bid, TIMESTAMPDIFF(SECOND, b.latest_bid, p.end_time) AS diff " +
+                     "FROM products p JOIN (SELECT product_id, MAX(bid_time) AS latest_bid FROM bids GROUP BY product_id) b ON b.product_id = p.id " +
+                     "WHERE p.id = " + testProductIdNegativeBid)) {
+            if (rs.next()) {
+                System.out.println("[DEBUG TEST] NegativeBidTime - ID: " + testProductIdNegativeBid +
+                        " | End: " + rs.getTimestamp("end_time") +
+                        " | LatestBid: " + rs.getTimestamp("latest_bid") +
+                        " | Diff: " + rs.getInt("diff"));
+            } else {
+                System.out.println("[DEBUG TEST] NegativeBidTime - ID: " + testProductIdNegativeBid + " - KHÔNG TÌM THẤY BẢN GHI JOIN!");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         // Chạy hàm cần test
         productDAO.extendAuctionIfLastBid();
 

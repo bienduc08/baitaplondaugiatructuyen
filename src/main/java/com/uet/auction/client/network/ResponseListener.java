@@ -118,6 +118,7 @@ public class ResponseListener implements Runnable {
                             String currentUsr = SessionManager.getCurrentUsername();
                             if (currentUsr != null) {
                                 SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_USER_BALANCE", currentUsr));
+                                SocketClient.sendRequest(new com.uet.auction.common.Request.AuctionRequest("GET_NOTIFICATIONS", currentUsr));
                             }
                         });
                         break;
@@ -221,6 +222,28 @@ public class ResponseListener implements Runnable {
                             Platform.runLater(() -> {
                                 if (ProductDetailController.instance != null) {
                                     ProductDetailController.instance.updateProductInfo(freshProduct);
+                                }
+                            });
+                        }
+                        break;
+
+                    case "GET_NOTIFICATIONS_RESULT":
+                        if (res.isSuccess()) {
+                            List<com.uet.auction.common.DTO.NotificationDTO> notifs = 
+                                    (List<com.uet.auction.common.DTO.NotificationDTO>) res.getData();
+                            int count = notifs.size();
+                            Platform.runLater(() -> {
+                                if (NotificationListController.instance != null) {
+                                    NotificationListController.instance.displayNotifications(notifs);
+                                }
+                                if (UserController.instance != null) {
+                                    UserController.instance.updateNotificationCount(count);
+                                }
+                                if (SellerController.instance != null) {
+                                    SellerController.instance.updateNotificationCount(count);
+                                }
+                                if (AdminController.instance != null) {
+                                    AdminController.instance.updateNotificationCount(count);
                                 }
                             });
                         }

@@ -156,10 +156,28 @@ public class AuctionService {
     }
 
     public AuctionResponse changeProductStatus(int productId, String newStatus) {
+        String sellerName = productDAO.getSellerOfProduct(productId);
+        ProductDTO product = productDAO.getProductById(productId);
+
         boolean ok = productDAO.updateProductStatus(productId, newStatus);
-        return ok
-                ? new AuctionResponse(true,  "CHANGE_STATUS_RESULT", "Cập nhật thành công!", null)
-                : new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Cập nhật thất bại!", null);
+        if (ok) {
+            if (sellerName != null && product != null) {
+                try {
+                    com.uet.auction.server.DAO.NotificationDAO notifDAO = new com.uet.auction.server.DAO.NotificationDAO();
+                    if ("APPROVED".equals(newStatus)) {
+                        String msg = String.format("Sản phẩm \"%s\" của bạn đã được duyệt thành công!", product.getName());
+                        notifDAO.insertNotification(sellerName, msg, "PRODUCT_APPROVED");
+                    } else if ("REJECTED".equals(newStatus)) {
+                        String msg = String.format("Sản phẩm \"%s\" của bạn đã bị từ chối duyệt.", product.getName());
+                        notifDAO.insertNotification(sellerName, msg, "PRODUCT_REJECTED");
+                    }
+                } catch (Exception e) {
+                    System.err.println("[AuctionService.changeProductStatus] Lỗi tạo thông báo: " + e.getMessage());
+                }
+            }
+            return new AuctionResponse(true,  "CHANGE_STATUS_RESULT", "Cập nhật thành công!", null);
+        }
+        return new AuctionResponse(false, "CHANGE_STATUS_RESULT", "Cập nhật thất bại!", null);
     }
 
     // =========================================================

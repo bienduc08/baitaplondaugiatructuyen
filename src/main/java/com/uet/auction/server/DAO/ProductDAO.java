@@ -217,8 +217,8 @@ public class ProductDAO {
                 + "WHERE p.status = 'OPEN' "
                 + "AND COALESCE(p.extension_count, 0) < 3 "
                 + "AND (p.last_extended_at IS NULL OR p.last_extended_at < b.latest_bid) "
-                // Dieu kien: tinh tu NOW(), con lai < 30 giay (hoac da qua <= 5 giay - buffer race condition)
-                + "AND TIMESTAMPDIFF(SECOND, NOW(), p.end_time) BETWEEN -5 AND 29";
+                // Điều kiện: lượt bid gần nhất phải nằm trong 30 giây cuối của phiên (hoặc đã quá <= 5 giây)
+                + "AND TIMESTAMPDIFF(SECOND, b.latest_bid, p.end_time) BETWEEN -5 AND 29";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.executeUpdate();
         } catch (SQLException ignored) {}
