@@ -128,6 +128,7 @@ public class AdminPendingController {
                     if (empty || s == null) { setText(null); setStyle(""); return; }
                     switch (s) {
                         case "PENDING":  setText("⏳ Chờ duyệt"); setStyle("-fx-text-fill: #e67e22; -fx-font-weight: bold;"); break;
+                        case "APPROVED": setText("✓ Đã duyệt");   setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;"); break;
                         case "OPEN":     setText("🔥 Đang đấu");  setStyle("-fx-text-fill: #2980b9; -fx-font-weight: bold;"); break;
                         case "CLOSED":   setText("🔒 Đã đóng");   setStyle("-fx-text-fill: #7f8c8d;"); break;
                         case "REJECTED": setText("✘ Từ chối");    setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;"); break;
@@ -146,15 +147,10 @@ public class AdminPendingController {
             ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
             int selectedId = selected != null ? selected.getId() : -1;
 
-            // 2. Chỉ hiển thị các sản phẩm có trạng thái PENDING (chờ duyệt)
-            java.util.List<ProductDTO> pendingProducts = products.stream()
-                    .filter(p -> "PENDING".equals(p.getStatus()))
-                    .toList();
+            // 2. Hiển thị tất cả sản phẩm
+            pendingListData.setAll(products);
 
-            // 3. Đổ dữ liệu đã lọc vào bảng
-            pendingListData.setAll(pendingProducts);
-
-            // 4. Chọn lại sản phẩm cũ nếu nó vẫn còn trong danh sách chờ duyệt
+            // 3. Chọn lại sản phẩm cũ nếu nó vẫn còn trong danh sách
             if (selectedId != -1) {
                 for (int i = 0; i < pendingListData.size(); i++) {
                     if (pendingListData.get(i).getId() == selectedId) {
@@ -178,15 +174,10 @@ public class AdminPendingController {
     public void onApproveButtonClick() {
         ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
         if (selected == null) { AlertHelper.showError("Vui lòng chọn sản phẩm!"); return; }
-        if ("OPEN".equals(selected.getStatus())) { AlertHelper.showError("Sản phẩm này đang được đấu giá!"); return; }
-        if ("CLOSED".equals(selected.getStatus())) { AlertHelper.showError("Sản phẩm này đã đóng!"); return; }
+        if (!"PENDING".equals(selected.getStatus())) { AlertHelper.showError("Chỉ có thể duyệt sản phẩm đang ở trạng thái Chờ duyệt!"); return; }
 
         // Gửi APPROVE_PRODUCT để server set status APPROVED, Timer sẽ tự mở đúng giờ start_time
-        // Không gửi CHANGE_PRODUCT_STATUS với "OPEN" vì sẽ bỏ qua start_time đã đặt
         SocketClient.sendRequest(new AuctionRequest("APPROVE_PRODUCT", selected));
-
-        // Cập nhật UI ngay lập tức
-        pendingListData.remove(selected);
         AlertHelper.showInfo("Đã duyệt sản phẩm thành công!");
     }
 
@@ -194,12 +185,10 @@ public class AdminPendingController {
     public void onRejectButtonClick() {
         ProductDTO selected = pendingTable.getSelectionModel().getSelectedItem();
         if (selected == null) { AlertHelper.showError("Vui lòng chọn sản phẩm!"); return; }
+        if (!"PENDING".equals(selected.getStatus())) { AlertHelper.showError("Chỉ có thể từ chối sản phẩm đang ở trạng thái Chờ duyệt!"); return; }
 
         Object[] data = {selected.getId(), "REJECTED"};
         SocketClient.sendRequest(new AuctionRequest("CHANGE_PRODUCT_STATUS", data));
-
-        // Cập nhật UI ngay lập tức
-        pendingListData.remove(selected);
         AlertHelper.showInfo("Đã từ chối sản phẩm!");
     }
 

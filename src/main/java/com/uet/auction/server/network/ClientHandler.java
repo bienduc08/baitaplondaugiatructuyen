@@ -106,6 +106,13 @@ public class ClientHandler implements Runnable {
                         sendResponse(response);
                         break;
 
+                    case "GET_PRODUCT_BY_ID":
+                        int prodId = ((Number) request.getData()).intValue();
+                        ProductDTO freshProd = auctionService.getProductById(prodId);
+                        response = new AuctionResponse(true, "GET_PRODUCT_BY_ID_RESULT", freshProd);
+                        sendResponse(response);
+                        break;
+
                     case "APPROVE_PRODUCT":
                         // SECURITY: Chỉ ADMIN mới được duyệt sản phẩm
                         if (!isAdmin()) {
@@ -159,8 +166,16 @@ public class ClientHandler implements Runnable {
                         response = auctionService.placeBid(productId2, bidder, amount);
                         sendResponse(response);
                         if (response.isSuccess()) {
+                            // Gọi Anti-sniping kiểm tra gia hạn ngay sau lượt bid mới đặt
+                            com.uet.auction.server.DAO.ProductDAO pdao = new com.uet.auction.server.DAO.ProductDAO();
+                            pdao.extendAuctionIfLastBid();
+
                             // Sau khi có bid thủ công, kích hoạt đấu tự động cho phiên này
                             auctionService.triggerAutoBid(productId2, bidder);
+
+                            // Sau khi auto-bid tự động đặt giá (nếu có), kiểm tra gia hạn tiếp
+                            pdao.extendAuctionIfLastBid();
+
                             SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "UPDATE_PRICE", null));
                         }
                         break;
@@ -180,6 +195,11 @@ public class ClientHandler implements Runnable {
                         if (response.isSuccess()) {
                             // Ngay sau khi đăng ký, thử kích hoạt auto-bid
                             auctionService.triggerAutoBid(abProductId, null);
+                            
+                            // Kiểm tra gia hạn nếu auto-bid vừa đặt giá thành công
+                            com.uet.auction.server.DAO.ProductDAO pdao = new com.uet.auction.server.DAO.ProductDAO();
+                            pdao.extendAuctionIfLastBid();
+
                             SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "UPDATE_PRICE", null));
                         }
                         break;

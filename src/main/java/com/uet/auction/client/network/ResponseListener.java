@@ -215,6 +215,17 @@ public class ResponseListener implements Runnable {
                         }
                         break;
 
+                    case "GET_PRODUCT_BY_ID_RESULT":
+                        if (res.isSuccess() && res.getData() instanceof ProductDTO) {
+                            ProductDTO freshProduct = (ProductDTO) res.getData();
+                            Platform.runLater(() -> {
+                                if (ProductDetailController.instance != null) {
+                                    ProductDetailController.instance.updateProductInfo(freshProduct);
+                                }
+                            });
+                        }
+                        break;
+
                     case "DEPOSIT_RESULT":
                         Platform.runLater(() -> {
                             if (res.isSuccess()) {

@@ -290,6 +290,10 @@ public class AuctionService {
             return new AuctionResponse(false, "GET_JOINED_PRODUCTS_RESULT", "Lỗi: " + e.getMessage(), null);
         }
     }
+    public ProductDTO getProductById(int productId) {
+        return productDAO.getProductById(productId);
+    }
+
     /**
      * Xóa registry auto-bid của các phiên đã đóng để tránh memory leak.
      * Gọi sau closeExpiredAuctions().

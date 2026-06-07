@@ -27,6 +27,7 @@ public class AuctionTimer {
 
                 // 3. KÍCH HOẠT AUTO-BID TRƯỚC KHI CHỐT SỔ ĐÓNG PHIÊN
                 AuctionService.getInstance().triggerAllAutoBids();
+                productDAO.extendAuctionIfLastBid();
 
                 // 4. Đóng các phiên hết giờ
                 List<Map<String, Object>> closedAuctions = productDAO.closeExpiredAuctions();
