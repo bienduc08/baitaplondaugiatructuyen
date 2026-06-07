@@ -32,6 +32,13 @@ public class AuctionTimer {
                 // Nhận lại danh sách phiên vừa đóng để broadcast người thắng
                 List<Map<String, Object>> closedAuctions = productDAO.closeExpiredAuctions();
 
+                // Bước 4.5: Dọn registry auto-bid cho các phiên vừa đóng
+                List<Integer> closedIds = new java.util.ArrayList<>();
+                for (Map<String, Object> info : closedAuctions) {
+                    closedIds.add((Integer) info.get("productId"));
+                }
+                AuctionService.getInstance().clearClosedAuctions(closedIds);
+
                 // Bước 5: Broadcast riêng AUCTION_ENDED cho từng phiên vừa đóng
                 boolean hasClosedAuction = !closedAuctions.isEmpty();
                 for (Map<String, Object> info : closedAuctions) {

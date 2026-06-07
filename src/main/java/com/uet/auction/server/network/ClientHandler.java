@@ -149,6 +149,7 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "PLACE_BID":
+                        if (loggedInUser == null) { sendResponse(unauthorized()); break; }
                         Object[] bidData = (Object[]) request.getData();
                         int productId2 = ((Number) bidData[0]).intValue();
                         String bidder  = (String) bidData[1];

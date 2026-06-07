@@ -103,6 +103,12 @@ public class AuctionService {
                     SocketServer.broadcastToLoggedInUsers(new AuctionResponse(true, "UPDATE_PRICE", null));
                     keepGoing = true;
                     break;
+                } else {
+                    // Đặt giá thất bại (hết tiền hoặc lỗi DB) — dừng auto-bid để tránh loop vô ích
+                    cfg.setActive(false);
+                    System.out.println("[AutoBid] User=" + username
+                            + " đặt giá thất bại (hết số dư hoặc lỗi) tại phiên=" + productId
+                            + " — tắt auto-bid.");
                 }
             }
         }
@@ -281,6 +287,15 @@ public class AuctionService {
             return new AuctionResponse(true, "GET_JOINED_PRODUCTS_RESULT", list);
         } catch (Exception e) {
             return new AuctionResponse(false, "GET_JOINED_PRODUCTS_RESULT", "Lỗi: " + e.getMessage(), null);
+        }
+    }
+    /**
+     * Xóa registry auto-bid của các phiên đã đóng để tránh memory leak.
+     * Gọi sau closeExpiredAuctions().
+     */
+    public synchronized void clearClosedAuctions(List<Integer> closedProductIds) {
+        for (Integer id : closedProductIds) {
+            autoBidRegistry.remove(id);
         }
     }
 }

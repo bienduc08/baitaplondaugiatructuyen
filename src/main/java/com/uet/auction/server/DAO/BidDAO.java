@@ -1,7 +1,9 @@
 package com.uet.auction.server.DAO;
 
 import com.uet.auction.common.DTO.BidDTO;
+import com.uet.auction.common.Response.AuctionResponse;
 import com.uet.auction.server.config.DatabaseConnection;
+import com.uet.auction.server.network.SocketServer;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -125,6 +127,7 @@ public class BidDAO {
                         NotificationDAO notifDAO = new NotificationDAO();
                         String outbidMsg = "Bạn đã bị vượt giá ở sản phẩm ID: " + productId + ". Giá mới hiện tại là: " + String.format("%.0f", bidAmount) + " VNĐ.";
                         notifDAO.insertNotification(currentOwner, outbidMsg, "OUTBID");
+                        SocketServer.sendToUser(currentOwner, new AuctionResponse(true, "OUTBID_NOTIFICATION", outbidMsg, null));
                     } catch (Exception e) {
                         System.err.println("[BidDAO] Lỗi khi tạo thông báo vượt giá: " + e.getMessage());
                     }

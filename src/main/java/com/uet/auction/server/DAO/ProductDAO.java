@@ -155,8 +155,9 @@ public class ProductDAO {
         String closeSql  = "UPDATE products SET status = 'CLOSED' WHERE id = ?";
         String paySql    = "UPDATE users SET balance = balance + ? WHERE username = ?";
 
-        // Dùng try-with-resources để không rò rỉ RAM/Kết nối DB
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
             try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
                 ResultSet rs = selectStmt.executeQuery();
@@ -192,6 +193,10 @@ public class ProductDAO {
             conn.commit();
         } catch (SQLException e) {
             System.err.println("[closeExpiredAuctions] Lỗi: " + e.getMessage());
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            closedList.clear(); // tránh broadcast thông tin sai khi rollback
+        } finally {
+            if (conn != null) try { conn.close(); } catch (SQLException ignored) {}
         }
         return closedList;
     }
@@ -233,7 +238,8 @@ public class ProductDAO {
         p.setDescription(safeGetString(rs, "description"));
         p.setStartingPrice(rs.getDouble("starting_price"));
         p.setStepPrice(rs.getDouble("step_price"));
-        p.setCurrentPrice(rs.wasNull() ? rs.getDouble("starting_price") : rs.getDouble("current_price"));
+        double cp = rs.getDouble("current_price");
+        p.setCurrentPrice(rs.wasNull() ? p.getStartingPrice() : cp);
         p.setSellerName(safeGetString(rs, "seller_name"));
         p.setOwnerName(safeGetString(rs, "owner_name"));
         p.setStatus(rs.getString("status"));

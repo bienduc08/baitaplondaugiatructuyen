@@ -1,36 +1,24 @@
-# Hệ Thống Đấu Giá Trực Tuyến UET
+# 🏆 Hệ Thống Đấu Giá Trực Tuyến UET
 
-Bài tập lớn môn Lập trình nâng cao — nhóm 4 thành viên. Hệ thống mô phỏng nền tảng đấu giá trực tuyến dạng desktop, trong đó nhiều client JavaFX kết nối tới một server TCP để đăng nhập, quản lý phiên đấu giá, đặt giá theo thời gian thực và xử lý ví điện tử.
+> Bài tập lớn môn Lập trình nâng cao — Trường Đại học Công nghệ, ĐHQGHN
+> Hệ thống mô phỏng nền tảng đấu giá trực tuyến dạng desktop, nhiều client JavaFX kết nối tới một server TCP để đăng nhập, quản lý phiên đấu giá, đặt giá theo thời gian thực và xử lý ví điện tử.
 
-Repository: [https://github.com/bienduc08/baitaplondaugiatructuyen](https://github.com/bienduc08/baitaplondaugiatructuyen)
-
----
-
-## 1. Phạm vi hệ thống
-
-Hệ thống tập trung vào luồng đấu giá nội bộ chạy local/demo:
-
-- Người dùng đăng ký, đăng nhập và sử dụng hệ thống theo vai trò `USER`, `SELLER`, `ADMIN`.
-- Seller tạo sản phẩm đấu giá, chờ Admin duyệt trước khi phiên được mở.
-- User xem danh sách phiên đang diễn ra, vào trang chi tiết để đặt giá thủ công hoặc đăng ký đấu tự động (auto-bid).
-- Server cập nhật giá thầu realtime tới tất cả client qua broadcast TCP socket.
-- Admin duyệt sản phẩm, quản lý người dùng (khoá / mở khoá tài khoản) và theo dõi toàn bộ hệ thống.
-- Ví điện tử cho phép nạp tiền; server kiểm tra số dư trước mỗi lượt đặt giá.
+🔗 Repository: [github.com/bienduc08/baitaplondaugiatructuyen](https://github.com/bienduc08/baitaplondaugiatructuyen)
 
 ---
 
-## 2. Thành viên
+## 👥 Thành viên nhóm
 
-| Thành viên | Phụ trách chính                                  |
-|---|--------------------------------------------------|
-| Biện Minh Đức | Kiến trúc tổng thể, server, concurrency, review , DAO / Database |
-| Nguyễn Đình Đức | Live bidding UI, auto-bid, schema MySQL                     |
-| Đinh Văn Toàn | Client JavaFX, giao diện người dùng              |
-| Trần Đức Tuấn | realtime chart         |
+| Thành viên | Phụ trách chính |
+|---|---|
+| Biện Minh Đức | Kiến trúc tổng thể, server, concurrency, review, DAO / Database |
+| Nguyễn Đình Đức | Live bidding UI, auto-bid, schema MySQL |
+| Đinh Văn Toàn | Client JavaFX, giao diện người dùng |
+| Trần Đức Tuấn | Realtime chart |
 
 ---
 
-## 3. Công nghệ và môi trường
+## 🛠️ Công nghệ sử dụng
 
 | Nhóm | Công nghệ |
 |---|---|
@@ -39,19 +27,13 @@ Hệ thống tập trung vào luồng đấu giá nội bộ chạy local/demo:
 | Client | JavaFX 21, FXML, CSS |
 | Server | TCP Socket, Java Object Serialization |
 | Database | MySQL 8.x |
-| Serialization | Gson 2.10.1 |
 | Testing | JUnit Jupiter 5 |
 
-**Yêu cầu cài đặt:**
-
-- JDK 21+
-- Apache Maven 3.8+
-- MySQL Server 8.0+
-- Hệ điều hành có môi trường đồ họa để chạy JavaFX client: Windows, macOS hoặc Linux desktop
+**Yêu cầu cài đặt:** JDK 21+ · Maven 3.8+ · MySQL 8.0+ · Hệ điều hành có đồ họa (Windows / macOS / Linux desktop)
 
 ---
 
-## 4. Cấu trúc dự án
+## 📁 Cấu trúc dự án
 
 Dự án là một Maven single-module, toàn bộ source code nằm trong `src/main/java/com/uet/auction/`:
 
@@ -63,12 +45,12 @@ src/main/java/com/uet/auction/
 │   └── util/           # AlertHelper, SceneManager, SessionManager, CountdownTask
 ├── server/
 │   ├── config/         # DatabaseConnection, DbMigrator
-│   ├── DAO/            # Truy vấn DB: UserDAO, ProductDAO, BidDAO
+│   ├── DAO/            # Truy vấn DB: UserDAO, ProductDAO, BidDAO, NotificationDAO
 │   ├── model/          # Entity: User, Product, Bid, Auction, AutoBidConfig...
 │   ├── network/        # SocketServer, ClientHandler
 │   └── service/        # AuctionService, AuthService, AuctionTimer, SessionManager
 └── common/
-    ├── DTO/            # AuctionDTO, BidDTO, ProductDTO, UserDTO
+    ├── DTO/            # AuctionDTO, BidDTO, ProductDTO, UserDTO, NotificationDTO
     ├── Request/        # AuctionRequest, LoginRequest
     ├── Response/       # AuctionResponse, LoginResponse
     └── exception/      # AuctionException, InvalidBidException, UnauthorizedException
@@ -81,7 +63,7 @@ src/main/resources/com/uet/auction/
 
 ---
 
-## 5. Cài đặt và chạy
+## 🚀 Cài đặt và chạy
 
 ### Bước 1 — Tạo database
 
@@ -89,7 +71,7 @@ src/main/resources/com/uet/auction/
 mysql -u root -p < schema.sql
 ```
 
-File `schema.sql` ở thư mục gốc repository sẽ tạo database `auction_db` và các bảng `users`, `products`, `bids`.
+File `schema.sql` tạo database `auction_db` với các bảng `users`, `products`, `bids`, `notifications` và dữ liệu mẫu sẵn.
 
 ### Bước 2 — Cấu hình kết nối database
 
@@ -107,117 +89,148 @@ Mặc định: `jdbc:mysql://localhost:3306/auction_db`
 mvn clean package -DskipTests
 ```
 
-### Bước 4 — Chạy Server (chạy trước)
+### Bước 4 — Chạy Server *(chạy trước)*
 
 ```bash
 mvn exec:java -Dexec.mainClass="com.uet.auction.server.ServerApplication"
 ```
 
-Server khởi động, lắng nghe kết nối tại cổng `8080`, và tự động chạy `AuctionTimer` để quản lý vòng đời phiên đấu giá (PENDING → OPEN → CLOSED) mỗi 5 giây.
+Server lắng nghe tại cổng `8080` và tự động chạy `AuctionTimer` mỗi 5 giây để quản lý vòng đời phiên đấu giá (APPROVED → OPEN → CLOSED).
 
-### Bước 5 — Chạy Client (sau khi server đã khởi động)
+### Bước 5 — Chạy Client
 
 ```bash
 mvn javafx:run
 ```
 
-Để demo nhiều người dùng đồng thời, mở thêm terminal và lặp lại lệnh trên. Client tự động kết nối lại mỗi 3 giây nếu mất kết nối với server.
+Để demo nhiều người dùng đồng thời, mở thêm terminal và lặp lại lệnh trên. Client tự động kết nối lại mỗi 3 giây nếu mất kết nối.
 
 ---
 
-## 6. Tài khoản demo
+## 🔑 Tài khoản demo
 
-Tạo thủ công tài khoản qua màn hình đăng ký, hoặc insert thẳng vào database:
+Mật khẩu mặc định tất cả tài khoản: **`123456`**
 
-| Username | Vai trò | Ghi chú |
+| Username | Vai trò | Số dư |
 |---|---|---|
-| *(tự tạo)* | `ADMIN` | Chọn role ADMIN khi đăng ký |
-| *(tự tạo)* | `SELLER` | Chọn role SELLER khi đăng ký |
-| *(tự tạo)* | `USER` | Role mặc định, dùng để đặt giá |
+| `admin` | ADMIN | 0 VNĐ |
+| `seller1` | SELLER | 0 VNĐ |
+| `user1` | USER | 50.000.000 VNĐ |
+| `user2` | USER | 20.000.000 VNĐ |
 
 ---
 
-## 7. Chức năng đã hoàn thành
+## ✅ Chức năng đã hoàn thành
 
 **Xác thực & Hồ sơ**
 - [x] Đăng ký tài khoản với đầy đủ thông tin (họ tên, username, email, số điện thoại, mật khẩu, vai trò)
-- [x] Đăng nhập / đăng xuất, phân quyền theo vai trò
+- [x] Đăng nhập / đăng xuất, phân quyền theo vai trò; chặn tài khoản bị khoá
 - [x] Chỉnh sửa hồ sơ cá nhân (họ tên, số điện thoại, đổi mật khẩu)
-- [x] Nạp tiền vào tài khoản
+- [x] Nạp tiền vào ví (tối đa 500.000.000 VNĐ / lần)
 
 **Người dùng (USER)**
-- [x] Xem danh sách sản phẩm đang đấu giá (OPEN), đếm ngược thời gian thực
+- [x] Xem danh sách phiên đang đấu giá (OPEN), đếm ngược thời gian thực
 - [x] Tìm kiếm và lọc sản phẩm theo danh mục
-- [x] Vào trang chi tiết sản phẩm: xem lịch sử đặt giá, biểu đồ LineChart diễn biến giá, người đang giữ đỉnh
+- [x] Trang chi tiết: lịch sử đặt giá, biểu đồ LineChart diễn biến giá, người đang giữ đỉnh
 - [x] Đặt giá thủ công với kiểm tra số dư và bước giá tối thiểu
 - [x] Đăng ký đấu giá tự động (auto-bid) với giá tối đa và bước tăng tuỳ chỉnh
-- [x] Xem các phiên đã tham gia
+- [x] Xem danh sách các phiên đã tham gia
 
 **Seller**
 - [x] Tạo sản phẩm đấu giá kèm ảnh, mô tả, giá khởi điểm, bước giá, thời gian bắt đầu/kết thúc
+- [x] Chỉnh sửa sản phẩm chờ duyệt (không thể sửa khi phiên đang OPEN)
 - [x] Xem danh sách sản phẩm của mình và trạng thái duyệt
 
 **Admin**
-- [x] Duyệt hoặc từ chối sản phẩm (PENDING → OPEN / REJECTED)
+- [x] Duyệt hoặc từ chối sản phẩm (PENDING → APPROVED → OPEN khi đến giờ / REJECTED)
 - [x] Quản lý người dùng: xem danh sách, tìm kiếm, khoá / mở khoá tài khoản
 
 **Server & Realtime**
 - [x] Broadcast realtime khi có lượt đặt giá mới — tất cả client cập nhật đồng thời
-- [x] Tự động chuyển trạng thái phiên: đúng giờ mở (PENDING → OPEN), hết giờ đóng (OPEN → CLOSED)
-- [x] Anti-sniping: tự động gia hạn thêm 5 phút nếu có bid trong 30 giây cuối
-- [x] Auto-bid engine: kích hoạt và xử lý chuỗi đặt giá tự động sau mỗi lượt bid thủ công
-- [x] Thông báo kết thúc phiên broadcast tới toàn bộ client kèm tên người thắng và giá trúng
+- [x] Tự động chuyển trạng thái phiên: Admin duyệt → APPROVED, đúng giờ mở (APPROVED → OPEN), hết giờ đóng (OPEN → CLOSED)
+- [x] Anti-sniping: gia hạn thêm 3 phút nếu có bid trong 30 giây cuối (tối đa 3 lần)
+- [x] Auto-bid engine: xử lý chuỗi đặt giá tự động dây chuyền sau mỗi lượt bid thủ công
+- [x] Thông báo kết thúc phiên broadcast toàn bộ client kèm tên người thắng và giá trúng
 - [x] Thread pool giới hạn 50 client đồng thời, xử lý concurrent bidding với `synchronized`
 - [x] Client tự động kết nối lại khi mất kết nối
 
 ---
 
-## 8. Kiến trúc realtime
+## 🔄 Vòng đời phiên đấu giá
+
+```
+Seller tạo sản phẩm
+        │
+        ▼
+   [PENDING] ──── Admin từ chối ────▶ [REJECTED]
+        │
+   Admin duyệt
+        │
+        ▼
+  [APPROVED]
+        │
+   AuctionTimer: start_time <= NOW()
+        │
+        ▼
+    [OPEN] ◀──── Anti-sniping gia hạn nếu bid trong 30s cuối
+        │
+   AuctionTimer: end_time <= NOW()
+        │
+        ▼
+   [CLOSED] ──── Trả tiền Seller · Thông báo người thắng
+```
+
+---
+
+## 🏗️ Kiến trúc realtime
 
 ```
 Client A  ──┐
 Client B  ──┼──▶  SocketServer (port 8080)
 Client C  ──┘        │
-                     ├── ClientHandler (thread pool, tối đa 50)
-                     ├── AuctionService  (xử lý bid, auto-bid)
-                     ├── AuthService     (xác thực, quản lý user)
-                     └── AuctionTimer    (cron 5s: PENDING→OPEN→CLOSED, anti-sniping)
+                     ├── ClientHandler      (thread pool, tối đa 50)
+                     ├── AuctionService     (xử lý bid, auto-bid)
+                     ├── AuthService        (xác thực, quản lý user)
+                     └── AuctionTimer       (cron 5s: APPROVED→OPEN, anti-sniping, OPEN→CLOSED)
                               │
                          MySQL 8.x (auction_db)
                          ├── users
                          ├── products
-                         └── bids
+                         ├── bids
+                         └── notifications
 ```
 
 Mỗi sự kiện thay đổi giá hoặc trạng thái phiên đều kích hoạt `SocketServer.broadcast()` — tất cả client nhận update đồng thời mà không cần polling.
 
 ---
 
-## 9. Database schema
-
-Ba bảng chính:
+## 🗄️ Database schema
 
 | Bảng | Mô tả |
 |---|---|
 | `users` | Thông tin tài khoản, vai trò, số dư, trạng thái |
-| `products` | Thông tin sản phẩm đấu giá, giá hiện tại, người đang giữ đỉnh, thời gian |
+| `products` | Sản phẩm đấu giá, giá hiện tại, người giữ đỉnh, thời gian, số lần gia hạn |
 | `bids` | Lịch sử toàn bộ lượt đặt giá |
+| `notifications` | Thông báo bị vượt giá, kết thúc phiên cho từng user |
 
 Xem chi tiết tại [`schema.sql`](schema.sql).
 
 ---
 
-## 10. Báo cáo và Demo
-
-- 📄 Báo cáo PDF: https://docs.google.com/document/d/1wZ_LSpcFZGR3Xeszm4fEgzW_rkjZoU1Z/edit?usp=sharing&ouid=111826535776200247084&rtpof=true&sd=true
-- 🎬 Video demo: *(cập nhật link)*
-
-**Kịch bản demo đề xuất:**
+## 🎬 Kịch bản demo
 
 1. Chạy server: `mvn exec:java -Dexec.mainClass="com.uet.auction.server.ServerApplication"`
 2. Mở 3 terminal, chạy 3 client: `mvn javafx:run`
-3. Đăng nhập với tài khoản Seller → tạo sản phẩm đấu giá mới
-4. Đăng nhập Admin → duyệt sản phẩm vừa tạo
-5. Đăng nhập 2 tài khoản User → cùng vào phiên, cạnh tranh đặt giá realtime
-6. Một User đăng ký auto-bid — quan sát hệ thống tự động đặt giá
-7. Chờ hoặc rút ngắn thời gian phiên để xem thông báo kết thúc và tên người thắng
+3. Đăng nhập `seller1` → tạo sản phẩm mới với `start_time` trong quá khứ
+4. Đăng nhập `admin` → duyệt sản phẩm (trạng thái chuyển APPROVED)
+5. Chờ 5 giây → AuctionTimer tự mở phiên (APPROVED → OPEN)
+6. Đăng nhập `user1` và `user2` → cùng vào phiên, cạnh tranh đặt giá realtime
+7. Một user đăng ký auto-bid → quan sát hệ thống tự động đặt giá dây chuyền
+8. Cập nhật `end_time` trực tiếp trong MySQL để rút ngắn → quan sát anti-sniping gia hạn và thông báo kết thúc
+
+---
+
+## 📄 Báo cáo
+
+- 📝 Báo cáo: [Google Docs](https://docs.google.com/document/d/1wZ_LSpcFZGR3Xeszm4fEgzW_rkjZoU1Z/edit?usp=sharing&ouid=111826535776200247084&rtpof=true&sd=true)
+- 🎬 Video demo: *(cập nhật link)*
